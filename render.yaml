@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: xira-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MODEL_VERSION
+        value: v1.0.0-mvp
+      - key: XLAYER_RPC_URL
+        value: https://testnet.xlayer.tech
+      - key: XIRA_CONTRACT_ADDRESS
+        value: "0x0000000000000000000000000000000000000000"
+      - key: PRIVATE_KEY
+        value: ""
+      - key: AI_MODE
+        value: heuristic
+    autoDeploy: true
