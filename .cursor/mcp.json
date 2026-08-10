@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "XIRA": {
+      "command": "python3",
+      "args": [
+        "/Users/mac/Documents/Default Project/xira/mcp_server/server.py"
+      ],
+      "env": {
+        "XIRA_API_URL": "https://xira-gsb3.onrender.com"
+      }
+    }
+  }
+}
