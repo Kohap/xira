@@ -22,6 +22,9 @@ export interface Attestation {
   model_version: string;
   data_source: string;
   data_freshness_ms: number;
+  chain_tx?: string;
+  chain_explorer?: string;
+  chain_block?: number;
 }
 
 export interface AllAssetsResponse {
@@ -30,6 +33,8 @@ export interface AllAssetsResponse {
   data_source: string;
   assets: Attestation[];
   summary: string;
+  contract_address?: string;
+  chain_id?: number;
 }
 
 export interface AttestationHistory {
