@@ -15,6 +15,7 @@ function SummaryBar({
   anomalyCount,
   totalAssets,
   nextRefresh,
+  dataSource,
 }: {
   summary: string;
   generatedAt: number;
@@ -22,12 +23,25 @@ function SummaryBar({
   anomalyCount: number;
   totalAssets: number;
   nextRefresh: number;
+  dataSource: string;
 }) {
+  const isLive = dataSource === "live";
   return (
     <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 mb-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Market Risk Overview</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Market Risk Overview</h2>
+            <span
+              className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                isLive
+                  ? "bg-green-900/40 text-green-400 border border-green-700/50"
+                  : "bg-yellow-900/40 text-yellow-400 border border-yellow-700/50"
+              }`}
+            >
+              {isLive ? "LIVE" : dataSource.toUpperCase()}
+            </span>
+          </div>
           <p className="text-sm text-neutral-400 mt-1">{summary}</p>
         </div>
         <div className="flex items-center gap-4 text-xs text-neutral-500 flex-wrap">
@@ -205,6 +219,7 @@ export default function DashboardPage() {
         anomalyCount={anomalyCount}
         totalAssets={data.assets.length}
         nextRefresh={countdown}
+        dataSource={data.data_source || "mock"}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

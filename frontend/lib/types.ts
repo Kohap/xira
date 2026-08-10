@@ -20,11 +20,14 @@ export interface Attestation {
   evidence_hash: string;
   timestamp: number;
   model_version: string;
+  data_source: string;
+  data_freshness_ms: number;
 }
 
 export interface AllAssetsResponse {
   generated_at: number;
   model_version: string;
+  data_source: string;
   assets: Attestation[];
   summary: string;
 }

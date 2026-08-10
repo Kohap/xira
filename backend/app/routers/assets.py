@@ -1,7 +1,6 @@
 from __future__ import annotations
 import os, time
 from fastapi import APIRouter, HTTPException
-from typing import Optional
 
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
@@ -30,47 +29,55 @@ async def get_all_assets(fresh: bool = False):
     assets = get_tracked_assets()
     tickers = [a["underlying"] for a in assets]
 
-    prices = data_fetcher.fetch_all_prices(tickers)
-    sentiments = data_fetcher.fetch_all_sentiments(tickers)
+    prices, _ = data_fetcher.fetch_all_prices(tickers)
+    sentiments, _ = data_fetcher.fetch_all_sentiments(tickers, prices)
 
     results: list[AttestationResponse] = []
     anomaly_count = 0
     total_score = 0
+    live_count = 0
+    now = int(time.time())
 
     for asset in assets:
         price_data = prices.get(asset["underlying"])
-        sentiment = sentiments.get(asset["underlying"], 0.0)
+        sentiment = sentiments.get(asset["underlying"])
+        s_val = sentiment.score if hasattr(sentiment, "score") else (sentiment if isinstance(sentiment, (int, float)) else 0.0)
 
         result = ai_engine.analyze(
             symbol=asset["symbol"],
             price_data=price_data,
-            sentiment=sentiment,
+            sentiment=s_val,
             model_version=model_version,
         )
 
-        result.timestamp = int(time.time())
-        results.append(result)
+        result.timestamp = now
+        if result.data_source == "yahoo":
+            live_count += 1
 
+        results.append(result)
         if result.anomaly:
             anomaly_count += 1
         total_score += result.risk_score
-
         _store_asset_history(asset["symbol"], result)
 
     avg_score = total_score / len(results) if results else 0
+    source_label = "live" if live_count >= len(results) * 0.7 else ("partial" if live_count > 0 else "mock")
 
     if avg_score < 30:
-        summary = f"Market outlook: Low risk. Average score {avg_score:.0f}/100 across {len(results)} assets."
+        summary = f"Market outlook: Low risk. Avg {avg_score:.0f}/100 across {len(results)} assets."
     elif avg_score < 55:
-        summary = f"Market outlook: Moderate risk. Average score {avg_score:.0f}/100 across {len(results)} assets."
+        summary = f"Market outlook: Moderate risk. Avg {avg_score:.0f}/100 across {len(results)} assets."
     elif avg_score < 75:
-        summary = f"Market outlook: Elevated risk. Average score {avg_score:.0f}/100 across {len(results)} assets. {anomaly_count} anomaly alerts active."
+        summary = f"Market outlook: Elevated risk. Avg {avg_score:.0f}/100 across {len(results)} assets. {anomaly_count} alerts."
     else:
-        summary = f"Market outlook: High risk. Average score {avg_score:.0f}/100 across {len(results)} assets. {anomaly_count} anomaly alerts active."
+        summary = f"Market outlook: High risk. Avg {avg_score:.0f}/100 across {len(results)} assets. {anomaly_count} alerts."
+
+    summary += f" Data: {source_label} ({live_count}/{len(results)} from Yahoo Finance)."
 
     return AllAssetsResponse(
-        generated_at=int(time.time()),
+        generated_at=now,
         model_version=model_version,
+        data_source=source_label,
         assets=results,
         summary=summary,
     )
@@ -79,10 +86,12 @@ async def get_all_assets(fresh: bool = False):
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
     contract_addr = os.getenv("XIRA_CONTRACT_ADDRESS", "0x0000000000000000000000000000000000000000")
+    live = os.getenv("USE_LIVE_DATA", "true").lower() == "true"
     return HealthResponse(
         status="ok",
         version=os.getenv("MODEL_VERSION", "v1.0.0-mvp"),
         chain="xlayer-testnet",
         contract=contract_addr,
         tracked_assets=len(get_tracked_assets()),
+        live_data=live,
     )

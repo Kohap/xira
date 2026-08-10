@@ -32,6 +32,8 @@ class AttestationResponse(BaseModel):
     evidence_hash: str
     timestamp: int
     model_version: str
+    data_source: str = "mock"
+    data_freshness_ms: int = 0
 
 
 class AttestationHistory(BaseModel):
@@ -42,6 +44,7 @@ class AttestationHistory(BaseModel):
 class AllAssetsResponse(BaseModel):
     generated_at: int
     model_version: str
+    data_source: str = "mock"
     assets: list[AttestationResponse]
     summary: str
 
@@ -59,3 +62,4 @@ class HealthResponse(BaseModel):
     chain: str
     contract: str
     tracked_assets: int
+    live_data: bool = False

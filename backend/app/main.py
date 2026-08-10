@@ -1,6 +1,5 @@
 from __future__ import annotations
 import os, logging
-from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -14,21 +13,22 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(na
 logger = logging.getLogger("xira")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("XIRA backend starting up...")
-    logger.info(f"Model version: {os.getenv('MODEL_VERSION', 'v1.0.0-mvp')}")
-    assets_meta = __import__("app.services.data_fetcher", fromlist=["get_tracked_assets"]).get_tracked_assets()
-    logger.info(f"Tracking {len(assets_meta)} assets: {[a['symbol'] for a in assets_meta]}")
-    yield
-    logger.info("XIRA backend shutting down.")
+def _build_endpoints() -> dict:
+    live = os.getenv("USE_LIVE_DATA", "false").lower() == "true"
+    return {
+        "assets_all": "/api/assets/all",
+        "attestation": "/api/attestations/{symbol}",
+        "attestation_history": "/api/attestations/{symbol}/history",
+        "health": "/api/assets/health",
+        "docs": "/docs",
+        "live_data": live,
+    }
 
 
 app = FastAPI(
-    title="XIRA - X-Layer Intelligence & Risk Analytics",
+    title="XIRA — X-Layer Intelligence & Risk Analytics",
     description="AI-powered risk intelligence and signals for tokenized equities on X Layer.",
     version="1.0.0-mvp",
-    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -43,19 +43,30 @@ app.include_router(assets.router)
 app.include_router(attestations.router)
 
 
+@app.on_event("startup")
+async def startup():
+    live = os.getenv("USE_LIVE_DATA", "false").lower() == "true"
+    mode = "LIVE (Yahoo Finance + news)" if live else "MOCK (simulated data)"
+    logger.info(f"XIRA backend starting | Mode: {mode}")
+    logger.info(f"Model: {os.getenv('MODEL_VERSION', 'v1.0.0-mvp')}")
+
+    from app.services.data_fetcher import get_tracked_assets
+    assets = get_tracked_assets()
+    logger.info(f"Tracking {len(assets)} assets: {[a['symbol'] for a in assets]}")
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    logger.info("XIRA backend shutting down.")
+
+
 @app.get("/")
 async def root():
     return {
         "name": "XIRA",
         "full_name": "X-Layer Intelligence & Risk Analytics",
         "version": os.getenv("MODEL_VERSION", "v1.0.0-mvp"),
-        "endpoints": {
-            "assets_all": "/api/assets/all",
-            "attestation": "/api/attestations/{symbol}",
-            "attestation_history": "/api/attestations/{symbol}/history",
-            "health": "/api/assets/health",
-        },
-        "docs": "/docs",
+        "endpoints": _build_endpoints(),
     }
 
 

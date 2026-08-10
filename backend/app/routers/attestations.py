@@ -1,10 +1,10 @@
 from __future__ import annotations
+import os, time
 from fastapi import APIRouter, HTTPException, Query
-from typing import Optional
 
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
-from app.models import AttestationResponse, AttestationHistory, RiskLevel
+from app.models import AttestationResponse, AttestationHistory
 
 router = APIRouter(prefix="/api/attestations", tags=["attestations"])
 
@@ -15,7 +15,7 @@ def _store_history(symbol: str, result: AttestationResponse):
     if symbol not in HISTORY_STORE:
         HISTORY_STORE[symbol] = []
     entry = result.model_dump()
-    entry["timestamp"] = int(__import__("time").time())
+    entry["timestamp"] = int(time.time())
     result.timestamp = entry["timestamp"]
     HISTORY_STORE[symbol].append(entry)
     if len(HISTORY_STORE[symbol]) > 50:
@@ -30,18 +30,22 @@ async def get_attestation(symbol: str):
     if not match:
         raise HTTPException(status_code=404, detail=f"Asset '{symbol}' not tracked.")
 
-    model_version = __import__("os").getenv("MODEL_VERSION", "v1.0.0-mvp")
-    price_data = data_fetcher.fetch_all_prices([match["underlying"]]).get(match["underlying"])
-    sentiment = data_fetcher.fetch_all_sentiments([match["underlying"]]).get(match["underlying"], 0.0)
+    model_version = os.getenv("MODEL_VERSION", "v1.0.0-mvp")
+
+    prices, _ = data_fetcher.fetch_all_prices([match["underlying"]])
+    price_data = prices.get(match["underlying"])
+
+    sentiments, _ = data_fetcher.fetch_all_sentiments([match["underlying"]], prices)
+    sentiment = sentiments.get(match["underlying"])
+    s_val = sentiment.score if hasattr(sentiment, "score") else (sentiment if isinstance(sentiment, (int, float)) else 0.0)
 
     result = ai_engine.analyze(
         symbol=match["symbol"],
         price_data=price_data,
-        sentiment=sentiment,
+        sentiment=s_val,
         model_version=model_version,
     )
 
-    import time
     result.timestamp = int(time.time())
 
     try:
