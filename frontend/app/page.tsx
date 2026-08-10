@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import type { AllAssetsResponse } from "@/lib/types";
 import { ScoreCard } from "@/components/ScoreCard";
 
@@ -14,12 +14,14 @@ function SummaryBar({
   modelVersion,
   anomalyCount,
   totalAssets,
+  nextRefresh,
 }: {
   summary: string;
   generatedAt: number;
   modelVersion: string;
   anomalyCount: number;
   totalAssets: number;
+  nextRefresh: number;
 }) {
   return (
     <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 mb-6">
@@ -28,12 +30,16 @@ function SummaryBar({
           <h2 className="text-lg font-semibold">Market Risk Overview</h2>
           <p className="text-sm text-neutral-400 mt-1">{summary}</p>
         </div>
-        <div className="flex items-center gap-4 text-xs text-neutral-500">
+        <div className="flex items-center gap-4 text-xs text-neutral-500 flex-wrap">
           <span>
             Updated{" "}
             <span className="text-neutral-300 tabular-nums">
               {formatTimestamp(generatedAt)}
             </span>
+          </span>
+          <span>
+            Refresh in{" "}
+            <span className="text-neutral-300 tabular-nums">{nextRefresh}s</span>
           </span>
           <span>
             Model: <span className="text-neutral-300">{modelVersion}</span>
@@ -72,40 +78,79 @@ export default function DashboardPage() {
   const [data, setData] = useState<AllAssetsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [coldStart, setColdStart] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${apiBase}/api/assets/all`);
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status} ${res.statusText}`);
+  const fetchData = useCallback(
+    async (showLoading = true) => {
+      if (showLoading) setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${apiBase}/api/assets/all`);
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status} ${res.statusText}`);
+        }
+        const json: AllAssetsResponse = await res.json();
+        setData(json);
+        setColdStart(false);
+        setCountdown(60);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        if (msg.includes("fetch") || msg.includes("NetworkError")) {
+          setColdStart(true);
+        }
+        setError(msg);
+      } finally {
+        setLoading(false);
       }
-      const json: AllAssetsResponse = await res.json();
-      setData(json);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, [apiBase]);
+    },
+    [apiBase]
+  );
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  if (loading) {
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          fetchData(false);
+          return 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [fetchData]);
+
+  if (loading && !data) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 mb-6 animate-pulse">
-          <div className="h-5 w-48 bg-neutral-800 rounded mb-2" />
-          <div className="h-4 w-96 bg-neutral-800 rounded" />
+          <div className="flex items-center gap-3">
+            <svg className="animate-spin h-5 w-5 text-[var(--accent-glow)]" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <div>
+              <div className="h-5 w-48 bg-neutral-800 rounded mb-2" />
+              <div className="h-4 w-72 bg-neutral-800 rounded" />
+            </div>
+          </div>
         </div>
+        <p className="text-center text-neutral-500 text-sm mb-6">
+          {coldStart
+            ? "Waking up backend (Render free tier cold start, ~30s)..."
+            : "Loading risk data for 15 xStocks..."}
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 12 }).map((_, i) => (
+          {Array.from({ length: 15 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
@@ -113,51 +158,54 @@ export default function DashboardPage() {
     );
   }
 
-  if (error || !data) {
+  if (error && !data) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-10 text-center">
+          <div className="text-4xl mb-4">&#128225;</div>
           <p className="text-neutral-400 text-lg mb-2">
             Unable to connect to the XIRA backend.
           </p>
-          <p className="text-neutral-600 text-sm mb-2">
-            Make sure the API server is running:
-          </p>
-          <pre className="bg-neutral-900 rounded-lg p-3 text-xs text-neutral-400 inline-block text-left mt-1 mb-4">
-            cd backend && source venv/bin/activate && python -m app.main
-          </pre>
           <p className="text-neutral-500 text-xs mb-4">
-            API Base: <code className="text-[var(--accent-glow)]">{apiBase}</code>
+            API: <code className="text-[var(--accent-glow)]">{apiBase}</code>
           </p>
           {error && (
-            <p className="text-red-400/80 text-xs mb-4 font-mono">
+            <p className="text-red-400/80 text-xs mb-6 font-mono bg-red-900/10 rounded p-2 inline-block">
               {error}
             </p>
           )}
-          <button
-            onClick={fetchData}
-            className="px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white rounded-lg text-sm transition-colors"
-          >
-            Retry
-          </button>
+          <div className="space-y-3">
+            <p className="text-neutral-600 text-xs">
+              {coldStart
+                ? "The backend is on Render free tier and may take 30-60s to wake from sleep."
+                : "Make sure the API server is running."}
+            </p>
+            <button
+              onClick={() => fetchData(true)}
+              className="px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white rounded-lg text-sm transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  if (!data) return null;
+
   const anomalyCount = data.assets.filter((a) => a.anomaly).length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-4">
-        <SummaryBar
-          summary={data.summary}
-          generatedAt={data.generated_at}
-          modelVersion={data.model_version}
-          anomalyCount={anomalyCount}
-          totalAssets={data.assets.length}
-        />
-      </div>
+      <SummaryBar
+        summary={data.summary}
+        generatedAt={data.generated_at}
+        modelVersion={data.model_version}
+        anomalyCount={anomalyCount}
+        totalAssets={data.assets.length}
+        nextRefresh={countdown}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {data.assets.map((asset) => (
@@ -174,13 +222,18 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6 flex items-center justify-between">
-        <button
-          onClick={fetchData}
-          disabled={loading}
-          className="px-4 py-2 bg-[var(--accent)]/20 hover:bg-[var(--accent)]/40 text-[var(--accent-glow)] rounded-lg text-sm transition-colors disabled:opacity-50"
-        >
-          {loading ? "Refreshing..." : "Refresh Data"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchData(false)}
+            disabled={loading}
+            className="px-4 py-2 bg-[var(--accent)]/20 hover:bg-[var(--accent)]/40 text-[var(--accent-glow)] rounded-lg text-sm transition-colors disabled:opacity-50"
+          >
+            {loading ? "Refreshing..." : "Refresh Now"}
+          </button>
+          <span className="text-xs text-neutral-500">
+            Auto-refresh every 60s
+          </span>
+        </div>
         <span className="text-xs text-neutral-600">
           XIRA v{data.model_version}
         </span>
