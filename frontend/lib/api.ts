@@ -1,0 +1,28 @@
+import type { AllAssetsResponse, Attestation, AttestationHistory } from "./types";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+async function fetchJSON<T>(url: string): Promise<T> {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function fetchAllAssets(): Promise<AllAssetsResponse> {
+  return fetchJSON<AllAssetsResponse>(`${API_BASE}/api/assets/all`);
+}
+
+export async function fetchAttestation(symbol: string): Promise<Attestation> {
+  return fetchJSON<Attestation>(`${API_BASE}/api/attestations/${symbol}`);
+}
+
+export async function fetchAttestationHistory(
+  symbol: string,
+  limit = 10
+): Promise<AttestationHistory> {
+  return fetchJSON<AttestationHistory>(
+    `${API_BASE}/api/attestations/${symbol}/history?limit=${limit}`
+  );
+}

@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0f;
+  --foreground: #eaeaec;
+  --card-bg: #111119;
+  --card-border: #1e1e2e;
+  --accent: #6c5ce7;
+  --accent-glow: #8b7cf6;
+  --risk-low: #22c55e;
+  --risk-moderate: #eab308;
+  --risk-elevated: #f97316;
+  --risk-high: #ef4444;
+  --risk-critical: #dc2626;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-accent: var(--accent);
+  --color-accent-glow: var(--accent-glow);
+  --color-risk-low: var(--risk-low);
+  --color-risk-moderate: var(--risk-moderate);
+  --color-risk-elevated: var(--risk-elevated);
+  --color-risk-high: var(--risk-high);
+  --color-risk-critical: var(--risk-critical);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(108, 92, 231, 0.3); }
+  50% { box-shadow: 0 0 18px rgba(108, 92, 231, 0.6); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
