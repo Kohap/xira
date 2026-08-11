@@ -187,6 +187,17 @@ struct Attestation {
 ### `GET /api/assets/all`
 Returns risk scores for all 15 tracked assets plus a market summary.
 
+### `GET /api/assets/{symbol}`
+Returns detail for a single asset: underlying, sector, token address, current
+risk score, 24h price change, and the score delta vs the previous attestation.
+
+### `GET /api/assets/stats`
+Market-level statistics: average score, distribution across risk levels,
+anomaly count, and best/worst scoring assets.
+
+### `GET /api/alerts`
+Returns all currently flagged anomaly alerts, sorted by risk score descending.
+
 ### `GET /api/attestations/{symbol}`
 Returns detailed attestation for a single asset (runs AI analysis on demand, publishes on-chain).
 
@@ -195,6 +206,9 @@ Returns last N attestations for an asset.
 
 ### `GET /api/assets/health`
 Health check with model version and tracked asset count.
+
+### `GET /api/assets/history/stats`
+SQLite history database statistics (record count, oldest/newest records).
 
 ---
 

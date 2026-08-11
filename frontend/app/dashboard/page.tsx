@@ -90,6 +90,12 @@ function AlertsStrip({ assets }: { assets: AllAssetsResponse["assets"] }) {
         <span className="live-dot w-2 h-2 rounded-full bg-red-400" aria-hidden="true" />
         <h3 className="text-sm font-semibold text-red-300">Anomaly alerts</h3>
         <span className="text-[11px] text-red-400/70 font-mono">factor consensus broken</span>
+        <Link
+          href="/alerts"
+          className="ml-auto text-xs text-red-400/90 hover:text-red-300 hover:underline underline-offset-4 transition-colors"
+        >
+          View all alerts →
+        </Link>
       </div>
       <ul className="flex flex-col gap-2">
         {alerts.map((a) => (
@@ -142,6 +148,8 @@ export default function DashboardPage() {
   const [coldStart, setColdStart] = useState(false);
   const [countdown, setCountdown] = useState(POLL_SECONDS);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"score" | "symbol" | "confidence">("score");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retriesRef = useRef(0);
@@ -310,6 +318,25 @@ export default function DashboardPage() {
 
   const anomalyCount = data.assets.filter((a) => a.anomaly).length;
 
+  const visibleAssets = data.assets
+    .filter(
+      (a) =>
+        query.trim() === "" ||
+        a.symbol.toLowerCase().includes(query.trim().toLowerCase())
+    )
+    .slice()
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "symbol":
+          return a.symbol.localeCompare(b.symbol);
+        case "confidence":
+          return b.confidence - a.confidence;
+        case "score":
+        default:
+          return b.risk_score - a.risk_score;
+      }
+    });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {refreshError && (
@@ -346,19 +373,88 @@ export default function DashboardPage() {
         <RiskHeatmap assets={data.assets} />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
-        {data.assets.map((asset) => (
-          <ScoreCard
-            key={asset.symbol}
-            symbol={asset.symbol}
-            risk_score={asset.risk_score}
-            risk_level={asset.risk_level}
-            confidence={asset.confidence}
-            factors={asset.factors}
-            anomaly={asset.anomaly}
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">
+        <label className="relative flex-1 max-w-sm">
+          <span className="sr-only">Search assets</span>
+          <svg
+            viewBox="0 0 24 24"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search symbols…"
+            className="w-full h-10 pl-9 pr-9 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-600 transition-colors"
           />
-        ))}
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md flex items-center justify-center text-neutral-500 hover:text-white transition-colors"
+            >
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+                <path d="M4 4l8 8M12 4l-8 8" />
+              </svg>
+            </button>
+          )}
+        </label>
+        <div className="flex items-center gap-2 text-sm">
+          <label htmlFor="sort-select" className="text-xs text-neutral-500">
+            Sort
+          </label>
+          <select
+            id="sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            className="h-10 px-3 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-sm text-neutral-300 hover:border-neutral-600 transition-colors"
+          >
+            <option value="score">Risk score</option>
+            <option value="symbol">Symbol</option>
+            <option value="confidence">Confidence</option>
+          </select>
+          <span className="text-xs text-neutral-600 tabular-nums">
+            {visibleAssets.length}/{data.assets.length}
+          </span>
+        </div>
       </div>
+
+      {visibleAssets.length === 0 ? (
+        <div className="mt-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-8 text-center">
+          <p className="text-sm text-neutral-400">
+            No assets match &quot;{query}&quot;.
+          </p>
+          <button
+            onClick={() => setQuery("")}
+            className="mt-3 text-xs text-[var(--accent-glow)] hover:underline underline-offset-4"
+          >
+            Clear search
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
+          {visibleAssets.map((asset) => (
+            <ScoreCard
+              key={asset.symbol}
+              symbol={asset.symbol}
+              risk_score={asset.risk_score}
+              risk_level={asset.risk_level}
+              confidence={asset.confidence}
+              factors={asset.factors}
+              anomaly={asset.anomaly}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 flex items-center justify-between">
         <div className="flex items-center gap-3">

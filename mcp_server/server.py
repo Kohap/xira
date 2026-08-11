@@ -109,6 +109,32 @@ MCP_TOOLS = [
             "required": [],
         },
     },
+    {
+        "name": "xira_get_alerts",
+        "description": (
+            "Get all currently flagged anomaly alerts across the tracked "
+            "xStocks. Returns symbols, risk scores, anomaly reasons, and "
+            "severity, sorted by risk score descending."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+    {
+        "name": "xira_get_market_stats",
+        "description": (
+            "Get market-level risk statistics: average score, distribution "
+            "across risk levels, anomaly count, and the best/worst scoring "
+            "assets."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
 ]
 
 
@@ -241,6 +267,28 @@ def handle_get_health(request_id: Any) -> None:
     send_response(request_id, data)
 
 
+def handle_get_alerts(request_id: Any) -> None:
+    data = api_get("/api/alerts")
+    if not data or "error" in data:
+        send_error(request_id, -32004, data.get("error", "Failed to fetch alerts") if data else "No data")
+        return
+
+    send_response(request_id, {
+        "generated_at": data.get("generated_at"),
+        "total_alerts": data.get("total_alerts", 0),
+        "data_source": data.get("data_source", "unknown"),
+        "alerts": data.get("alerts", []),
+    })
+
+
+def handle_get_market_stats(request_id: Any) -> None:
+    data = api_get("/api/assets/stats")
+    if not data or "error" in data:
+        send_error(request_id, -32005, data.get("error", "Failed to fetch stats") if data else "No data")
+        return
+    send_response(request_id, data)
+
+
 # ── MCP lifecycle ──
 
 def handle_initialize(request_id: Any, params: dict) -> None:
@@ -282,6 +330,10 @@ def handle_tools_call(request_id: Any, params: dict) -> None:
             handle_get_asset_history(request_id, symbol, int(limit))
         elif tool_name == "xira_get_health":
             handle_get_health(request_id)
+        elif tool_name == "xira_get_alerts":
+            handle_get_alerts(request_id)
+        elif tool_name == "xira_get_market_stats":
+            handle_get_market_stats(request_id)
         else:
             send_error(request_id, -32601, f"Unknown tool: {tool_name}")
     except Exception as e:

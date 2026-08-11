@@ -12,18 +12,35 @@ contract XIRA {
         string anomalyReason;
     }
 
+    struct AttestationInput {
+        address asset;
+        uint8 score;
+        uint8 confidence;
+        bytes32 evidenceHash;
+        string modelVersion;
+        bool anomaly;
+        string anomalyReason;
+    }
+
+    uint256 private constant MAX_HISTORY = 20;
+
     address public owner;
     mapping(address => bool) public authorizedUpdaters;
     mapping(address => Attestation) public latestAttestation;
     mapping(address => address) public assetAddresses;
+    mapping(string => address) public symbolAddresses;
+    mapping(address => Attestation[MAX_HISTORY]) internal historyRing;
+    mapping(address => uint256) public historyCount;
     string[] public trackedSymbols;
 
     event AttestationUpdated(
         address indexed asset,
         uint8 score,
         uint8 confidence,
+        bytes32 evidenceHash,
+        uint64 timestamp,
         bool anomaly,
-        uint64 timestamp
+        string modelVersion
     );
     event UpdaterAuthorized(address indexed updater, bool authorized);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -61,6 +78,7 @@ contract XIRA {
         require(tokenAddr != address(0), "XIRA: zero address");
         require(!isSymbolTracked(symbol), "XIRA: symbol already registered");
         assetAddresses[tokenAddr] = tokenAddr;
+        symbolAddresses[symbol] = tokenAddr;
         trackedSymbols.push(symbol);
         emit AssetRegistered(tokenAddr, symbol);
     }
@@ -74,11 +92,23 @@ contract XIRA {
         bool anomaly,
         string calldata anomalyReason
     ) external onlyAuthorized {
+        _writeAttestation(asset, score, confidence, evidenceHash, modelVersion, anomaly, anomalyReason);
+    }
+
+    function _writeAttestation(
+        address asset,
+        uint8 score,
+        uint8 confidence,
+        bytes32 evidenceHash,
+        string memory modelVersion,
+        bool anomaly,
+        string memory anomalyReason
+    ) internal {
         require(asset != address(0), "XIRA: zero address");
         require(score <= 100, "XIRA: score > 100");
         require(confidence <= 100, "XIRA: confidence > 100");
 
-        latestAttestation[asset] = Attestation({
+        Attestation memory a = Attestation({
             score: score,
             confidence: confidence,
             evidenceHash: evidenceHash,
@@ -88,7 +118,30 @@ contract XIRA {
             anomalyReason: anomalyReason
         });
 
-        emit AttestationUpdated(asset, score, confidence, anomaly, uint64(block.timestamp));
+        latestAttestation[asset] = a;
+        _pushHistory(asset, a);
+
+        emit AttestationUpdated(asset, score, confidence, evidenceHash, a.timestamp, anomaly, modelVersion);
+    }
+
+    function batchUpdateAttestations(AttestationInput[] calldata inputs) external onlyAuthorized {
+        uint256 n = inputs.length;
+        for (uint256 i = 0; i < n; i++) {
+            _writeAttestation(
+                inputs[i].asset,
+                inputs[i].score,
+                inputs[i].confidence,
+                inputs[i].evidenceHash,
+                inputs[i].modelVersion,
+                inputs[i].anomaly,
+                inputs[i].anomalyReason
+            );
+        }
+    }
+
+    function _pushHistory(address asset, Attestation memory a) internal {
+        historyRing[asset][historyCount[asset] % MAX_HISTORY] = a;
+        historyCount[asset]++;
     }
 
     function getLatestAttestation(address asset)
@@ -106,6 +159,16 @@ contract XIRA {
     {
         Attestation storage a = latestAttestation[asset];
         return (a.score, a.confidence, a.evidenceHash, a.timestamp, a.modelVersion, a.anomaly, a.anomalyReason);
+    }
+
+    function getHistory(address asset) external view returns (Attestation[] memory) {
+        uint256 count = historyCount[asset];
+        uint256 n = count > MAX_HISTORY ? MAX_HISTORY : count;
+        Attestation[] memory out = new Attestation[](n);
+        for (uint256 i = 0; i < n; i++) {
+            out[i] = historyRing[asset][(count - n + i) % MAX_HISTORY];
+        }
+        return out;
     }
 
     function getScore(address asset) external view returns (uint8 score) {
@@ -127,6 +190,31 @@ contract XIRA {
 
     function getAllTrackedSymbols() external view returns (string[] memory) {
         return trackedSymbols;
+    }
+
+    function getAllTrackedAssetsWithScores()
+        external
+        view
+        returns (
+            address[] memory assets,
+            string[] memory symbols,
+            uint8[] memory scores,
+            uint64[] memory timestamps
+        )
+    {
+        uint256 n = trackedSymbols.length;
+        assets = new address[](n);
+        symbols = new string[](n);
+        scores = new uint8[](n);
+        timestamps = new uint64[](n);
+        for (uint256 i = 0; i < n; i++) {
+            address asset = symbolAddresses[trackedSymbols[i]];
+            Attestation storage a = latestAttestation[asset];
+            assets[i] = asset;
+            symbols[i] = trackedSymbols[i];
+            scores[i] = a.score;
+            timestamps[i] = a.timestamp;
+        }
     }
 
     function isSymbolTracked(string memory symbol) internal view returns (bool) {
