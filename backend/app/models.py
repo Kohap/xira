@@ -34,6 +34,10 @@ class AttestationResponse(BaseModel):
     model_version: str
     data_source: str = "mock"
     data_freshness_ms: int = 0
+    chain_tx: Optional[str] = None
+    chain_explorer: Optional[str] = None
+    chain_block: Optional[int] = None
+    chain_id: Optional[int] = None
 
 
 class AttestationHistory(BaseModel):

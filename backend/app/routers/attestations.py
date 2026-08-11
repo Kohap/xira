@@ -55,7 +55,7 @@ async def get_attestation(symbol: str):
 
     try:
         from app.services.publisher import publisher
-        publisher.update_attestation(
+        tx = publisher.update_attestation(
             token_address=match["token_address"],
             score=result.risk_score,
             confidence=result.confidence,
@@ -64,6 +64,11 @@ async def get_attestation(symbol: str):
             anomaly=result.anomaly,
             anomaly_reason=result.anomaly_reason,
         )
+        if tx:
+            result.chain_tx = tx["tx_hash"]
+            result.chain_explorer = tx["explorer_url"]
+            result.chain_block = tx.get("block")
+            result.chain_id = publisher.chain_id
     except Exception:
         pass
 

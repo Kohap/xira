@@ -1,0 +1,23 @@
+name: Publish XIRA Attestations
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish attestations for all 15 xStocks
+        run: |
+          for sym in NVDAx TSLAx AAPLx MSFTx GOOGLx AMZNx METAx SPYx QQQx AMDx INTCx NFLXx BAx JPMx XOMx; do
+            if curl -sf -m 120 "https://xira-gsb3.onrender.com/api/attestations/$sym" > /dev/null; then
+              echo "OK $sym"
+            else
+              echo "FAIL $sym"
+            fi
+          done
