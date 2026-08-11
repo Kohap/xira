@@ -121,6 +121,58 @@ def send_discord_webhook(webhook_url: str, assets: list[dict], summary: str) -> 
         return False
 
 
+def send_slack_webhook(webhook_url: str, assets: list[dict], summary: str) -> bool:
+    anomalies = [a for a in assets if a.get("anomaly")]
+    high_risk = [a for a in assets if a.get("risk_score", 0) >= 60 and not a.get("anomaly")]
+    if not anomalies and not high_risk:
+        return False
+
+    lines = []
+    if anomalies:
+        for a in anomalies:
+            lines.append(
+                f"{ALERT_EMOJI.get(a.get('risk_level', ''), ':warning:')} *{a['symbol']}* "
+                f"score {a.get('risk_score', '?')}/100 ({a.get('risk_level', '?')}) — "
+                f"{a.get('anomaly_reason') or a.get('explanation', '')}"
+            )
+    if high_risk and not anomalies:
+        for a in high_risk[:5]:
+            lines.append(
+                f"{ALERT_EMOJI.get(a.get('risk_level', ''), ':fire:')} *{a['symbol']}* "
+                f"score {a.get('risk_score', '?')}/100 — {a.get('explanation', '')[:120]}..."
+            )
+
+    if not lines:
+        return False
+
+    payload = {
+        "text": summary or "XIRA risk alert",
+        "blocks": [
+            {
+                "type": "header",
+                "text": {"type": "plain_text", "text": "XIRA Risk Monitor" + (" — " + str(len(anomalies)) + " anomalies" if anomalies else "")},
+            },
+            {"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(lines)}},
+            {
+                "type": "context",
+                "elements": [{"type": "mrkdwn", "text": f"API: <{API_URL}/|XIRA dashboard> · {len(assets)} assets tracked · {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"}],
+            },
+        ],
+    }
+
+    try:
+        req = urllib.request.Request(
+            webhook_url,
+            data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return 200 <= resp.status < 300
+    except Exception as e:
+        print(f"  [!] Slack webhook send failed: {e}", file=sys.stderr)
+        return False
+
+
 def send_generic_webhook(webhook_url: str, assets: list[dict], summary: str) -> bool:
     anomalies = [a for a in assets if a.get("anomaly")]
     payload = {
@@ -190,8 +242,8 @@ def send_webhook(webhook_url: str, assets: list[dict], summary: str) -> bool:
     url_lower = webhook_url.lower()
     if "discord" in url_lower and ("webhooks" in url_lower or "api/webhooks" in url_lower):
         return send_discord_webhook(webhook_url, assets, summary)
-    elif "slack" in url_lower and "hooks.slack" in url_lower:
-        return send_generic_webhook(webhook_url, assets, summary)
+    if "slack" in url_lower and "hooks.slack" in url_lower:
+        return send_slack_webhook(webhook_url, assets, summary)
     else:
         return send_generic_webhook(webhook_url, assets, summary)
 
@@ -246,10 +298,13 @@ def main():
     args = parser.parse_args()
 
     if args.test_webhook and args.webhook_url:
-        test_payload = {
-            "username": "XIRA Risk Monitor",
-            "content": "✅ XIRA Alert Service is connected and ready.",
-        }
+        if "hooks.slack" in args.webhook_url.lower():
+            test_payload = {"text": "✅ XIRA Alert Service is connected and ready."}
+        else:
+            test_payload = {
+                "username": "XIRA Risk Monitor",
+                "content": "✅ XIRA Alert Service is connected and ready.",
+            }
         req = urllib.request.Request(
             args.webhook_url,
             data=json.dumps(test_payload).encode(),
