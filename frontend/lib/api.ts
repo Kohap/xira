@@ -7,8 +7,13 @@ import type {
   MarketStats,
 } from "./types";
 
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "https://xira-gsb3.onrender.com";
+function normalizeBase(url: string): string {
+  return url.trim().replace(/\/+$/, "");
+}
+
+export const API_BASE = normalizeBase(
+  process.env.NEXT_PUBLIC_API_URL || "https://xira-gsb3.onrender.com"
+);
 
 async function fetchJSON<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store" });
