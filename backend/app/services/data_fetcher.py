@@ -142,52 +142,62 @@ def fetch_price_data(ticker: str) -> Optional[PriceData]:
             logger.debug(f"Cache hit for {ticker}")
             return cached_data
 
-    try:
-        logger.info(f"Fetching live data for {ticker}...")
-        stock = yf.Ticker(ticker)
+    for attempt in range(2):  # 2 attempts with retry
+        try:
+            logger.info(f"Fetching live data for {ticker} (attempt {attempt + 1})...")
+            stock = yf.Ticker(ticker)
+            
+            # Single history call with timeout
+            history = stock.history(period="1mo", timeout=15)
+
+            if history.empty:
+                logger.warning(f"No price history for {ticker}")
+                return None
+
+            data = PriceData()
+            data.daily_prices = history["Close"].tolist()
+            closes = data.daily_prices
+            data.price = round(closes[-1], 2) if closes else 0.0
+            data.source = "yahoo"
+            data.fetched_at = time.time()
+
+            if len(closes) >= 2:
+                data.change_24h = round(((closes[-1] - closes[-2]) / closes[-2]) * 100, 2)
+            if len(closes) >= 6:
+                data.change_7d = round(((closes[-1] - closes[-6]) / closes[-6]) * 100, 2)
+
+            data.volume = int(history["Volume"].iloc[-1]) if "Volume" in history.columns else 0
+            data.avg_volume_20d = (
+                int(history["Volume"].tail(20).mean())
+                if "Volume" in history.columns and len(history) >= 5
+                else data.volume
+            )
+
+            data.high_52w = data.price * 1.3
+            data.low_52w = data.price * 0.7
+            data.market_cap = 0.0
+            data.beta = 1.0
+            data.pe_ratio = 0.0
+
+            # Try to get additional info with shorter timeout (optional)
+            try:
+                info = stock.info
+                data.high_52w = info.get("fiftyTwoWeekHigh", data.high_52w)
+                data.low_52w = info.get("fiftyTwoWeekLow", data.low_52w)
+                data.market_cap = info.get("marketCap", 0.0) or 0.0
+                data.beta = info.get("beta", 1.0) or 1.0
+            except Exception as e:
+                logger.debug(f"Info fetch failed for {ticker}: {e}")
+
+            # Cache the successful result
+            _price_cache[ticker] = (data, time.time())
+            logger.info(f"Successfully fetched and cached {ticker}")
+            return data
+        except Exception as e:
+            logger.error(f"Error fetching {ticker} (attempt {attempt + 1}): {type(e).__name__}: {e}")
+            if attempt == 0:
+                time.sleep(1)  # Brief delay before retry
         
-        # Set timeout for the request
-        stock.history(period="1mo", timeout=10)
-        info = stock.info
-        history = stock.history(period="1mo")
-
-        if history.empty:
-            logger.warning(f"No price history for {ticker}")
-            return None
-
-        data = PriceData()
-        data.daily_prices = history["Close"].tolist()
-        closes = data.daily_prices
-        data.price = round(closes[-1], 2) if closes else 0.0
-        data.source = "yahoo"
-        data.fetched_at = time.time()
-
-        if len(closes) >= 2:
-            data.change_24h = round(((closes[-1] - closes[-2]) / closes[-2]) * 100, 2)
-        if len(closes) >= 6:
-            data.change_7d = round(((closes[-1] - closes[-6]) / closes[-6]) * 100, 2)
-
-        data.volume = info.get("volume", 0) or (
-            int(history["Volume"].iloc[-1]) if "Volume" in history.columns else 0
-        )
-        data.avg_volume_20d = info.get("averageVolume", 0) or (
-            int(history["Volume"].tail(20).mean())
-            if "Volume" in history.columns and len(history) >= 5
-            else data.volume
-        )
-
-        data.high_52w = info.get("fiftyTwoWeekHigh", data.price * 1.3)
-        data.low_52w = info.get("fiftyTwoWeekLow", data.price * 0.7)
-        data.market_cap = info.get("marketCap", 0.0) or 0.0
-        data.beta = info.get("beta", 1.0) or 1.0
-        data.pe_ratio = info.get("trailingPE", 0.0) or info.get("forwardPE", 0.0) or 0.0
-
-        # Cache the successful result
-        _price_cache[ticker] = (data, time.time())
-        logger.info(f"Successfully fetched and cached {ticker}")
-        return data
-    except Exception as e:
-        logger.error(f"Error fetching {ticker}: {type(e).__name__}: {e}")
         # Return stale cache if available
         if ticker in _price_cache:
             cached_data, _ = _price_cache[ticker]
@@ -244,12 +254,12 @@ class DataFetcher:
                 results[t] = generate_mock_price_data(t)
             return results, time.time()
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=15) as executor:
             futures = {executor.submit(fetch_price_data, t): t for t in tickers}
             for future in as_completed(futures):
                 ticker = futures[future]
                 try:
-                    data = future.result(timeout=20)
+                    data = future.result(timeout=25)
                     if data is None:
                         logger.warning(f"Yahoo returned None for {ticker}, using mock")
                         data = generate_mock_price_data(ticker)
