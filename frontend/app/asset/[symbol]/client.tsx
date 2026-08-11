@@ -243,21 +243,21 @@ export function AssetDetailClient() {
             <span className="text-neutral-300">{attestation.timestamp}</span>
           </div>
         </div>
-        {(attestation as Record<string, unknown>).chain_tx ? (
+        {attestation.chain_tx ? (
           <div className="mt-4 pt-3 border-t border-[var(--card-border)]">
             <span className="text-xs text-neutral-500">
               Latest on-chain tx:{" "}
             </span>
             <a
-              href={(attestation as Record<string, unknown>).chain_explorer as string}
+              href={attestation.chain_explorer}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-[var(--accent-glow)] hover:underline break-all font-mono"
             >
-              {(attestation as Record<string, unknown>).chain_tx as string}
+              {attestation.chain_tx}
             </a>
             <span className="text-xs text-neutral-600 ml-2">
-              block #{(attestation as Record<string, unknown>).chain_block as number}
+              block #{attestation.chain_block}
             </span>
           </div>
         ) : (
