@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
 from app.services.publisher import publisher
+from app.services.history_db import history_db
 from app.models import AllAssetsResponse, AttestationResponse, HealthResponse
 
 router = APIRouter(prefix="/api/assets", tags=["assets"])
@@ -13,6 +14,7 @@ HISTORY_STORE: dict[str, list[dict]] = {}
 
 
 def _store_asset_history(symbol: str, result: AttestationResponse):
+    # Store in memory (for quick access)
     if symbol not in HISTORY_STORE:
         HISTORY_STORE[symbol] = []
     entry = result.model_dump()
@@ -21,6 +23,9 @@ def _store_asset_history(symbol: str, result: AttestationResponse):
     HISTORY_STORE[symbol].append(entry)
     if len(HISTORY_STORE[symbol]) > 50:
         HISTORY_STORE[symbol] = HISTORY_STORE[symbol][-50:]
+    
+    # Also persist to SQLite database
+    history_db.store_score(symbol, entry)
 
 
 @router.get("/all", response_model=AllAssetsResponse)
@@ -95,3 +100,14 @@ async def health_check():
         tracked_assets=len(get_tracked_assets()),
         live_data=live,
     )
+
+
+@router.get("/history/stats")
+async def history_stats():
+    """Get database statistics."""
+    stats = history_db.get_stats()
+    return {
+        "status": "ok",
+        "database": "sqlite",
+        "stats": stats,
+    }
