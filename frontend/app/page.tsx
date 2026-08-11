@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import type { AllAssetsResponse } from "@/lib/types";
 import { ScoreCard } from "@/components/ScoreCard";
+import { RiskHeatmap } from "@/components/RiskHeatmap";
 
 function formatTimestamp(ts: number): string {
   return new Date(ts * 1000).toLocaleString();
@@ -222,7 +223,9 @@ export default function DashboardPage() {
         dataSource={data.data_source || "mock"}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <RiskHeatmap assets={data.assets} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
         {data.assets.map((asset) => (
           <ScoreCard
             key={asset.symbol}
