@@ -73,10 +73,10 @@ export default function LandingPage() {
 
       <section className="relative overflow-hidden">
         <div className="hero-glow absolute inset-0" aria-hidden="true" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28">
-          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-16 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 lg:py-28">
+          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-16 items-center">
             <div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] text-balance">
+              <h1 className="text-[2.6rem] leading-[1.05] sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
                 One risk number for every{" "}
                 <span className="text-[var(--accent-glow)]">xStock</span>.
               </h1>
@@ -119,7 +119,7 @@ export default function LandingPage() {
 
       <section
         id="how"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 scroll-mt-20"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
       >
         <Reveal>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
@@ -131,7 +131,7 @@ export default function LandingPage() {
           </p>
         </Reveal>
 
-        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
+        <div className="mt-10 sm:mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-9">
           {PIPELINE.map((step, i) => (
             <Reveal key={step.verb} delay={i * 90}>
               <div className="relative">
@@ -162,7 +162,7 @@ export default function LandingPage() {
 
       <section
         id="features"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 scroll-mt-20"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
       >
         <Reveal>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
@@ -173,7 +173,7 @@ export default function LandingPage() {
         <div className="mt-12">
           {CAPABILITIES.map((cap, i) => (
             <Reveal key={cap.title} delay={Math.min(i * 60, 240)}>
-              <div className="grid sm:grid-cols-[260px_1fr] gap-2 sm:gap-8 items-baseline py-5 border-t border-[var(--card-border)] last:border-b">
+              <div className="grid sm:grid-cols-[260px_1fr] gap-2 sm:gap-8 items-baseline py-4 sm:py-5 border-t border-[var(--card-border)] last:border-b">
                 <h3 className="font-semibold">{cap.title}</h3>
                 <p className="text-sm text-neutral-400 leading-relaxed max-w-xl">
                   {cap.copy}
@@ -186,7 +186,7 @@ export default function LandingPage() {
 
       <section
         id="chain"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 scroll-mt-20"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
       >
         <Reveal>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
@@ -208,7 +208,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24">
         <Reveal>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
             Give your agents a risk desk.
@@ -234,7 +234,7 @@ export default function LandingPage() {
       </section>
 
       <section className="border-t border-[var(--card-border)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 flex flex-col items-start gap-7 sm:flex-row sm:items-center sm:justify-between">
           <Reveal>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance max-w-xl">
               Start with the full board.

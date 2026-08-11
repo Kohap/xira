@@ -23,14 +23,14 @@ export function RiskHeatmap({ assets }: HeatmapProps) {
   return (
     <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-6">
       <h2 className="text-lg font-semibold mb-4">Risk Heatmap</h2>
-      <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
         {sorted.map((asset) => (
           <Link
             key={asset.symbol}
             href={`/asset/${asset.symbol}`}
             aria-label={`${asset.symbol}: risk ${asset.risk_score}, ${asset.risk_level}${asset.anomaly ? ", anomaly" : ""}`}
             className={`relative ${getColor(asset.risk_score, asset.anomaly)}
-              border-2 rounded-lg p-4 flex flex-col items-center justify-center
+              border-2 rounded-lg p-3 sm:p-4 flex flex-col items-center justify-center
               transition-[filter,opacity] hover:brightness-110 focus-visible:brightness-110 group`}
           >
             {asset.anomaly && (
@@ -51,12 +51,14 @@ export function RiskHeatmap({ assets }: HeatmapProps) {
 
             {/* Tooltip */}
             <span
-              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 border border-[var(--card-border)]"
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-[var(--card-border)] max-w-[85vw]"
               role="tooltip"
             >
-              <span className="font-semibold">{asset.symbol}</span> · risk{" "}
-              {asset.risk_score}/100 · confidence {asset.confidence}%
-              {asset.anomaly && <span className="text-red-300"> · anomaly</span>}
+              <span className="whitespace-nowrap">
+                <span className="font-semibold">{asset.symbol}</span> · risk{" "}
+                {asset.risk_score}/100 · confidence {asset.confidence}%
+                {asset.anomaly && <span className="text-red-300"> · anomaly</span>}
+              </span>
             </span>
           </Link>
         ))}

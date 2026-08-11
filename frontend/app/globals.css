@@ -86,6 +86,16 @@ input {
   transform: none;
 }
 
+/* Live score bars (height set statically; animation only refines it) */
+@keyframes bar-grow {
+  from { height: 0%; }
+  to { height: var(--bar-h); }
+}
+.score-bar {
+  height: var(--bar-h);
+  animation: bar-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 /* Live ticker marquee */
 @keyframes marquee {
   from { transform: translateX(0); }
@@ -145,7 +155,8 @@ input {
   .marquee-track,
   .live-dot,
   .animate-pulse-glow,
-  .animate-fade-in {
+  .animate-fade-in,
+  .score-bar {
     animation: none;
   }
 }
