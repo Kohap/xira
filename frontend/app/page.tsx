@@ -193,8 +193,9 @@ export default function LandingPage() {
             Open the oracle.
           </h2>
           <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
-            The contract is live on X Layer testnet. Watch an attestation land
-            in real time, then check it on the explorer.
+            The contract is live on X Layer testnet. The oracle re-scores all
+            15 markets every 30 minutes and signs each meaningful change to
+            the chain — open a transaction and check it against the model.
           </p>
         </Reveal>
 

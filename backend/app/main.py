@@ -1,5 +1,5 @@
 from __future__ import annotations
-import os, logging
+import asyncio, os, logging
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -8,9 +8,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import assets, attestations
+from app.services import scheduler as scheduler_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("xira")
+
+_scheduler_task: asyncio.Task | None = None
 
 
 def _build_endpoints() -> dict:
@@ -54,9 +57,15 @@ async def startup():
     assets = get_tracked_assets()
     logger.info(f"Tracking {len(assets)} assets: {[a['symbol'] for a in assets]}")
 
+    global _scheduler_task
+    _scheduler_task = asyncio.create_task(scheduler_service.scheduler_loop())
+
 
 @app.on_event("shutdown")
 async def shutdown():
+    global _scheduler_task
+    if _scheduler_task:
+        _scheduler_task.cancel()
     logger.info("XIRA backend shutting down.")
 
 

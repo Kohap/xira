@@ -344,6 +344,19 @@ export default function WhitepaperPage() {
             came from.
           </p>
           <p>
+            Publication follows a heartbeat plus deviation rule: every{" "}
+            <code className="font-mono text-neutral-300">XIRA_HEARTBEAT_MINUTES</code>{" "}
+            (default 30) the backend re-scores each tracked market and writes a
+            new on-chain attestation only if the score moved by at least{" "}
+            <code className="font-mono text-neutral-300">XIRA_DEVIATION_THRESHOLD</code>{" "}
+            points (default ±3) — no tx on a flat market. All 15 assets are
+            passed in one pass, and simulated (non-live) data is never
+            published on-chain, so every attestation transaction corresponds to
+            a real score. The first pass runs 60s after startup, so the oracle
+            self-publishes shortly after a cold start without waiting for
+            traffic.
+          </p>
+          <p>
             Failed or stale reads never manufacture risk: every factor returns
             the neutral 50 when its inputs are missing, keeping the composite
             near 50 during an outage instead of spiking.
