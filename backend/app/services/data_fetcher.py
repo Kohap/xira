@@ -293,5 +293,5 @@ class DataFetcher:
 
 
 data_fetcher = DataFetcher(
-    use_live=os.getenv("USE_LIVE_DATA", "false").lower() == "true",
+    use_live=os.getenv("USE_LIVE_DATA", "true").lower() == "true",
 )
