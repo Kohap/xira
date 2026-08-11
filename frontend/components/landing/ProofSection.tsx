@@ -49,7 +49,7 @@ export function ProofSection() {
             href={contractUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-[11px] text-neutral-500 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-[11px] text-neutral-400 hover:text-white transition-colors"
           >
             view on explorer
             <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -61,7 +61,7 @@ export function ProofSection() {
           <code className="font-mono text-xs text-neutral-300 truncate">{CONTRACT}</code>
           <CopyButton value={CONTRACT} label="contract address" />
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-neutral-500">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-neutral-400">
           <span>chain 1952 · X Layer testnet</span>
           <span className="inline-flex items-center gap-1.5">
             <span className="live-dot w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
@@ -82,15 +82,15 @@ export function ProofSection() {
             <div className="flex items-center gap-3 sm:col-span-2 border-b border-[var(--card-border)] pb-3">
               <dt className="sr-only">Symbol</dt>
               <dd className="font-mono text-base font-semibold text-white">{latest.symbol}</dd>
-              <dd className="text-[11px] text-neutral-500 font-mono">score {latest.risk_score}/100</dd>
-              <dd className="text-[11px] text-neutral-500 font-mono">conf {latest.confidence}%</dd>
+              <dd className="text-[11px] text-neutral-400 font-mono">score {latest.risk_score}/100</dd>
+              <dd className="text-[11px] text-neutral-400 font-mono">conf {latest.confidence}%</dd>
             </div>
-            <dt className="text-neutral-500 text-xs pt-0.5">evidence hash</dt>
+            <dt className="text-neutral-400 text-xs pt-0.5">evidence hash</dt>
             <dd className="font-mono text-xs text-neutral-300 break-all">
               <span aria-hidden="true">{latest.evidence_hash.slice(0, 18)}…{latest.evidence_hash.slice(-6)}</span>
               <CopyButton value={latest.evidence_hash} label="evidence hash" />
             </dd>
-            <dt className="text-neutral-500 text-xs pt-0.5">chain tx</dt>
+            <dt className="text-neutral-400 text-xs pt-0.5">chain tx</dt>
             <dd className="font-mono text-xs text-neutral-300 break-all">
               {latest.chain_tx ? (
                 <>
@@ -105,14 +105,14 @@ export function ProofSection() {
                   <CopyButton value={latest.chain_tx} label="chain transaction" />
                 </>
               ) : (
-                <span className="text-neutral-600">not yet mined</span>
+                <span className="text-neutral-400">not yet mined</span>
               )}
             </dd>
-            <dt className="text-neutral-500 text-xs pt-0.5">timestamp</dt>
+            <dt className="text-neutral-400 text-xs pt-0.5">timestamp</dt>
             <dd className="font-mono text-xs text-neutral-300">
               {new Date(latest.timestamp * 1000).toLocaleString()}
             </dd>
-            <dt className="text-neutral-500 text-xs pt-0.5">factors</dt>
+            <dt className="text-neutral-400 text-xs pt-0.5">factors</dt>
             <dd className="text-xs text-neutral-300 flex flex-wrap items-center gap-x-3 gap-y-1">
               {latest.factors.map((f) => (
                 <span key={f.name} className="font-mono">

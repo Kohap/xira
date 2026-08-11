@@ -184,7 +184,7 @@ export default function LandingPage() {
                 <p className="text-sm text-neutral-400 leading-relaxed max-w-xl">
                   {cap.copy}
                 </p>
-                <code className="font-mono text-[11px] text-neutral-600 whitespace-nowrap">
+                <code className="font-mono text-[11px] text-neutral-400 whitespace-nowrap">
                   {cap.mono}
                 </code>
               </div>

@@ -46,7 +46,7 @@ export default function RootLayout({
           {children}
         </main>
         <footer className="border-t border-[var(--card-border)] py-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-600">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400">
             <span>
               XIRA — X-Layer Intelligence &amp; Risk Analytics
             </span>
