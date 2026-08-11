@@ -99,43 +99,54 @@ export default function LandingPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 lg:py-28">
           <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-16 items-center">
             <div>
-              <h1 className="text-[2.6rem] leading-[1.05] sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
-                One risk number for every{" "}
-                <span className="text-[var(--accent-glow)]">xStock</span>.
-              </h1>
-              <p className="mt-6 text-lg text-neutral-400 max-w-xl leading-relaxed">
-                XIRA weighs volatility, momentum, news, volume, and beta into a
-                single 0–100 score — then signs it onto X Layer so the number
-                you see is the transaction anyone can verify.
-              </p>
+              <Reveal>
+                <h1 className="text-[2.6rem] leading-[1.05] sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
+                  One risk number for every{" "}
+                  <span className="font-serif italic text-[var(--accent-glow)] tracking-normal">
+                    xStock
+                  </span>
+                  .
+                </h1>
+              </Reveal>
+              <Reveal delay={90}>
+                <p className="mt-6 text-lg text-neutral-400 max-w-xl leading-relaxed">
+                  XIRA weighs volatility, momentum, news, volume, and beta into a
+                  single 0–100 score — then signs it onto X Layer so the number
+                  you see is the transaction anyone can verify.
+                </p>
+              </Reveal>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                <a
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white font-medium transition-colors active:scale-[0.98]"
-                >
-                  Open dashboard
-                </a>
-                <a
-                  href="#chain"
-                  className="inline-flex items-center justify-center px-6 h-12 rounded-xl border border-[var(--card-border)] text-neutral-300 hover:text-white hover:border-neutral-600 transition-colors active:scale-[0.98]"
-                >
-                  Verify on-chain
-                </a>
-              </div>
+              <Reveal delay={180}>
+                <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                  <a
+                    href="/dashboard"
+                    className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-glow)] hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(108,92,231,0.35)] text-white font-medium transition-[background-color,transform,box-shadow] active:scale-[0.98]"
+                  >
+                    Open dashboard
+                  </a>
+                  <a
+                    href="#chain"
+                    className="inline-flex items-center justify-center px-6 h-12 rounded-xl border border-[var(--card-border)] text-neutral-300 hover:text-white hover:border-neutral-600 transition-colors active:scale-[0.98]"
+                  >
+                    Verify on-chain
+                  </a>
+                </div>
+              </Reveal>
 
-              <div className="mt-8 inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
-                <span className="text-[11px] text-neutral-500 mr-1">oracle</span>
-                <code className="font-mono text-[11px] text-neutral-300">
-                  {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
-                </code>
-                <CopyButton value={CONTRACT} label="contract address" />
-              </div>
+              <Reveal delay={260}>
+                <div className="mt-8 inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
+                  <span className="text-[11px] text-neutral-500 mr-1">oracle</span>
+                  <code className="font-mono text-[11px] text-neutral-300">
+                    {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
+                  </code>
+                  <CopyButton value={CONTRACT} label="contract address" />
+                </div>
+              </Reveal>
             </div>
 
-            <div>
+            <Reveal delay={150}>
               <LiveBars />
-            </div>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -220,8 +231,13 @@ export default function LandingPage() {
         <div className="mt-12">
           {CAPABILITIES.map((cap, i) => (
             <Reveal key={cap.title} delay={Math.min(i * 60, 240)}>
-              <div className="grid sm:grid-cols-[260px_1fr] gap-2 sm:gap-8 items-baseline py-4 sm:py-5 border-t border-[var(--card-border)] last:border-b">
-                <h3 className="font-semibold">{cap.title}</h3>
+              <div className="grid sm:grid-cols-[260px_1fr] gap-1 sm:gap-8 items-baseline py-4 sm:py-5 border-t border-[var(--card-border)] last:border-b group">
+                <h3 className="font-semibold flex items-baseline gap-3 transition-colors group-hover:text-[var(--accent-glow)]">
+                  <span className="font-mono text-xs text-neutral-600 tabular-nums w-5 shrink-0 group-hover:text-neutral-400 transition-colors">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  {cap.title}
+                </h3>
                 <p className="text-sm text-neutral-400 leading-relaxed max-w-xl">
                   {cap.copy}
                 </p>
