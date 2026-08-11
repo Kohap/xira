@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "API Docs — XIRA",
   description:
-    "XIRA API reference: attestation endpoints, payload shapes, the on-chain contract, and MCP tooling — as implemented in v1.0.0-mvp.",
+    "XIRA API reference: attestation endpoints, payload shapes, the on-chain contract, and MCP tooling — as implemented in v1.0.0.",
 };
 
 const API_BASE = "https://xira-gsb3.onrender.com";
@@ -151,7 +151,7 @@ const SAMPLE_ATTESTATION = `{
   "anomaly_reason": "",
   "evidence_hash": "0x4d8a…",
   "timestamp": 1786471527,
-  "model_version": "v1.0.0-mvp",
+  "model_version": "v1.0.0",
   "data_source": "yahoo",
   "data_freshness_ms": 4120,
   "chain_tx": "0xabf3…",
@@ -175,7 +175,7 @@ export default function DocsPage() {
           </code>
           , the model is{" "}
           <code className="font-mono text-[12px] text-neutral-300">
-            v1.0.0-mvp
+            v1.0.0
           </code>
           , and every endpoint is also browsable via interactive OpenAPI docs
           at <code className="font-mono text-[12px] text-neutral-300">/docs</code> of the
@@ -322,7 +322,7 @@ curl ${API_BASE}/api/assets/health`}
       <section className="mt-14 border-t border-[var(--card-border)] pt-8">
         <h2 className="text-sm font-semibold">Versioning and compatibility</h2>
         <p className="mt-3 text-xs text-neutral-500 leading-relaxed">
-          Endpoints are additive in this MVP; breaking changes will bump the
+          Endpoints are additive; breaking changes will bump the
           model version and the docs page together. The contract ABI is fixed
           at the deployed address and is the compatibility boundary — a
           future verify() addition would be an additive function.

@@ -134,7 +134,7 @@ npm run dev
 
 ---
 
-## Tracked Assets (MVP)
+## Tracked Assets
 
 | Symbol  | Underlying | Sector             |
 |---------|-----------|-------------------|
@@ -205,7 +205,7 @@ The `/api/assets/all` endpoint returns JSON consumable by AI agents and DeFi pro
 ```json
 {
   "generated_at": 1723315200,
-  "model_version": "v1.0.0-mvp",
+  "model_version": "v1.0.0",
   "summary": "Market outlook: Moderate risk. Average score 47/100 across 15 assets. 2 anomaly alerts active.",
   "assets": [
     {
@@ -248,7 +248,7 @@ The `/api/assets/all` endpoint returns JSON consumable by AI agents and DeFi pro
       "anomaly_reason": "",
       "evidence_hash": "a1b2c3d4e5f6...",
       "timestamp": 1723315200,
-      "model_version": "v1.0.0-mvp"
+      "model_version": "v1.0.0"
     }
   ]
 }
@@ -287,7 +287,7 @@ Each factor scores 0-100. The weighted average produces the overall **Risk Score
 | `PRIVATE_KEY`         | (empty)                          | Deployer/updater key |
 | `AI_MODE`             | `heuristic`                      | `heuristic` or `openai` |
 | `OPENAI_API_KEY`      | (empty)                          | For LLM explanations |
-| `MODEL_VERSION`       | `v1.0.0-mvp`                     | Model version tag |
+| `MODEL_VERSION`       | `v1.0.0`                     | Model version tag |
 | `PORT`                | `8000`                           | API port |
 
 ---

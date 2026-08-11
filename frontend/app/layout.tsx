@@ -70,7 +70,7 @@ export default function RootLayout({
               ))}
             </nav>
             <p className="font-mono text-neutral-600">
-              chain 1952 · contract 0x6428…32AE · testnet · v1.0.0-mvp
+              chain 1952 · contract 0x6428…32AE · testnet · v1.0.0
             </p>
           </div>
         </footer>

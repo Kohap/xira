@@ -30,7 +30,7 @@ def _store_asset_history(symbol: str, result: AttestationResponse):
 
 @router.get("/all", response_model=AllAssetsResponse)
 async def get_all_assets(fresh: bool = False):
-    model_version = os.getenv("MODEL_VERSION", "v1.0.0-mvp")
+    model_version = os.getenv("MODEL_VERSION", "v1.0.0")
     assets = get_tracked_assets()
     tickers = [a["underlying"] for a in assets]
 
@@ -94,7 +94,7 @@ async def health_check():
     live = os.getenv("USE_LIVE_DATA", "true").lower() == "true"
     return HealthResponse(
         status="ok",
-        version=os.getenv("MODEL_VERSION", "v1.0.0-mvp"),
+        version=os.getenv("MODEL_VERSION", "v1.0.0"),
         chain="xlayer-testnet",
         contract=contract_addr,
         tracked_assets=len(get_tracked_assets()),

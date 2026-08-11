@@ -47,7 +47,7 @@ async def _run_pass() -> None:
                 else sentiment if isinstance(sentiment, (int, float)) else 0.0
             )
 
-            model_version = os.getenv("MODEL_VERSION", "v1.0.0-mvp")
+            model_version = os.getenv("MODEL_VERSION", "v1.0.0")
             result = ai_engine.analyze(
                 symbol=symbol,
                 price_data=price_data,

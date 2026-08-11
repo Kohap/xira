@@ -35,7 +35,7 @@ async def get_attestation(symbol: str):
     if not match:
         raise HTTPException(status_code=404, detail=f"Asset '{symbol}' not tracked.")
 
-    model_version = os.getenv("MODEL_VERSION", "v1.0.0-mvp")
+    model_version = os.getenv("MODEL_VERSION", "v1.0.0")
 
     prices, _ = data_fetcher.fetch_all_prices([match["underlying"]])
     price_data = prices.get(match["underlying"])

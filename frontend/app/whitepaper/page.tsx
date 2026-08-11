@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Whitepaper — XIRA",
   description:
-    "XIRA v1.0.0-mvp: five-factor risk scoring for tokenized equities, attested on X Layer. Model definition, formulas, and validation of the logic as implemented.",
+    "XIRA v1.0.0: five-factor risk scoring for tokenized equities, attested on X Layer. Model definition, formulas, and validation of the logic as implemented.",
 };
 
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
@@ -109,7 +109,7 @@ const VALIDATION = [
 ];
 
 const KNOWN_LIMITS = [
-  "The MVP is heuristic-only: the OpenAI path exists in the engine signature but analyze() always runs the deterministic factor model. Scores are fully reproducible given the same inputs.",
+  "The current model is heuristic-only: the OpenAI path exists in the engine signature but analyze() always runs the deterministic factor model. Scores are fully reproducible given the same inputs.",
   "The evidence hash does not include timestamp, model version, or the anomaly flag. In v1 the on-chain block timestamp is the source of truth for time; hashing the full payload (modelVersion included) is planned so a later model revision is provable.",
   "Sentiment is an English keyword classifier and a price-proxy fallback — it measures headline tone, not reported fundamentals or news quality.",
   "The contract stores one latest attestation per asset. There is no per-asset on-chain history and no batch root, so cross-asset proofs use getScoreBatch (reads) rather than a merkle commitment.",
@@ -152,7 +152,7 @@ export default function WhitepaperPage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       <header>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-          XIRA Whitepaper — v1.0.0-mvp
+          XIRA Whitepaper — v1.0.0
         </h1>
         <p className="mt-4 text-neutral-400 leading-relaxed">
           X-Layer Intelligence &amp; Risk Analytics produces a single, auditable
@@ -223,6 +223,15 @@ export default function WhitepaperPage() {
             gap — turning price-tracked tokens into assets a vault or agent can
             assess and use with a number it can verify.
           </p>
+          <p>
+            XIRA is also deliberately single-chain. Cross-chain protocols such
+            as Chainlink CCIP solve the <em>movement</em> problem — how assets
+            and data travel between networks. XIRA solves the{" "}
+            <em>intelligence</em> problem where they arrive: continuous,
+            explainable risk context for the assets trading on X Layer. The two
+            stack: a tokenized equity can reach X Layer over CCIP, and XIRA
+            keeps publishing risk intelligence about it once it is there.
+          </p>
         </div>
       </section>
 
@@ -252,6 +261,17 @@ export default function WhitepaperPage() {
           factor scores. Every factor measures a distinct failure mode for a
           tokenized position; a high factor score always means <em>more</em>{" "}
           risk.
+        </p>
+        <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+          The five factors map onto four risk dimensions identified in RWA
+          research: momentum and volatility together cover fast market
+          movement (30% combined), volume anomaly and liquidity proxy cover
+          the liquidity and market-quality dimension (35% combined),
+          sentiment covers information flow (20%), and holder concentration —
+          an on-chain HHI over balances — is the fourth dimension, planned as
+          the next factor once the X Layer indexer is wired in (see roadmap).
+          Weights are chosen so the most immediately observable risks
+          dominate, while noisier signals stay bounded.
         </p>
 
         <div className="mt-6 overflow-x-auto">
