@@ -317,7 +317,14 @@ def main():
     if args.once:
         data = api_get("/api/assets/all")
         if data:
-            print_console_alert(data.get("assets", []), data.get("summary", ""))
+            assets = data.get("assets", [])
+            summary = data.get("summary", "")
+            if args.webhook_url:
+                if send_webhook(args.webhook_url, assets, summary):
+                    print(f"  [webhook sent] {datetime.now().strftime('%H:%M:%S')}")
+                else:
+                    print("  [no alert conditions — webhook skipped]")
+            print_console_alert(assets, summary)
         return
 
     run_loop(webhook_url=args.webhook_url, interval=args.interval)
