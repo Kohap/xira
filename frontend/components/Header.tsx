@@ -13,6 +13,8 @@ export function Header() {
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard" },
+    { label: "Whitepaper", href: "/whitepaper" },
+    { label: "Docs", href: "/docs" },
     ...(onLanding
       ? [
           { label: "How it works", href: "/#how" },
@@ -38,7 +40,7 @@ export function Header() {
 
         <nav className="flex items-center gap-2" aria-label="Primary">
           <div className="hidden md:flex items-center gap-1 text-sm text-neutral-400">
-            {navItems.map((item) => (
+{navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -47,9 +49,6 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            <span className="ml-3 text-xs border border-[var(--card-border)] rounded-full px-3 py-1 text-neutral-500 whitespace-nowrap">
-              MVP v1.0 · testnet
-            </span>
           </div>
 
           <Link

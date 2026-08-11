@@ -37,32 +37,26 @@ const CAPABILITIES = [
   {
     title: "Risk heatmap",
     copy: "The whole market at a glance — every asset color-coded and sorted by score, with confidence and anomaly flags on hover.",
-    mono: "dashboard",
   },
   {
     title: "Factor breakdown",
     copy: "Why a number is what it is: per-factor scores, weights, and a plain-language explanation behind every attestation.",
-    mono: "asset page",
   },
   {
     title: "Anomaly alerting",
     copy: "Scores beyond what the factor model expects get flagged on the board, with the reason carried in the attestation itself.",
-    mono: "alerts",
   },
   {
     title: "Agent-ready",
     copy: "Talk to risk from your own tooling: MCP tools for every asset, all assets at once, and full attestation history.",
-    mono: "MCP tools",
   },
   {
     title: "Proof trail",
     copy: "Every score keeps its history — past attestations, score deltas, and the chain transaction hash of each one.",
-    mono: "history",
   },
   {
     title: "Batch reads",
     copy: "Contracts and agents can pull many symbols in a single on-chain call instead of looping one by one.",
-    mono: "getScoreBatch",
   },
 ];
 
@@ -179,14 +173,11 @@ export default function LandingPage() {
         <div className="mt-12">
           {CAPABILITIES.map((cap, i) => (
             <Reveal key={cap.title} delay={Math.min(i * 60, 240)}>
-              <div className="grid sm:grid-cols-[260px_1fr_auto] gap-2 sm:gap-8 items-baseline py-5 border-t border-[var(--card-border)] last:border-b">
+              <div className="grid sm:grid-cols-[260px_1fr] gap-2 sm:gap-8 items-baseline py-5 border-t border-[var(--card-border)] last:border-b">
                 <h3 className="font-semibold">{cap.title}</h3>
                 <p className="text-sm text-neutral-400 leading-relaxed max-w-xl">
                   {cap.copy}
                 </p>
-                <code className="font-mono text-[11px] text-neutral-400 whitespace-nowrap">
-                  {cap.mono}
-                </code>
               </div>
             </Reveal>
           ))}

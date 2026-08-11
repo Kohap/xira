@@ -1,17 +1,25 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import type { AllAssetsResponse } from "@/lib/types";
 import { ScoreCard } from "@/components/ScoreCard";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
 
-function formatTimestamp(ts: number): string {
-  return new Date(ts * 1000).toLocaleString();
+const POLL_SECONDS = 60;
+const MAX_COLD_START_RETRIES = 5;
+const RETRY_DELAY_MS = 8000;
+
+function formatAge(now: number, generatedAt: number): string {
+  const s = Math.max(0, Math.round(now - generatedAt));
+  if (s < 90) return `${s}s ago`;
+  return `${Math.round(s / 60)}m ago`;
 }
 
 function SummaryBar({
   summary,
   generatedAt,
+  now,
   modelVersion,
   anomalyCount,
   totalAssets,
@@ -20,6 +28,7 @@ function SummaryBar({
 }: {
   summary: string;
   generatedAt: number;
+  now: number;
   modelVersion: string;
   anomalyCount: number;
   totalAssets: number;
@@ -49,11 +58,8 @@ function SummaryBar({
           <p className="text-sm text-neutral-400 mt-1">{summary}</p>
         </div>
         <div className="flex items-center gap-4 text-xs text-neutral-500 flex-wrap">
-          <span>
-            Updated{" "}
-            <span className="text-neutral-300 tabular-nums">
-              {formatTimestamp(generatedAt)}
-            </span>
+          <span title={new Date(generatedAt * 1000).toLocaleString()}>
+            Updated <span className="text-neutral-300 tabular-nums">{formatAge(now, generatedAt)}</span>
           </span>
           <span>
             Next attestation in{" "}
@@ -69,6 +75,41 @@ function SummaryBar({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function AlertsStrip({ assets }: { assets: AllAssetsResponse["assets"] }) {
+  const alerts = assets.filter((a) => a.anomaly);
+  if (alerts.length === 0) return null;
+
+  return (
+    <div className="mb-6 rounded-xl border border-red-800/50 bg-red-950/20 p-4" role="status">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="live-dot w-2 h-2 rounded-full bg-red-400" aria-hidden="true" />
+        <h3 className="text-sm font-semibold text-red-300">Anomaly alerts</h3>
+        <span className="text-[11px] text-red-400/70 font-mono">factor consensus broken</span>
+      </div>
+      <ul className="flex flex-col gap-2">
+        {alerts.map((a) => (
+          <li key={a.symbol}>
+            <Link
+              href={`/asset/${a.symbol}`}
+              className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 rounded-lg px-3 py-2 bg-black/30 border border-[var(--card-border)] hover:border-red-800/60 transition-colors group"
+            >
+              <span className="font-mono text-xs text-red-300 whitespace-nowrap">
+                {a.symbol}
+              </span>
+              <span className="text-xs text-neutral-400 leading-relaxed">
+                {a.anomaly_reason || "Anomaly flagged by factor model."}
+              </span>
+              <span className="mt-auto sm:mt-0 sm:ml-auto font-mono text-[11px] text-neutral-600 tabular-nums whitespace-nowrap group-hover:text-neutral-400 transition-colors">
+                score {a.risk_score}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -95,12 +136,22 @@ function SkeletonCard() {
 export default function DashboardPage() {
   const [data, setData] = useState<AllAssetsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [coldStart, setColdStart] = useState(false);
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(POLL_SECONDS);
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retriesRef = useRef(0);
+  const dataRef = useRef<AllAssetsResponse | null>(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  const scheduleRetry = useCallback((fn: () => void) => {
+    if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    retryTimerRef.current = setTimeout(fn, RETRY_DELAY_MS);
+  }, []);
 
   const fetchData = useCallback(
     async (showLoading = true) => {
@@ -113,19 +164,32 @@ export default function DashboardPage() {
         }
         const json: AllAssetsResponse = await res.json();
         setData(json);
+        dataRef.current = json;
         setColdStart(false);
-        setCountdown(60);
+        setRefreshError(false);
+        retriesRef.current = 0;
+        setCountdown(POLL_SECONDS);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Unknown error";
         if (msg.includes("fetch") || msg.includes("NetworkError")) {
           setColdStart(true);
+          if (!dataRef.current && retriesRef.current < MAX_COLD_START_RETRIES) {
+            retriesRef.current += 1;
+            scheduleRetry(() => fetchData(false));
+          }
+        } else {
+          setColdStart(false);
         }
-        setError(msg);
+        if (dataRef.current) {
+          setRefreshError(true);
+        } else {
+          setError(msg);
+        }
       } finally {
         setLoading(false);
       }
     },
-    [apiBase]
+    [apiBase, scheduleRetry]
   );
 
   useEffect(() => {
@@ -134,10 +198,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
+      setNow(Math.floor(Date.now() / 1000));
       setCountdown((prev) => {
         if (prev <= 1) {
           fetchData(false);
-          return 60;
+          return POLL_SECONDS;
         }
         return prev - 1;
       });
@@ -146,6 +211,12 @@ export default function DashboardPage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [fetchData]);
+
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
+  }, []);
 
   if (loading && !data) {
     return (
@@ -162,10 +233,17 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        <p className="text-center text-neutral-500 text-sm mb-6">
-          {coldStart
-            ? "Waking up backend (Render free tier cold start, ~30s)..."
-            : "Loading risk data for 15 xStocks..."}
+        <p className="text-center text-sm mb-6" role="status">
+          {coldStart ? (
+            <span className="text-neutral-400">
+              Waking up the backend (free-tier cold start, ~30s)… retrying{" "}
+              <span className="text-neutral-300 tabular-nums">
+                {retriesRef.current}/{MAX_COLD_START_RETRIES}
+              </span>
+            </span>
+          ) : (
+            <span className="text-neutral-500">Loading risk data for 15 xStocks…</span>
+          )}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 15 }).map((_, i) => (
@@ -178,8 +256,8 @@ export default function DashboardPage() {
 
   if (error && !data) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-10 text-center">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-10 text-center">
           <svg
             viewBox="0 0 24 24"
             className="w-10 h-10 mx-auto mb-4 text-red-400/70"
@@ -194,30 +272,34 @@ export default function DashboardPage() {
             <path d="M12 17h.01" />
             <path d="M10.3 3.8L2.6 17a2 2 0 001.7 3h15.4a2 2 0 001.7-3L13.7 3.8a2 2 0 00-3.4 0z" />
           </svg>
-          <p className="text-neutral-400 text-lg mb-2">
-            Unable to connect to the XIRA backend.
-          </p>
-          <p className="text-neutral-500 text-xs mb-4">
-            API: <code className="text-[var(--accent-glow)]">{apiBase}</code>
+          <p className="text-lg mb-1">The risk board is unreachable right now.</p>
+          <p className="text-sm text-neutral-500 mb-6 max-w-md mx-auto leading-relaxed">
+            {coldStart
+              ? "The backend is on a free-tier host and may take 30–60s to wake from sleep."
+              : "The API did not answer. It should recover on its own; if it does not, the service has changed or is down."}
           </p>
           {error && (
             <p className="text-red-400/80 text-xs mb-6 font-mono bg-red-900/10 rounded p-2 inline-block break-all">
               {error}
             </p>
           )}
-          <div className="space-y-3">
-            <p className="text-neutral-600 text-xs">
-              {coldStart
-                ? "The backend is on Render free tier and may take 30-60s to wake from sleep."
-                : "Make sure the API server is running."}
-            </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => fetchData(true)}
-              className="px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white rounded-lg text-sm transition-colors active:scale-[0.98]"
+              className="inline-flex items-center justify-center px-5 h-11 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors active:scale-[0.98]"
             >
-              Retry
+              Retry now
             </button>
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center px-5 h-11 rounded-lg border border-[var(--card-border)] text-sm text-neutral-300 hover:text-white hover:border-neutral-600 transition-colors active:scale-[0.98]"
+            >
+              Back to overview
+            </Link>
           </div>
+          <p className="mt-6 text-xs text-neutral-600">
+            Upstream API: <code className="font-mono text-neutral-400">{apiBase}</code>
+          </p>
         </div>
       </div>
     );
@@ -229,15 +311,35 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {refreshError && (
+        <div
+          className="mb-6 flex flex-col sm:flex-row sm:items-center gap-2 justify-between rounded-xl border border-yellow-800/50 bg-yellow-950/20 px-4 py-3"
+          role="status"
+        >
+          <p className="text-xs text-yellow-400/90">
+            Last refresh failed — showing the most recent attestations. Auto-retry continues.
+          </p>
+          <button
+            onClick={() => fetchData(false)}
+            className="text-xs text-yellow-300 underline underline-offset-4 hover:text-yellow-200 transition-colors"
+          >
+            Refresh now
+          </button>
+        </div>
+      )}
+
       <SummaryBar
         summary={data.summary}
         generatedAt={data.generated_at}
+        now={now}
         modelVersion={data.model_version}
         anomalyCount={anomalyCount}
         totalAssets={data.assets.length}
         nextRefresh={countdown}
         dataSource={data.data_source || "mock"}
       />
+
+      <AlertsStrip assets={data.assets} />
 
       <RiskHeatmap assets={data.assets} />
 
@@ -265,10 +367,10 @@ export default function DashboardPage() {
             {loading ? "Refreshing..." : "Refresh Now"}
           </button>
           <span className="text-xs text-neutral-500">
-            Auto-refresh every 60s
+            Auto-refresh every {POLL_SECONDS}s
           </span>
         </div>
-        <span className="text-xs text-neutral-600">
+        <span className="text-xs text-neutral-500">
           XIRA v{data.model_version}
         </span>
       </div>
