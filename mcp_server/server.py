@@ -62,7 +62,7 @@ MCP_TOOLS = [
             "Get detailed risk attestation for a single xStock. Returns risk score "
             "(0-100), confidence, 5 risk factor scores (momentum, volatility, "
             "sentiment, volume anomaly, liquidity), explanation, anomaly status, "
-            "and on-chain evidence hash."
+            "on-chain evidence hash, and the verification tx hash / explorer link."
         ),
         "inputSchema": {
             "type": "object",
@@ -195,6 +195,13 @@ def handle_get_asset_risk(request_id: Any, symbol: str) -> None:
         "explanation": data.get("explanation", ""),
         "factors": data.get("factors", []),
         "data_source": data.get("data_source", "unknown"),
+        "onchain": {
+            "evidence_hash": data.get("evidence_hash", ""),
+            "chain_tx": data.get("chain_tx"),
+            "chain_explorer": data.get("chain_explorer"),
+            "chain_block": data.get("chain_block"),
+            "chain_id": data.get("chain_id"),
+        },
         "timestamp": data.get("timestamp", 0),
     })
 
