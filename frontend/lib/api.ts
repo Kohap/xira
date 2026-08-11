@@ -1,6 +1,7 @@
 import type { AllAssetsResponse, Attestation, AttestationHistory } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://xira-gsb3.onrender.com";
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "https://xira-gsb3.onrender.com";
 
 async function fetchJSON<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store" });

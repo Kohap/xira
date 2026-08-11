@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import type { AllAssetsResponse } from "@/lib/types";
+import { API_BASE } from "@/lib/api";
 import { ScoreCard } from "@/components/ScoreCard";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
 
@@ -146,7 +147,7 @@ export default function DashboardPage() {
   const retriesRef = useRef(0);
   const dataRef = useRef<AllAssetsResponse | null>(null);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiBase = API_BASE;
 
   const scheduleRetry = useCallback((fn: () => void) => {
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
