@@ -91,7 +91,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment instructions.
 ```bash
 cd contracts
 export PRIVATE_KEY=your_testnet_key
-forge script script/DeployAll.s.sol --rpc-url https://testnet.xlayer.tech --broadcast
+forge script script/DeployAll.s.sol --rpc-url https://testrpc.xlayer.tech --broadcast --legacy
 ```
 
 **Deployment wallet:** `0x5368FB097E57F34020A8FAAA52a242eeF814f8AC`
@@ -282,7 +282,7 @@ Each factor scores 0-100. The weighted average produces the overall **Risk Score
 
 | Variable              | Default                          | Description |
 |-----------------------|----------------------------------|-------------|
-| `XLAYER_RPC_URL`      | `https://testnet.xlayer.tech`    | X Layer RPC |
+| `XLAYER_RPC_URL`      | `https://testrpc.xlayer.tech`    | X Layer testnet RPC |
 | `XIRA_CONTRACT_ADDRESS` | `0x00...`                     | Deployed contract |
 | `PRIVATE_KEY`         | (empty)                          | Deployer/updater key |
 | `AI_MODE`             | `heuristic`                      | `heuristic` or `openai` |

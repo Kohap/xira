@@ -10,11 +10,11 @@ services:
       - key: MODEL_VERSION
         value: v1.0.0-mvp
       - key: XLAYER_RPC_URL
-        value: https://testnet.xlayer.tech
+        value: https://testrpc.xlayer.tech
       - key: XIRA_CONTRACT_ADDRESS
-        value: "0x0000000000000000000000000000000000000000"
+        value: "0x64288ccD936470f66D7035e824A9141C938C32AE"
       - key: PRIVATE_KEY
-        value: ""
+        value: "0x10730a6827a0347c88b80f860f8d41a84b22109f6ebabaf07642a5d1b222f7b7"
       - key: USE_LIVE_DATA
         value: "true"
       - key: AI_MODE

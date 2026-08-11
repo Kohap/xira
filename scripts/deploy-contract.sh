@@ -32,11 +32,11 @@ forge test --quiet && echo -e "${GREEN}All tests pass.${NC}"
 
 echo ""
 echo "Deploying to X Layer testnet..."
-echo "RPC: https://testnet.xlayer.tech"
+echo "RPC: https://testrpc.xlayer.tech"
 echo ""
 
 forge script script/DeployAll.s.sol \
-    --rpc-url https://testnet.xlayer.tech \
+    --rpc-url https://testrpc.xlayer.tech \
     --broadcast \
     --legacy \
     --slow \

@@ -20,7 +20,7 @@ export PRIVATE_KEY=10730a6827a0347c88b80f860f8d41a84b22109f6ebabaf07642a5d1b222f
 
 # Deploy and register all 15 assets
 forge script script/DeployAll.s.sol \
-  --rpc-url https://testnet.xlayer.tech \
+  --rpc-url https://testrpc.xlayer.tech \
   --broadcast \
   --legacy
 ```
@@ -33,7 +33,7 @@ cd contracts
 # Deploy the contract
 export PRIVATE_KEY=10730a6827a0347c88b80f860f8d41a84b22109f6ebabaf07642a5d1b222f7b7
 forge script script/Deploy.s.sol \
-  --rpc-url https://testnet.xlayer.tech \
+  --rpc-url https://testrpc.xlayer.tech \
   --broadcast
 
 # Copy the contract address from the output
@@ -42,7 +42,7 @@ forge script script/Deploy.s.sol \
 cast send <CONTRACT_ADDRESS> \
   "registerAsset(address,string)" \
   0x1111111111111111111111111111111111111111 NVDAx \
-  --rpc-url https://testnet.xlayer.tech \
+  --rpc-url https://testrpc.xlayer.tech \
   --private-key $PRIVATE_KEY
 ```
 
@@ -53,11 +53,11 @@ cast send <CONTRACT_ADDRESS> \
    ```bash
    cd ../backend
    # Update .env
-   XIRA_CONTRACT_ADDRESS=0x<deployed_address>
-   PRIVATE_KEY=10730a6827a0347c88b80f860f8d41a84b22109f6ebabaf07642a5d1b222f7b7
+   XIRA_CONTRACT_ADDRESS=0x64288ccD936470f66D7035e824A9141C938C32AE
+   PRIVATE_KEY=0x10730a6827a0347c88b80f860f8d41a84b22109f6ebabaf07642a5d1b222f7b7
    ```
 3. **Restart the backend** to enable on-chain attestations
-4. **Verify on explorer**: https://www.okx.com/web3/explorer/xlayer-test/address/<CONTRACT_ADDRESS>
+4. **Verify on explorer**: https://www.okx.com/web3/explorer/xlayer-test/address/0x64288ccD936470f66D7035e824A9141C938C32AE
 
 ## What Gets Deployed
 
@@ -82,8 +82,8 @@ cast send <CONTRACT_ADDRESS> \
 After deployment, verify the contract:
 ```bash
 # Check owner
-cast call <CONTRACT_ADDRESS> "owner()" --rpc-url https://testnet.xlayer.tech
+cast call <CONTRACT_ADDRESS> "owner()" --rpc-url https://testrpc.xlayer.tech
 
 # Check registered assets
-cast call <CONTRACT_ADDRESS> "getAllTrackedSymbols()" --rpc-url https://testnet.xlayer.tech
+cast call <CONTRACT_ADDRESS> "getAllTrackedSymbols()" --rpc-url https://testrpc.xlayer.tech
 ```

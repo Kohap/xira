@@ -31,12 +31,12 @@ contract DeployAll is Script {
             address(0x7777777777777777777777777777777777777777),
             address(0x8888888888888888888888888888888888888888),
             address(0x9999999999999999999999999999999999999999),
-            address(0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAAA),
-            address(0xbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbB),
-            address(0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC),
-            address(0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD),
-            address(0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE),
-            address(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+            address(0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa),
+            address(0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB),
+            address(0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC),
+            address(0xDDdDddDdDdddDDddDDddDDDDdDdDDdDDdDDDDDDd),
+            address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE),
+            address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)
         ];
 
         console.log("--- Registering 15 xStocks ---");

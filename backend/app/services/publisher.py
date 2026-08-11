@@ -6,7 +6,7 @@ from web3 import Web3
 
 logger = logging.getLogger(__name__)
 
-XLAYER_TESTNET_RPC = "https://testnet.xlayer.tech"
+XLAYER_TESTNET_RPC = "https://testrpc.xlayer.tech"
 XLAYER_EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test"
 
 
