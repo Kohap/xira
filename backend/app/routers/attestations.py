@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
+from app.services.history_db import history_db
 from app.models import AttestationResponse, AttestationHistory
 
 router = APIRouter(prefix="/api/attestations", tags=["attestations"])
@@ -12,6 +13,7 @@ HISTORY_STORE: dict[str, list[dict]] = {}
 
 
 def _store_history(symbol: str, result: AttestationResponse):
+    # Store in memory (for quick access)
     if symbol not in HISTORY_STORE:
         HISTORY_STORE[symbol] = []
     entry = result.model_dump()
@@ -20,6 +22,9 @@ def _store_history(symbol: str, result: AttestationResponse):
     HISTORY_STORE[symbol].append(entry)
     if len(HISTORY_STORE[symbol]) > 50:
         HISTORY_STORE[symbol] = HISTORY_STORE[symbol][-50:]
+    
+    # Also persist to SQLite database
+    history_db.store_score(symbol, entry)
 
 
 @router.get("/{symbol}", response_model=AttestationResponse)
@@ -74,6 +79,34 @@ async def get_attestation_history(symbol: str, limit: int = Query(default=10, le
     if not match:
         raise HTTPException(status_code=404, detail=f"Asset '{symbol}' not tracked.")
 
+    # Try to get from database first (persistent history)
+    db_history = history_db.get_history(match["symbol"], limit=limit)
+    
+    if db_history:
+        # Convert database records to AttestationResponse format
+        history_responses = []
+        for record in db_history:
+            history_responses.append(AttestationResponse(
+                symbol=match["symbol"],
+                risk_score=record["risk_score"],
+                risk_level=record["risk_level"],
+                confidence=record["confidence"],
+                factors=record["factors"],
+                explanation=record["explanation"],
+                anomaly=record["anomaly"],
+                anomaly_reason=record["anomaly_reason"],
+                evidence_hash="",
+                timestamp=record["timestamp"],
+                model_version="",
+                data_source="",
+                data_freshness_ms=0,
+            ))
+        return AttestationHistory(
+            symbol=match["symbol"],
+            history=history_responses,
+        )
+    
+    # Fallback to in-memory store if database is empty
     history = HISTORY_STORE.get(match["symbol"], [])
     return AttestationHistory(
         symbol=match["symbol"],
