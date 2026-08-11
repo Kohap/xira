@@ -131,7 +131,7 @@ const RWA_GAPS: { gap: string; answer: string }[] = [
   },
   {
     gap: "Low DeFi utilization of tokenized equities",
-    answer: "Verifiable risk context is what collateral logic needs; a signed score a vault can trust is more useful than a price it can only quote.",
+    answer: "Collateralized lending is xStocks' most active real-world use — depositing a position to borrow stablecoins without selling it. Lending venues are price-safe but risk-blind; a signed 0–100 risk score is the input their collateral logic is missing.",
   },
   {
     gap: "No transparency behind the number",
@@ -191,6 +191,14 @@ export default function WhitepaperPage() {
             how volatile, crowded, or news-sensitive that position is — and no
             off-chain vendor produces a number that can be verified without
             trusting them.
+          </p>
+          <p>
+            The mismatch is structural: xStocks trade 24/7 on-chain, while the
+            underlying equity settles during market sessions — so volatility
+            and liquidity risk accumulate in hours the price ticker never
+            shows. The most active real-world use, lending against the token
+            as collateral, under prices those hours entirely: a venue can
+            quote a position but cannot score how risky it is to hold.
           </p>
           <p>
             XIRA's answer is not another dashboard look. It is a pipeline whose
