@@ -280,27 +280,6 @@ export default function LandingPage() {
           </ul>
         </Reveal>
       </section>
-
-      <section className="border-t border-[var(--card-border)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 flex flex-col items-start gap-7 sm:flex-row sm:items-center sm:justify-between">
-          <Reveal>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance max-w-xl">
-              Start with the full board.
-            </h2>
-            <p className="mt-3 text-neutral-400">
-              Fifteen markets, one number each, all verifiable on X Layer.
-            </p>
-          </Reveal>
-          <Reveal delay={120} className="shrink-0">
-            <a
-              href="/dashboard"
-              className="inline-flex items-center justify-center px-8 h-14 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white font-medium text-lg transition-colors active:scale-[0.98]"
-            >
-              Open dashboard
-            </a>
-          </Reveal>
-        </div>
-      </section>
     </>
   );
 }
