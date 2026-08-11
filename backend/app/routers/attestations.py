@@ -53,22 +53,19 @@ async def get_attestation(symbol: str):
 
     result.timestamp = int(time.time())
 
+    # Read-only on-chain sync: attach the latest stored attestation so the
+    # frontend can link the contract on the explorer. Publishing is left to
+    # the heartbeat scheduler; a GET must never spend gas / sign a tx.
     try:
-        from app.services.publisher import publisher
-        tx = publisher.update_attestation(
-            token_address=match["token_address"],
-            score=result.risk_score,
-            confidence=result.confidence,
-            evidence_hash_hex=result.evidence_hash,
-            model_version=result.model_version,
-            anomaly=result.anomaly,
-            anomaly_reason=result.anomaly_reason,
-        )
-        if tx:
-            result.chain_tx = tx["tx_hash"]
-            result.chain_explorer = tx["explorer_url"]
-            result.chain_block = tx.get("block")
+        from app.services.publisher import publisher, XLAYER_EXPLORER
+        onchain = publisher.read_latest(match["token_address"])
+        if onchain:
             result.chain_id = publisher.chain_id
+            result.chain_explorer = (
+                f"{XLAYER_EXPLORER}/address/{publisher.contract_address}"
+                if publisher.contract_address
+                else None
+            )
     except Exception:
         pass
 

@@ -105,7 +105,14 @@ export function ProofSection() {
                   <CopyButton value={latest.chain_tx} label="chain transaction" />
                 </>
               ) : (
-                <span className="text-neutral-400">not yet mined</span>
+                <a
+                  href={contractUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-white underline underline-offset-4 decoration-neutral-700 transition-colors"
+                >
+                  view contract on explorer
+                </a>
               )}
             </dd>
             <dt className="text-neutral-400 text-xs pt-0.5">timestamp</dt>

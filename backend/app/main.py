@@ -4,10 +4,10 @@ import asyncio, os, logging
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import assets, attestations
+from app.routers import assets, attestations, alerts
 from app.services import scheduler as scheduler_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -15,11 +15,22 @@ logger = logging.getLogger("xira")
 
 _scheduler_task: asyncio.Task | None = None
 
+# Explicit, known frontend origins only. Wildcard CORS combined with
+# credentials is invalid and over-permissive for a public API.
+ALLOWED_ORIGINS = [
+    "https://xira-tan.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+
 
 def _build_endpoints() -> dict:
     live = os.getenv("USE_LIVE_DATA", "false").lower() == "true"
     return {
         "assets_all": "/api/assets/all",
+        "asset_detail": "/api/assets/{symbol}",
+        "asset_stats": "/api/assets/stats",
+        "alerts": "/api/alerts",
         "attestation": "/api/attestations/{symbol}",
         "attestation_history": "/api/attestations/{symbol}/history",
         "health": "/api/assets/health",
@@ -36,14 +47,15 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET"],
+    allow_headers=["Content-Type"],
 )
 
 app.include_router(assets.router)
 app.include_router(attestations.router)
+app.include_router(alerts.router)
 
 
 @app.on_event("startup")
@@ -81,7 +93,12 @@ async def root():
 
 @app.get("/debug/data-sources")
 async def debug_data_sources():
-    """Diagnostic endpoint to show data source status and errors."""
+    """Diagnostic endpoint to show data source status and errors.
+
+    Gated behind XIRA_ENABLE_DEBUG to avoid leaking cache internals publicly.
+    """
+    if os.getenv("XIRA_ENABLE_DEBUG", "false").lower() != "true":
+        raise HTTPException(status_code=404, detail="Not found.")
     import sys
     import time
     from app.services.data_fetcher import _price_cache, CACHE_TTL, data_fetcher

@@ -3,12 +3,34 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import type { Attestation, AttestationHistory } from "@/lib/types";
+import type { AssetDetail, Attestation, AttestationHistory } from "@/lib/types";
+import { API_BASE } from "@/lib/api";
 import { RiskBadge } from "@/components/ScoreCard";
 import { FactorBreakdown, HistoryChart, AlertBanner } from "@/components/FactorBreakdown";
 
 function formatTimestamp(ts: number): string {
   return new Date(ts * 1000).toLocaleString();
+}
+
+function ScoreDelta({ delta }: { delta: number | null }) {
+  if (delta === null || delta === 0) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-neutral-500 font-mono">
+        <span className="text-neutral-600">Δ</span> 0
+      </span>
+    );
+  }
+  const up = delta > 0;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-xs font-mono ${
+        up ? "text-red-400" : "text-green-400"
+      }`}
+      title="Change vs previous attestation"
+    >
+      {up ? "▲" : "▼"} {Math.abs(delta)}
+    </span>
+  );
 }
 
 export function AssetDetailClient() {
@@ -17,28 +39,33 @@ export function AssetDetailClient() {
 
   const [attestation, setAttestation] = useState<Attestation | null>(null);
   const [history, setHistory] = useState<AttestationHistory | null>(null);
+  const [detail, setDetail] = useState<AssetDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiBase = API_BASE;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [aRes, hRes] = await Promise.all([
+      const [aRes, hRes, dRes] = await Promise.all([
         fetch(`${apiBase}/api/attestations/${encodeURIComponent(symbol)}`),
         fetch(`${apiBase}/api/attestations/${encodeURIComponent(symbol)}/history?limit=10`),
+        fetch(`${apiBase}/api/assets/${encodeURIComponent(symbol)}`),
       ]);
 
       if (!aRes.ok) throw new Error(`API error: ${aRes.status}`);
       if (!hRes.ok) throw new Error(`History API error: ${hRes.status}`);
+      if (!dRes.ok) throw new Error(`Detail API error: ${dRes.status}`);
 
       const aData: Attestation = await aRes.json();
       const hData: AttestationHistory = await hRes.json();
+      const dData: AssetDetail = await dRes.json();
 
       setAttestation(aData);
       setHistory(hData);
+      setDetail(dData);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -101,12 +128,22 @@ export function AssetDetailClient() {
       <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-6 mb-6">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl font-bold">{attestation.symbol}</h1>
+            <h1 className="text-2xl font-bold">
+              {attestation.symbol}{" "}
+              {detail && (
+                <span className="text-base font-normal text-neutral-500">
+                  {detail.underlying} · {detail.sector}
+                </span>
+              )}
+            </h1>
             <div className="flex items-center gap-3 mt-2">
               <RiskBadge level={attestation.risk_level} />
               <span className="text-sm text-neutral-500">
                 Last update: {formatTimestamp(attestation.timestamp)}
               </span>
+              {detail && (
+                <ScoreDelta delta={detail.score_delta_24h} />
+              )}
             </div>
           </div>
           <div className="text-right">
@@ -262,9 +299,27 @@ export function AssetDetailClient() {
           </div>
         ) : (
           <div className="mt-4 pt-3 border-t border-[var(--card-border)]">
-            <span className="text-xs text-neutral-600">
-              Deploy the XIRA contract and configure PRIVATE_KEY to enable on-chain attestations.
-            </span>
+            {attestation.chain_explorer ? (
+              <>
+                <span className="text-xs text-neutral-600">
+                  No recent on-chain tx for this read. The oracle signs a new
+                  attestation when a score moves past the deviation threshold;{" "}
+                </span>
+                <a
+                  href={attestation.chain_explorer}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-[var(--accent-glow)] hover:underline"
+                >
+                  view the contract on the explorer
+                </a>
+                <span className="text-xs text-neutral-600">.</span>
+              </>
+            ) : (
+              <span className="text-xs text-neutral-600">
+                On-chain publishing is not configured for this deployment.
+              </span>
+            )}
           </div>
         )}
       </div>

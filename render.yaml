@@ -13,8 +13,9 @@ services:
         value: https://testrpc.xlayer.tech
       - key: XIRA_CONTRACT_ADDRESS
         value: "0x64288ccD936470f66D7035e824A9141C938C32AE"
-      - key: PRIVATE_KEY
-        value: "0x10730a6827a0347c88b80f860f8d41a84b22109f6ebabaf07642a5d1b222f7b7"
+      # PRIVATE_KEY must NOT be committed. Set it as a Render dashboard secret
+      # (Redacted). If missing, the backend runs in off-chain mode: scores are
+      # served but no on-chain attestation transactions are published.
       - key: USE_LIVE_DATA
         value: "true"
       - key: AI_MODE

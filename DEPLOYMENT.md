@@ -1,5 +1,14 @@
 # XIRA Smart Contract Deployment Guide
 
+## ⚠️ Secret hygiene
+
+The oracle updater private key was previously committed in this repo's history
+(and in `render.yaml`). Treat it as **compromised and rotate it**: generate a
+new key (`cast wallet new`), fund it with testnet OKB, authorize it as updater,
+and set `PRIVATE_KEY` only in the Render dashboard secret / local `.env` —
+never in a committed file. `render.yaml` and `contracts/.env.deploy` no longer
+contain a key; leaving it unset simply runs the backend in off-chain mode.
+
 ## Prerequisites
 
 1. **Foundry installed**: `curl -L https://foundry.paradigm.xyz | bash`
@@ -16,7 +25,7 @@
 cd contracts
 
 # Set your private key
-export PRIVATE_KEY=10730a6827a0347c88b80f860f8d41a84b22109f6ebabaf07642a5d1b222f7b7
+export PRIVATE_KEY=
 
 # Deploy and register all 15 assets
 forge script script/DeployAll.s.sol \
@@ -31,7 +40,7 @@ forge script script/DeployAll.s.sol \
 cd contracts
 
 # Deploy the contract
-export PRIVATE_KEY=10730a6827a0347c88b80f860f8d41a84b22109f6ebabaf07642a5d1b222f7b7
+export PRIVATE_KEY=
 forge script script/Deploy.s.sol \
   --rpc-url https://testrpc.xlayer.tech \
   --broadcast
@@ -58,9 +67,9 @@ cast send <CONTRACT_ADDRESS> \
 2. **Update backend configuration**:
    ```bash
    cd ../backend
-   # Update .env
+   # Update .env — or set the secret in the Render dashboard (recommended):
    XIRA_CONTRACT_ADDRESS=0x64288ccD936470f66D7035e824A9141C938C32AE
-   PRIVATE_KEY=0x10730a6827a0347c88b80f860f8d41a84b22109f6ebabaf07642a5d1b222f7b7
+   PRIVATE_KEY=<set-from-secret>
    ```
 3. **Restart the backend** to enable on-chain attestations
 4. **Verify on explorer**: https://www.okx.com/web3/explorer/xlayer-test/address/0x64288ccD936470f66D7035e824A9141C938C32AE
