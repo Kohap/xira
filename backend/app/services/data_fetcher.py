@@ -14,21 +14,21 @@ _price_cache: dict[str, tuple[PriceData, float]] = {}
 CACHE_TTL = 300  # 5 minutes
 
 TRACKED_ASSETS: list[dict] = [
-    {"symbol": "NVDAx", "underlying": "NVDA", "sector": "Technology", "token_address": "0x1111111111111111111111111111111111111111"},
-    {"symbol": "TSLAx", "underlying": "TSLA", "sector": "Consumer Cyclical", "token_address": "0x2222222222222222222222222222222222222222"},
-    {"symbol": "AAPLx", "underlying": "AAPL", "sector": "Technology", "token_address": "0x3333333333333333333333333333333333333333"},
-    {"symbol": "MSFTx", "underlying": "MSFT", "sector": "Technology", "token_address": "0x4444444444444444444444444444444444444444"},
-    {"symbol": "GOOGLx", "underlying": "GOOGL", "sector": "Communication", "token_address": "0x5555555555555555555555555555555555555555"},
-    {"symbol": "AMZNx", "underlying": "AMZN", "sector": "Consumer Cyclical", "token_address": "0x6666666666666666666666666666666666666666"},
-    {"symbol": "METAx", "underlying": "META", "sector": "Communication", "token_address": "0x7777777777777777777777777777777777777777"},
-    {"symbol": "SPYx", "underlying": "SPY", "sector": "ETF", "token_address": "0x8888888888888888888888888888888888888888"},
-    {"symbol": "QQQx", "underlying": "QQQ", "sector": "ETF", "token_address": "0x9999999999999999999999999999999999999999"},
-    {"symbol": "AMDx", "underlying": "AMD", "sector": "Technology", "token_address": "0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa"},
-    {"symbol": "INTCx", "underlying": "INTC", "sector": "Technology", "token_address": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"},
-    {"symbol": "NFLXx", "underlying": "NFLX", "sector": "Communication", "token_address": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"},
+    {"symbol": "NVDAx", "underlying": "NVDA", "sector": "Technology", "token_address": "0xc845b2894dbddd03858fd2d643b4ef725fe0849d"},
+    {"symbol": "TSLAx", "underlying": "TSLA", "sector": "Consumer Cyclical", "token_address": "0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0"},
+    {"symbol": "AAPLx", "underlying": "AAPL", "sector": "Technology", "token_address": "0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a"},
+    {"symbol": "MSFTx", "underlying": "MSFT", "sector": "Technology", "token_address": "0x5621737f42dae558b81269fcb9e9e70c19aa6b35"},
+    {"symbol": "GOOGLx", "underlying": "GOOGL", "sector": "Communication", "token_address": "0xe92f673ca36c5e2efd2de7628f815f84807e803f"},
+    {"symbol": "AMZNx", "underlying": "AMZN", "sector": "Consumer Cyclical", "token_address": "0x3557ba345b01efa20a1bddc61f573bfd87195081"},
+    {"symbol": "METAx", "underlying": "META", "sector": "Communication", "token_address": "0x96702be57cd9777f835117a809c7124fe4ec989a"},
+    {"symbol": "SPYx", "underlying": "SPY", "sector": "ETF", "token_address": "0x90a2a4c76b5d8c0bc892a69ea28aa775a8f2dd48"},
+    {"symbol": "QQQx", "underlying": "QQQ", "sector": "ETF", "token_address": "0xa753a7395cae905cd615da0b82a53e0560f250af"},
+    {"symbol": "AMDx", "underlying": "AMD", "sector": "Technology", "token_address": "0x3522513e5f146a2006e2901b05f16b2821485e19"},
+    {"symbol": "INTCx", "underlying": "INTC", "sector": "Technology", "token_address": "0xf8a80d1cb9cfd70d03d655d9df42339846f3b3c8"},
+    {"symbol": "NFLXx", "underlying": "NFLX", "sector": "Communication", "token_address": "0xa6a65ac27e76cd53cb790473e4345c46e5ebf961"},
     {"symbol": "BAx", "underlying": "BA", "sector": "Industrials", "token_address": "0xDDdDddDdDdddDDddDDddDDDDdDdDDdDDdDDDDDDd"},
-    {"symbol": "JPMx", "underlying": "JPM", "sector": "Financial", "token_address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"},
-    {"symbol": "XOMx", "underlying": "XOM", "sector": "Energy", "token_address": "0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF"},
+    {"symbol": "JPMx", "underlying": "JPM", "sector": "Financial", "token_address": "0xd9fc3e075d45254a1d834fea18af8041207dea0a"},
+    {"symbol": "XOMx", "underlying": "XOM", "sector": "Energy", "token_address": "0xeedb0273c5af792745180e9ff568cd01550ffa13"},
 ]
 
 

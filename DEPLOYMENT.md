@@ -41,10 +41,16 @@ forge script script/Deploy.s.sol \
 # Register assets manually (repeat for each asset)
 cast send <CONTRACT_ADDRESS> \
   "registerAsset(address,string)" \
-  0x1111111111111111111111111111111111111111 NVDAx \
+  0xc845b2894dbddd03858fd2d643b4ef725fe0849d NVDAx \
   --rpc-url https://testrpc.xlayer.tech \
   --private-key $PRIVATE_KEY
 ```
+
+> **Token keys:** attestations are keyed by the real X Layer xStock ERC-20 addresses
+> (e.g. NVDAx `0xc845...0849d` — same address on every EVM chain). The backend
+> `TRACKED_ASSETS` list holds the canonical keys; BAx has no published EVM address
+> yet and keeps a placeholder key. `registerAsset` is legacy metadata only —
+> `updateAttestation` accepts any address.
 
 ## Post-Deployment
 
