@@ -85,25 +85,16 @@ xira/
 
 ### 1. Smart Contracts
 
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment instructions.
+
+**Quick deploy:**
 ```bash
 cd contracts
-
-# Install dependencies
-forge install
-
-# Build
-forge build
-
-# Run tests
-forge test -vvv
-
-# Deploy to X Layer testnet
-# Set PRIVATE_KEY in .env
-source ../backend/.env 2>/dev/null || export PRIVATE_KEY=your_key_here
-forge script script/Deploy.s.sol --broadcast --rpc-url https://testnet.xlayer.tech
-
-# Note: copy the deployed contract address to backend/.env as XIRA_CONTRACT_ADDRESS
+export PRIVATE_KEY=your_testnet_key
+forge script script/DeployAll.s.sol --rpc-url https://testnet.xlayer.tech --broadcast
 ```
+
+**Deployment wallet:** `0x5368FB097E57F34020A8FAAA52a242eeF814f8AC`
 
 ### 2. Backend
 
