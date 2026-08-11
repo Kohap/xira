@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Header } from "@/components/Header";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,39 +35,25 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
-        <header className="border-b border-[var(--card-border)] bg-[var(--card-bg)]/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center font-bold text-white text-sm">
-                X
-              </div>
-              <div>
-                <h1 className="font-semibold text-lg leading-tight">XIRA</h1>
-                <p className="text-xs text-neutral-500 leading-tight">
-                  X-Layer Intelligence &amp; Risk Analytics
-                </p>
-              </div>
-            </div>
-            <nav className="flex items-center gap-6 text-sm text-neutral-400">
-              <a href="/" className="hover:text-white transition-colors">
-                Dashboard
-              </a>
-              <a
-                href="/docs"
-                className="hover:text-white transition-colors hidden sm:inline"
-              >
-                API Docs
-              </a>
-              <span className="text-xs border border-[var(--card-border)] rounded-full px-3 py-1 text-neutral-500">
-                MVP v1.0
-              </span>
-            </nav>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-[var(--accent)] focus:text-white focus:text-sm"
+        >
+          Skip to main content
+        </a>
+        <Header />
+        <main id="main" className="flex-1">
+          {children}
+        </main>
+        <footer className="border-t border-[var(--card-border)] py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-600">
+            <span>
+              XIRA — X-Layer Intelligence &amp; Risk Analytics
+            </span>
+            <span className="font-mono">
+              chain 1952 · contract 0x6428…32AE · testnet
+            </span>
           </div>
-        </header>
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-[var(--card-border)] py-4 text-center text-xs text-neutral-600">
-          XIRA &mdash; X-Layer Intelligence &amp; Risk Analytics &middot; Powered
-          by AI &middot; Built on X Layer
         </footer>
       </body>
     </html>

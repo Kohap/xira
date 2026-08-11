@@ -53,7 +53,7 @@ export function AssetDetailClient() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors mb-6 inline-block">
+        <Link href="/dashboard" className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors mb-6 inline-block">
           &larr; Back to Dashboard
         </Link>
         <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-6 animate-pulse">
@@ -68,7 +68,7 @@ export function AssetDetailClient() {
   if (error || !attestation) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors mb-6 inline-block">
+        <Link href="/dashboard" className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors mb-6 inline-block">
           &larr; Back to Dashboard
         </Link>
         <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-10 text-center">
@@ -92,7 +92,7 @@ export function AssetDetailClient() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Link
-        href="/"
+        href="/dashboard"
         className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors mb-6 inline-block"
       >
         &larr; Back to Dashboard
