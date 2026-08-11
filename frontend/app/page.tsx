@@ -66,6 +66,29 @@ const MCP_TOOLS = [
   "xira_get_attestation_history",
 ];
 
+const RWA_GAPS = [
+  {
+    problem: "Price isn't risk",
+    answer:
+      "A 0–100 score built from momentum, volatility, sentiment, volume, and liquidity — with a readable reason, so the number explains itself.",
+  },
+  {
+    problem: "Risk data is fragmented",
+    answer:
+      "One compact attestation per market — score, factors, evidence hash — queryable by contract or agent, no scraping.",
+  },
+  {
+    problem: "Dashboards ignore agents",
+    answer:
+      "The same records feed MCP tooling: one asset, the whole board, or full history in a machine-readable shape.",
+  },
+  {
+    problem: "Off-chain claims need proof",
+    answer:
+      "Every meaningful score change is signed to X Layer testnet as a transaction anyone can replay against the model.",
+  },
+];
+
 export default function LandingPage() {
   return (
     <>
@@ -113,6 +136,30 @@ export default function LandingPage() {
             <div>
               <LiveBars />
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-[var(--card-border)] bg-black/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <Reveal>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-balance">
+              Why the risk number belongs on-chain.
+            </h2>
+          </Reveal>
+          <div className="mt-8 grid sm:grid-cols-2 gap-x-10 gap-y-8">
+            {RWA_GAPS.map((g, i) => (
+              <Reveal key={g.problem} delay={Math.min(i * 60, 180)}>
+                <div>
+                  <div className="text-[11px] font-mono text-neutral-500">
+                    {g.problem}
+                  </div>
+                  <p className="mt-1.5 text-sm text-neutral-300 leading-relaxed">
+                    {g.answer}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>

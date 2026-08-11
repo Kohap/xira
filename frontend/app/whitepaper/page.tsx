@@ -116,11 +116,35 @@ const KNOWN_LIMITS = [
   "Attestations on X Layer testnet are non-final by design; a mainnet deployment would require re-scoping the oracle key custody and gas model.",
 ];
 
+const RWA_GAPS: { gap: string; answer: string }[] = [
+  {
+    gap: "Price alone is insufficient",
+    answer: "A multi-factor 0–100 risk score — momentum, volatility, sentiment, volume anomaly, liquidity — with per-factor breakdown and a human-readable reason, never a bare number.",
+  },
+  {
+    gap: "Risk data is fragmented and off-chain",
+    answer: "One compact, queryable attestation per market (score, confidence, factors, evidence hash) read by a single contract call or API read.",
+  },
+  {
+    gap: "Agents cannot reliably use RWAs",
+    answer: "Machine-readable attestations plus MCP tooling: one asset, the whole board, or full history — no scraping, no opaque vendor API.",
+  },
+  {
+    gap: "Low DeFi utilization of tokenized equities",
+    answer: "Verifiable risk context is what collateral logic needs; a signed score a vault can trust is more useful than a price it can only quote.",
+  },
+  {
+    gap: "No transparency behind the number",
+    answer: "Every meaningful score change is signed to X Layer testnet with a replayable evidence hash; the number and its proof travel together.",
+  },
+];
+
 const ROADMAP = [
   "Include modelVersion and anomaly in the hashed evidence payload, and add a public verify() that recomputes and compares the fingerprint on-chain.",
   "Per-asset on-chain ring history (a bounded rolling window of attestations per token) and a merkle root for the full market snapshot.",
   "Backtest harness: replay the factor model over historical data and publish its calibration statistics as part of each attestation.",
   "Staked oracle + challenge window: a watcher can submit a corrected evidence hash; slashing mechanics only on mainnet.",
+  "Holder-concentration factor: an on-chain HHI over holder balances per xStock to catch crowded, fragile positions that price data alone misses.",
 ];
 
 export default function WhitepaperPage() {
@@ -174,6 +198,30 @@ export default function WhitepaperPage() {
             recompute the evidence hash, and compare it to the bytes32 the
             oracle signed into the contract.</em> The number and the proof move
             through the same pipeline.
+          </p>
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="text-left text-neutral-500 text-xs border-b border-[var(--card-border)]">
+                  <th scope="col" className="py-2 pr-4 font-medium">RWA problem</th>
+                  <th scope="col" className="py-2 font-medium">How XIRA answers it</th>
+                </tr>
+              </thead>
+              <tbody>
+                {RWA_GAPS.map((r) => (
+                  <tr key={r.gap} className="border-b border-[var(--card-border)] align-top">
+                    <td className="py-3 pr-4 font-medium whitespace-nowrap">{r.gap}</td>
+                    <td className="py-3 text-xs text-neutral-400 leading-relaxed">{r.answer}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The scope is deliberate: XIRA does not attempt legal ownership,
+            custody, or compliance. It closes the intelligence-and-usability
+            gap — turning price-tracked tokens into assets a vault or agent can
+            assess and use with a number it can verify.
           </p>
         </div>
       </section>
