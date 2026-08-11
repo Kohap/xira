@@ -185,7 +185,7 @@ export default function AlertsPage() {
             </ul>
           )}
 
-          <div className="mt-6 flex items-center justify-between text-xs text-neutral-500">
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-neutral-500">
             <span>
               Source:{" "}
               <span className="text-neutral-300 font-mono">

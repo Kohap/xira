@@ -206,7 +206,7 @@ export default function DocsPage() {
                 >
                   {e.method}
                 </span>
-                <code className="font-mono text-sm text-neutral-200">
+                <code className="font-mono text-sm text-neutral-200 break-all">
                   {e.path}
                 </code>
                 <span className="text-[11px] text-neutral-500 font-mono">
@@ -256,7 +256,7 @@ export default function DocsPage() {
         </h2>
         <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
           The XIRA oracle contract on X Layer testnet (chain 1952) at{" "}
-          <code className="font-mono text-[12px] text-neutral-300">{CONTRACT}</code>.
+          <code className="font-mono text-[12px] text-neutral-300 break-all">{CONTRACT}</code>.
           See the whitepaper for how the evidence fingerprint is computed.
         </p>
         <div className="mt-4">

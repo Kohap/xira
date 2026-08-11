@@ -136,7 +136,7 @@ export function AssetDetailClient() {
                 </span>
               )}
             </h1>
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
               <RiskBadge level={attestation.risk_level} />
               <span className="text-sm text-neutral-500">
                 Last update: {formatTimestamp(attestation.timestamp)}

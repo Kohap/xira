@@ -162,9 +162,9 @@ export default function WhitepaperPage() {
           be checked against the public code, the API, and the contract.
         </p>
         <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[11px] text-neutral-400">
-          <div className="flex items-center gap-2">
-            <dt className="text-neutral-500">contract</dt>
-            <dd className="font-mono">{CONTRACT}</dd>
+          <div className="flex items-center gap-2 min-w-0">
+            <dt className="text-neutral-500 shrink-0">contract</dt>
+            <dd className="font-mono break-all">{CONTRACT}</dd>
           </div>
           <div>
             <dt className="inline text-neutral-500">chain&nbsp;</dt>
@@ -372,7 +372,7 @@ export default function WhitepaperPage() {
             The backend submits{" "}
             <code className="font-mono text-neutral-300">updateAttestation(asset, score, confidence, evidenceHash, modelVersion, anomaly, anomalyReason)</code>{" "}
             to the XIRA contract at{" "}
-            <code className="font-mono text-[12px] text-neutral-300">{CONTRACT}</code>
+            <code className="font-mono text-[12px] text-neutral-300 break-all">{CONTRACT}</code>
             . The contract reverts on out-of-range values and only accepts
             writes from the owner or an authorized updater address. On-chain,
             anyone can read the latest attestation or just the score:

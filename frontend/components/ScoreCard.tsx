@@ -90,10 +90,10 @@ export function ScoreCard({
 
       <div className="space-y-1.5 mt-3">
         {factors.slice(0, 4).map((f) => (
-          <div key={f.name} className="flex items-center justify-between text-xs">
-            <span className="text-neutral-400">{f.name.toUpperCase()}</span>
-            <div className="flex items-center gap-2">
-              <div className="w-20 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+          <div key={f.name} className="flex items-center justify-between text-xs gap-2">
+            <span className="text-neutral-400 truncate min-w-0">{f.name.toUpperCase()}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="w-16 sm:w-20 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     f.score <= 20
@@ -119,7 +119,8 @@ export function ScoreCard({
         <span>confidence {confidence}%</span>
         <a
           href={`/asset/${symbol}`}
-          className="text-[var(--accent-glow)] hover:underline"
+          className="inline-flex items-center gap-1 px-2 py-1.5 -mr-1.5 -my-1.5 rounded-lg text-[var(--accent-glow)] hover:underline hover:bg-white/5 transition-colors"
+          aria-label={`Open ${symbol} details`}
         >
           details →
         </a>

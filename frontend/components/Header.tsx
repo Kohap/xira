@@ -53,7 +53,7 @@ export function Header() {
 
           <Link
             href="/dashboard"
-            className="hidden md:inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors active:scale-[0.98]"
+            className="hidden lg:inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors active:scale-[0.98]"
           >
             Open dashboard
           </Link>

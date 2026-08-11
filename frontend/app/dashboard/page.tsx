@@ -374,7 +374,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">
-        <label className="relative flex-1 max-w-sm">
+        <label className="relative flex-1 max-w-sm min-w-0">
           <span className="sr-only">Search assets</span>
           <svg
             viewBox="0 0 24 24"
@@ -408,7 +408,7 @@ export default function DashboardPage() {
             </button>
           )}
         </label>
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm flex-wrap">
           <label htmlFor="sort-select" className="text-xs text-neutral-500">
             Sort
           </label>
@@ -416,13 +416,13 @@ export default function DashboardPage() {
             id="sort-select"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="h-10 px-3 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-sm text-neutral-300 hover:border-neutral-600 transition-colors"
+            className="h-10 px-3 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-sm text-neutral-300 hover:border-neutral-600 transition-colors sm:flex-none"
           >
             <option value="score">Risk score</option>
             <option value="symbol">Symbol</option>
             <option value="confidence">Confidence</option>
           </select>
-          <span className="text-xs text-neutral-600 tabular-nums">
+          <span className="text-xs text-neutral-600 tabular-nums whitespace-nowrap">
             {visibleAssets.length}/{data.assets.length}
           </span>
         </div>
