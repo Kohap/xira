@@ -70,6 +70,35 @@ async def root():
     }
 
 
+@app.get("/debug/data-sources")
+async def debug_data_sources():
+    """Diagnostic endpoint to show data source status and errors."""
+    import sys
+    import time
+    from app.services.data_fetcher import _price_cache, CACHE_TTL, data_fetcher
+    
+    cache_status = {}
+    for ticker, (data, timestamp) in _price_cache.items():
+        age = time.time() - timestamp
+        cache_status[ticker] = {
+            "source": data.source,
+            "age_seconds": round(age, 1),
+            "price": data.price,
+            "cached": age < CACHE_TTL,
+        }
+    
+    return {
+        "use_live_data": data_fetcher.use_live,
+        "cache_ttl": CACHE_TTL,
+        "cached_tickers": list(_price_cache.keys()),
+        "cache_details": cache_status,
+        "env_vars": {
+            "USE_LIVE_DATA": os.getenv("USE_LIVE_DATA"),
+            "PYTHON_VERSION": sys.version,
+        }
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
     host = os.getenv("HOST", "0.0.0.0")
