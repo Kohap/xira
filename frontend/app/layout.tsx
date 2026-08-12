@@ -170,6 +170,23 @@ export default function RootLayout({
                 chain 1952 · contract 0x6428…32AE · testnet · model v1.0.0
               </p>
             </div>
+
+            <div className="mt-6 pt-5 border-t border-[var(--card-border)] flex items-center justify-center gap-2.5">
+              <span className="text-xs text-neutral-500">Built on</span>
+              <span className="inline-flex items-center gap-1.5">
+                <img
+                  src="/xira/xlayer-logo.png"
+                  alt=""
+                  width={20}
+                  height={20}
+                  className="w-5 h-5 object-contain"
+                  loading="lazy"
+                />
+                <span className="text-sm font-semibold text-neutral-300">
+                  XLayer
+                </span>
+              </span>
+            </div>
           </div>
         </footer>
       </body>
