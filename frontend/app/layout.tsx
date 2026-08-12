@@ -8,6 +8,8 @@ import xlayerLogo from "./xlayer-logo-light.png";
 import "./globals.css";
 
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
+const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
+const CONTRACT_URL = `${EXPLORER}/address/${CONTRACT}`;
 const ASSET_BASE = process.env.VERCEL === "1" ? "" : "/xira";
 
 const geistSans = Geist({
@@ -29,13 +31,13 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://xira-tan.vercel.app"),
-  title: "XIRA: X-Layer Intelligence & Risk Analytics",
+  title: "XIRA: One Verifiable Risk Number for Every xStock",
   description:
-    "AI-powered risk intelligence and signals for tokenized equities on X Layer.",
+    "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
   openGraph: {
-    title: "XIRA: X-Layer Intelligence & Risk Analytics",
+    title: "XIRA: One Verifiable Risk Number for Every xStock",
     description:
-      "One honest 0–100 risk score for every tokenized equity, signed onto X Layer as a verifiable attestation.",
+      "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
     type: "website",
     siteName: "XIRA",
     url: "https://xira-tan.vercel.app",
@@ -44,15 +46,15 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "XIRA: X-Layer Intelligence & Risk Analytics",
+        alt: "XIRA: Risk Intelligence on X Layer",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "XIRA: X-Layer Intelligence & Risk Analytics",
+    title: "XIRA: One Verifiable Risk Number for Every xStock",
     description:
-      "One honest 0–100 risk score for every tokenized equity, signed onto X Layer as a verifiable attestation.",
+      "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
     images: ["/og.png"],
   },
 };
@@ -105,25 +107,36 @@ export default function RootLayout({
                   </div>
                 </div>
                 <p className="mt-5 text-sm text-neutral-400 leading-relaxed">
-                  One honest 0–100 risk score for every{" "}
-                  <span className="font-serif italic text-[var(--accent-glow)]">
-                    xStock
-                  </span>
-                  , signed onto X Layer as a verifiable attestation, readable
-                  by humans, agents, and contracts.
+                  AI-powered risk scores for tokenized equities, published
+                  onchain. XIRA: X-Layer Intelligence &amp; Risk Analytics.
                 </p>
-                <div className="mt-6 flex flex-wrap items-center gap-3 text-[11px]">
-                  <span className="inline-flex items-center gap-1.5 text-neutral-400">
-                    <span className="live-dot w-1.5 h-1.5 rounded-full bg-[var(--accent-glow)]" aria-hidden="true" />
-                    oracle live · rescores every 30 min
-                  </span>
+
+                <div className="mt-6 space-y-3 text-[11px]">
+                  <div className="flex items-start gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2.5">
+                    <span className="shrink-0 text-neutral-500 pt-0.5">
+                      contract
+                    </span>
+                    <code className="font-mono text-[11px] text-neutral-300 break-all min-w-0">
+                      {CONTRACT}
+                    </code>
+                    <span className="ml-auto shrink-0">
+                      <CopyButton value={CONTRACT} label="contract address" />
+                    </span>
+                  </div>
+                  <p className="text-neutral-500">
+                    Chain ID: <span className="font-mono text-neutral-400">1952</span> · X Layer Testnet
+                  </p>
                 </div>
-                <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
-                  <span className="text-[10px] text-neutral-500 mr-1">contract</span>
-                  <code className="font-mono text-[11px] text-neutral-300">
-                    {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
-                  </code>
-                  <CopyButton value={CONTRACT} label="contract address" />
+
+                <div className="mt-4 rounded-lg border border-emerald-800/40 bg-emerald-950/20 px-3 py-2.5 text-[11px] leading-relaxed">
+                  <p className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M3.5 8.5l3 3 6-6" />
+                    </svg>
+                    Verified on X Layer Testnet
+                  </p>
+                  <p className="mt-1 text-neutral-400">1 score = 1 on-chain attestation</p>
+                  <p className="text-neutral-500">Updated every 30 minutes</p>
                 </div>
               </div>
 
@@ -179,9 +192,30 @@ export default function RootLayout({
               <p className="text-xs text-neutral-500">
                 © 2026 XIRA · Built by <span className="text-neutral-400">Gift</span>
               </p>
-              <p className="font-mono text-[11px] text-neutral-600">
-                chain 1952 · contract 0x6428…32AE · testnet · model v1.0.0
-              </p>
+              <nav
+                aria-label="Footer links"
+                className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs"
+              >
+                <a
+                  href={CONTRACT_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-neutral-400 hover:text-white transition-colors"
+                >
+                  View Contract
+                </a>
+                <span className="text-neutral-700" aria-hidden="true">·</span>
+                <a
+                  href="/dashboard"
+                  className="text-neutral-400 hover:text-white transition-colors"
+                >
+                  Live Dashboard
+                </a>
+                <span className="text-neutral-700" aria-hidden="true">·</span>
+                <span className="text-neutral-500">
+                  Built for the BuildX AI Season Hackathon
+                </span>
+              </nav>
             </div>
 
             <div className="mt-6 pt-5 border-t border-[var(--card-border)] flex items-center justify-center gap-2.5">

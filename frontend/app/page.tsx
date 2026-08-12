@@ -7,12 +7,14 @@ import { LiveHeatmap } from "@/components/landing/LiveHeatmap";
 import { CopyButton } from "@/components/landing/CopyButton";
 
 export const metadata: Metadata = {
-  title: "XIRA: Risk Intelligence on X Layer",
+  title: "XIRA: One Verifiable Risk Number for Every xStock",
   description:
-    "One honest 0–100 risk score for every tokenized equity, signed onto X Layer as a verifiable attestation.",
+    "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
 };
 
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
+const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
+const CONTRACT_URL = `${EXPLORER}/address/${CONTRACT}`;
 
 const PIPELINE = [
   {
@@ -64,6 +66,52 @@ const MCP_TOOLS = [
   "xira_get_asset_risk",
   "xira_get_all_assets",
   "xira_get_attestation_history",
+];
+
+const VERIFY_STEPS = [
+  {
+    title: "Copy the oracle contract address",
+    detail: "This is the address every score is published to:",
+  },
+  {
+    title: "Open it on the OKX Explorer",
+    detail: "Each meaningful score update is recorded onchain as a transaction.",
+  },
+  {
+    title: "Check the latest transactions and events",
+    detail: "Match the score, timestamp, and evidence hash shown on this dashboard with the on-chain data.",
+  },
+  {
+    title: "Verify, independently",
+    detail: "Every risk number you see can be verified without trusting this site.",
+  },
+];
+
+const FAQ = [
+  {
+    q: "What is XIRA?",
+    a: "XIRA (X-Layer Intelligence & Risk Analytics) generates real-time risk scores for xStocks and publishes them as verifiable attestations on X Layer.",
+  },
+  {
+    q: "How is the risk score calculated?",
+    a: "It uses a transparent five-factor model: Momentum, Volatility, Sentiment, Volume Anomaly, and Liquidity Proxy. These are combined into a single 0–100 score.",
+  },
+  {
+    q: "Why put the score onchain?",
+    a: "So agents, smart contracts, and users can trust and use the data without relying on a centralized API or dashboard.",
+  },
+  {
+    q: "How often are scores updated?",
+    a: "The system re-scores all markets every 30 minutes and only writes a new attestation when the score changes meaningfully.",
+  },
+  {
+    q: "Can agents use this data?",
+    a: "Yes. XIRA exposes MCP tools (xira_get_asset_risk, xira_get_all_assets, xira_get_attestation_history) so agents can query risk data directly.",
+  },
+  {
+    q: "Is this live on mainnet?",
+    a: "Currently live on X Layer Testnet (Chain ID 1952). Mainnet deployment is planned after the hackathon.",
+  },
 ];
 
 const RWA_GAPS = [
@@ -125,10 +173,10 @@ export default function LandingPage() {
                     Open dashboard
                   </a>
                   <a
-                    href="#chain"
+                    href="#verify"
                     className="inline-flex items-center justify-center px-6 h-12 rounded-xl border border-[var(--card-border)] text-neutral-300 hover:text-white hover:border-neutral-600 transition-colors active:scale-[0.98]"
                   >
-                    Verify on-chain
+                    How to verify
                   </a>
                 </div>
               </Reveal>
@@ -272,6 +320,70 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section
+        id="verify"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
+      >
+        <Reveal>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
+            How to verify a score.
+          </h2>
+          <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
+            Every risk number you see can be independently verified on X Layer
+            Testnet (Chain ID 1952) in a few steps.
+          </p>
+        </Reveal>
+
+        <ol className="mt-10 space-y-6">
+          {VERIFY_STEPS.map((step, i) => (
+            <Reveal key={step.title} delay={Math.min(i * 80, 240)}>
+              <li className="grid sm:grid-cols-[140px_1fr] gap-2 sm:gap-6 items-baseline">
+                <div className="flex items-center gap-3 sm:justify-end">
+                  <span className="w-8 h-8 rounded-lg bg-[var(--accent)]/15 border border-[var(--accent)]/30 flex items-center justify-center font-mono text-xs text-[var(--accent-glow)]">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm text-neutral-500">{step.title}</span>
+                </div>
+                <div>
+                  {i === 0 ? (
+                    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
+                      <code className="font-mono text-[11px] text-neutral-300 break-all">
+                        {CONTRACT}
+                      </code>
+                      <CopyButton value={CONTRACT} label="contract address" />
+                    </div>
+                  ) : i === 1 ? (
+                    <p className="text-sm text-neutral-400 leading-relaxed">
+                      <a
+                        href={CONTRACT_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[var(--accent-glow)] hover:underline underline-offset-4"
+                      >
+                        Open the contract on the OKX Explorer
+                      </a>{" "}
+                      and check its latest transactions.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-neutral-400 leading-relaxed">
+                      {step.detail}
+                    </p>
+                  )}
+                </div>
+              </li>
+            </Reveal>
+          ))}
+        </ol>
+
+        <Reveal delay={200}>
+          <p className="mt-10 text-sm text-neutral-300 leading-relaxed border-t border-[var(--card-border)] pt-6 max-w-2xl">
+            Each meaningful score update is recorded onchain. Match the score,
+            timestamp, and evidence hash shown on this dashboard with the
+            on-chain data, and every number proves itself.
+          </p>
+        </Reveal>
+      </section>
+
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24">
         <Reveal>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
@@ -295,6 +407,40 @@ export default function LandingPage() {
             ))}
           </ul>
         </Reveal>
+      </section>
+
+      <section
+        id="faq"
+        className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
+      >
+        <Reveal>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
+            Frequently asked questions.
+          </h2>
+        </Reveal>
+
+        <div className="mt-8">
+          {FAQ.map((item, i) => (
+            <Reveal key={item.q} delay={Math.min(i * 50, 200)}>
+              <details className="group border-b border-[var(--card-border)] py-4">
+                <summary className="flex items-center justify-between gap-4 cursor-pointer text-sm font-medium text-neutral-200 hover:text-white transition-colors list-none [&::-webkit-details-marker]:hidden">
+                  <span>{item.q}</span>
+                  <span
+                    className="shrink-0 w-5 h-5 rounded-md border border-[var(--card-border)] flex items-center justify-center text-[var(--accent-glow)] transition-transform group-open:rotate-45"
+                    aria-hidden="true"
+                  >
+                    <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                      <path d="M8 3v10M3 8h10" />
+                    </svg>
+                  </span>
+                </summary>
+                <p className="mt-3 text-sm text-neutral-400 leading-relaxed pr-8">
+                  {item.a}
+                </p>
+              </details>
+            </Reveal>
+          ))}
+        </div>
       </section>
     </>
   );
