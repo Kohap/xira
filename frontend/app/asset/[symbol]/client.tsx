@@ -192,7 +192,7 @@ export function AssetDetailClient() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 text-center">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-6 text-center">
           <div className="bg-neutral-900/50 rounded-lg p-3">
             <div className="text-lg font-bold tabular-nums">
               {attestation.confidence}%
