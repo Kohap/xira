@@ -73,6 +73,8 @@ export default function RootLayout({
         <head>
           <link rel="preconnect" href="https://xira-gsb3.onrender.com" crossOrigin="anonymous" />
           <link rel="dns-prefetch" href="https://xira-gsb3.onrender.com" />
+          <link rel="apple-touch-icon" href={`${ASSET_BASE}/apple-touch-icon.png`} />
+          <meta name="theme-color" content="#0a0a0f" />
         </head>
       <body
         className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]"

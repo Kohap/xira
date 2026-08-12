@@ -69,6 +69,9 @@ export function ScoreCard({
   factors,
   anomaly,
   data_source,
+  score_delta,
+  pinned,
+  onTogglePin,
 }: {
   symbol: string;
   sector?: string;
@@ -78,6 +81,9 @@ export function ScoreCard({
   factors: { name: string; score: number }[];
   anomaly: boolean;
   data_source?: string;
+  score_delta?: number | null;
+  pinned?: boolean;
+  onTogglePin?: () => void;
 }) {
   const simulated = data_source !== undefined && data_source !== "yahoo";
   return (
@@ -97,6 +103,16 @@ export function ScoreCard({
           </h3>
           <div className="mt-1 flex items-center gap-2">
             <RiskBadge level={risk_level} />
+            {score_delta !== undefined && score_delta !== null && score_delta !== 0 && (
+              <span
+                className={`inline-flex items-center gap-0.5 text-[11px] font-mono tabular-nums ${
+                  score_delta > 0 ? "text-red-400" : "text-green-400"
+                }`}
+                title={`Change vs previous attestation`}
+              >
+                {score_delta > 0 ? "▲" : "▼"} {Math.abs(score_delta)}
+              </span>
+            )}
             {simulated && (
               <span
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider text-yellow-400 bg-yellow-900/20 border border-yellow-700/40"
@@ -149,9 +165,31 @@ export function ScoreCard({
           />
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-neutral-600 font-mono">
-            {sector ?? symbol}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-[11px] text-neutral-600 font-mono">
+              {sector ?? symbol}
+            </span>
+            {onTogglePin && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onTogglePin();
+                }}
+                aria-label={pinned ? `Unpin ${symbol}` : `Pin ${symbol} to watchlist`}
+                title={pinned ? "Unpin" : "Pin to watchlist"}
+                className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                  pinned
+                    ? "text-[var(--accent-glow)] hover:text-white"
+                    : "text-neutral-600 hover:text-neutral-300"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill={pinned ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6-5.4-2.9-5.4 2.9 1-6L3.2 9.4l6.1-.9L12 3z" />
+                </svg>
+              </button>
+            )}
+          </div>
           <a
             href={`/asset/${symbol}`}
             className="inline-flex items-center gap-1 px-2 py-1.5 -mr-1.5 -my-1.5 rounded-lg text-[var(--accent-glow)] hover:underline hover:bg-[var(--card-border)]/50 transition-colors"

@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import type { AllAssetsResponse } from "@/lib/types";
-import { API_BASE } from "@/lib/api";
+import type { AllAssetsResponse, MarketHistoryResponse } from "@/lib/types";
+import { API_BASE, fetchMarketHistory } from "@/lib/api";
 import { ScoreCard, RiskBadge } from "@/components/ScoreCard";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
 
@@ -242,6 +242,47 @@ export default function DashboardPage() {
   const [anomalyOnly, setAnomalyOnly] = useState(false);
   const [view, setView] = useState<"grid" | "table">("grid");
   const [copied, setCopied] = useState(false);
+  const [sectorFilter, setSectorFilter] = useState<string>("ALL");
+  const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [watchReady, setWatchReady] = useState(false);
+  const [marketHistory, setMarketHistory] = useState<MarketHistoryResponse | null>(null);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        const raw = window.localStorage.getItem("xira-watchlist");
+        if (raw) setWatchlist(JSON.parse(raw));
+      } catch {
+        // ignore malformed storage
+      }
+      setWatchReady(true);
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    if (!watchReady) return;
+    try {
+      window.localStorage.setItem("xira-watchlist", JSON.stringify(watchlist));
+    } catch {
+      // storage may be unavailable; watchlist still works for the session
+    }
+  }, [watchlist, watchReady]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(() => {
+      fetchMarketHistory(24)
+        .then((d) => {
+          if (!cancelled) setMarketHistory(d);
+        })
+        .catch(() => {});
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, []);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retriesRef = useRef(0);
@@ -423,12 +464,23 @@ export default function DashboardPage() {
     return acc;
   }, {});
 
+  const sectors = Array.from(
+    new Set(data.assets.map((a) => SECTOR_MAP[a.symbol]).filter(Boolean))
+  ).sort();
+
+  const togglePin = useCallback((symbol: string) => {
+    setWatchlist((prev) =>
+      prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]
+    );
+  }, []);
+
   const visibleAssets = data.assets
     .filter(
       (a) =>
         (query.trim() === "" ||
           a.symbol.toLowerCase().includes(query.trim().toLowerCase())) &&
         (levelFilter === "ALL" || a.risk_level === levelFilter) &&
+        (sectorFilter === "ALL" || SECTOR_MAP[a.symbol] === sectorFilter) &&
         (!anomalyOnly || a.anomaly)
     )
     .slice()
@@ -443,6 +495,15 @@ export default function DashboardPage() {
           return b.risk_score - a.risk_score;
       }
     });
+
+  const recentMoves = data.assets
+    .filter((a) => a.score_delta !== null && a.score_delta !== undefined && a.score_delta !== 0)
+    .sort((a, b) => Math.abs(b.score_delta ?? 0) - Math.abs(a.score_delta ?? 0))
+    .slice(0, 6);
+
+  const pinnedAssets = watchReady
+    ? data.assets.filter((a) => watchlist.includes(a.symbol))
+    : [];
 
   const copyBoard = async () => {
     try {
@@ -580,6 +641,36 @@ export default function DashboardPage() {
           })}
         </div>
 
+        <div
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="group"
+          aria-label="Filter by sector"
+        >
+          {["ALL", ...sectors].map((sector) => {
+            const active = sectorFilter === sector;
+            const count =
+              sector === "ALL"
+                ? data.assets.length
+                : data.assets.filter((a) => SECTOR_MAP[a.symbol] === sector).length;
+            return (
+              <button
+                key={sector}
+                type="button"
+                onClick={() => setSectorFilter(sector)}
+                aria-pressed={active}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-3 h-8 rounded-full border text-xs transition-colors ${
+                  active
+                    ? "border-[var(--accent)]/60 bg-[var(--accent)]/15 text-[var(--accent-glow)]"
+                    : "border-[var(--card-border)] bg-[var(--card-bg)] text-neutral-400 hover:text-white hover:border-neutral-600"
+                }`}
+              >
+                {sector === "ALL" ? "All sectors" : sector}
+                <span className="text-neutral-600 tabular-nums">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="flex items-center gap-2 sm:ml-auto">
           <button
             type="button"
@@ -657,6 +748,130 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {pinnedAssets.length > 0 && (
+        <div className="mt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-[var(--accent-glow)]" fill="currentColor" aria-hidden="true">
+              <path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6-5.4-2.9-5.4 2.9 1-6L3.2 9.4l6.1-.9L12 3z" />
+            </svg>
+            <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500">
+              Watchlist
+            </h2>
+            <span className="text-[11px] text-neutral-600 tabular-nums">
+              {pinnedAssets.length} pinned
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {pinnedAssets.map((asset) => (
+              <ScoreCard
+                key={asset.symbol}
+                symbol={asset.symbol}
+                sector={SECTOR_MAP[asset.symbol]}
+                risk_score={asset.risk_score}
+                risk_level={asset.risk_level}
+                confidence={asset.confidence}
+                factors={asset.factors}
+                anomaly={asset.anomaly}
+                data_source={asset.data_source}
+                score_delta={asset.score_delta}
+                pinned
+                onTogglePin={() => togglePin(asset.symbol)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {recentMoves.length > 0 && (
+        <div className="mt-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500">
+              What&apos;s changed
+            </h2>
+            <span className="text-[10px] text-neutral-600">
+              vs previous attestation
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {recentMoves.map((a) => {
+              const up = (a.score_delta ?? 0) > 0;
+              return (
+                <Link
+                  key={a.symbol}
+                  href={`/asset/${a.symbol}`}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs transition-colors ${
+                    up
+                      ? "border-red-800/50 bg-red-950/20 text-red-300 hover:border-red-700/70"
+                      : "border-emerald-800/50 bg-emerald-950/20 text-emerald-300 hover:border-emerald-700/70"
+                  }`}
+                >
+                  <span className="font-mono font-medium">{a.symbol}</span>
+                  <span className="text-neutral-500 tabular-nums">
+                    {a.previous_score ?? "—"}→{a.risk_score}
+                  </span>
+                  <span className={`tabular-nums ${up ? "text-red-400" : "text-emerald-400"}`}>
+                    {up ? "▲" : "▼"} {Math.abs(a.score_delta ?? 0)}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {marketHistory && marketHistory.points.length >= 2 && (
+        <div className="mt-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500">
+              Market risk trend
+            </h2>
+            <span className="text-[10px] text-neutral-600 tabular-nums">
+              avg score · last {marketHistory.hours}h
+            </span>
+          </div>
+          <svg
+            viewBox="0 0 100 32"
+            preserveAspectRatio="none"
+            className="w-full h-20"
+            role="img"
+            aria-label="Average market risk over the last 24 hours"
+          >
+            <defs>
+              <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#8b7cf6" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#8b7cf6" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {(() => {
+              const pts = marketHistory.points;
+              const min = Math.min(...pts.map((p) => p.avg_score)) - 5;
+              const max = Math.max(...pts.map((p) => p.avg_score)) + 5;
+              const range = Math.max(1, max - min);
+              const coords = pts.map((p, i) => {
+                const x = (i / (pts.length - 1)) * 100;
+                const y = 30 - ((p.avg_score - min) / range) * 28;
+                return `${x.toFixed(2)},${y.toFixed(2)}`;
+              });
+              const line = coords.join(" ");
+              return (
+                <>
+                  <polygon points={`0,32 ${line} 100,32`} fill="url(#trend-fill)" />
+                  <polyline
+                    points={line}
+                    fill="none"
+                    stroke="#8b7cf6"
+                    strokeWidth="1.5"
+                    pathLength={100}
+                    vectorEffect="non-scaling-stroke"
+                    className="chart-line"
+                  />
+                </>
+              );
+            })()}
+          </svg>
+        </div>
+      )}
+
       {visibleAssets.length === 0 ? (
         <div className="mt-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-8 text-center">
           <p className="text-sm text-neutral-400">
@@ -666,6 +881,7 @@ export default function DashboardPage() {
             onClick={() => {
               setQuery("");
               setLevelFilter("ALL");
+              setSectorFilter("ALL");
               setAnomalyOnly(false);
             }}
             className="mt-3 text-xs text-[var(--accent-glow)] hover:underline underline-offset-4"
@@ -681,9 +897,10 @@ export default function DashboardPage() {
                 <th scope="col" className="px-4 py-3 font-medium">Asset</th>
                 <th scope="col" className="px-4 py-3 font-medium">Sector</th>
                 <th scope="col" className="px-4 py-3 font-medium">Risk</th>
+                <th scope="col" className="px-4 py-3 font-medium">Δ</th>
                 <th scope="col" className="px-4 py-3 font-medium">Confidence</th>
                 <th scope="col" className="px-4 py-3 font-medium">Source</th>
-                <th scope="col" className="px-4 py-3"><span className="sr-only">Details</span></th>
+                <th scope="col" className="px-4 py-3"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -726,6 +943,22 @@ export default function DashboardPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
+                    {asset.score_delta !== null &&
+                    asset.score_delta !== undefined &&
+                    asset.score_delta !== 0 ? (
+                      <span
+                        className={`inline-flex items-center gap-0.5 text-xs font-mono tabular-nums ${
+                          asset.score_delta > 0 ? "text-red-400" : "text-green-400"
+                        }`}
+                        title={`Change vs previous attestation`}
+                      >
+                        {asset.score_delta > 0 ? "▲" : "▼"} {Math.abs(asset.score_delta)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-neutral-600">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-2 min-w-[90px]">
                       <div className="flex-1 h-1 bg-neutral-800 rounded-full overflow-hidden">
                         <div
@@ -744,7 +977,21 @@ export default function DashboardPage() {
                       {asset.data_source === "yahoo" ? "LIVE" : asset.data_source.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => togglePin(asset.symbol)}
+                      aria-label={watchlist.includes(asset.symbol) ? `Unpin ${asset.symbol}` : `Pin ${asset.symbol}`}
+                      className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                        watchlist.includes(asset.symbol)
+                          ? "text-[var(--accent-glow)] hover:text-white"
+                          : "text-neutral-600 hover:text-neutral-300"
+                      }`}
+                    >
+                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill={watchlist.includes(asset.symbol) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6-5.4-2.9-5.4 2.9 1-6L3.2 9.4l6.1-.9L12 3z" />
+                      </svg>
+                    </button>
                     <Link
                       href={`/asset/${asset.symbol}`}
                       className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-[var(--accent-glow)] hover:underline hover:bg-[var(--card-border)]/50 transition-colors"
@@ -770,6 +1017,9 @@ export default function DashboardPage() {
               factors={asset.factors}
               anomaly={asset.anomaly}
               data_source={asset.data_source}
+              score_delta={asset.score_delta}
+              pinned={watchlist.includes(asset.symbol)}
+              onTogglePin={() => togglePin(asset.symbol)}
             />
           ))}
         </div>

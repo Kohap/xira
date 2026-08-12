@@ -43,6 +43,31 @@ export function AssetDetailClient() {
   const [detail, setDetail] = useState<AssetDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const copySummary = async () => {
+    if (!attestation) return;
+    const factors = attestation.factors
+      .map((f) => `${f.label.toLowerCase()} ${f.score}`)
+      .join(" · ");
+    const text = [
+      `XIRA score: ${attestation.symbol} ${attestation.risk_score}/100 (${attestation.risk_level})`,
+      `Confidence: ${attestation.confidence}%`,
+      `Factors: ${factors}`,
+      `Evidence: ${attestation.evidence_hash.slice(0, 16)}…`,
+      attestation.chain_tx
+        ? `On-chain: ${attestation.chain_explorer ?? attestation.chain_tx}`
+        : "On-chain: not published for this read",
+      "Verified on X Layer Testnet (Chain ID 1952)",
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   const apiBase = API_BASE;
 
@@ -325,7 +350,29 @@ export function AssetDetailClient() {
         )}
       </div>
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={copySummary}
+          aria-label="Copy attestation summary"
+          className={`inline-flex items-center gap-2 px-4 h-11 rounded-lg border text-sm font-medium transition-colors active:scale-[0.98] ${
+            copied
+              ? "border-emerald-700/60 bg-emerald-950/30 text-emerald-400"
+              : "border-[var(--card-border)] text-neutral-300 hover:text-white hover:border-neutral-600"
+          }`}
+        >
+          {copied ? (
+            <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3.5 8.5l3 3 6-6" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" />
+              <path d="M10.5 5.5v-2a1.5 1.5 0 00-1.5-1.5h-5a1.5 1.5 0 00-1.5 1.5v5a1.5 1.5 0 001.5 1.5h2" />
+            </svg>
+          )}
+          {copied ? "Copied summary" : "Copy score summary"}
+        </button>
         <button
           onClick={fetchData}
           disabled={loading}

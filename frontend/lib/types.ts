@@ -25,6 +25,20 @@ export interface Attestation {
   chain_tx?: string;
   chain_explorer?: string;
   chain_block?: number;
+  previous_score?: number | null;
+  score_delta?: number | null;
+}
+
+export interface MarketHistoryPoint {
+  ts: number;
+  avg_score: number;
+  count: number;
+}
+
+export interface MarketHistoryResponse {
+  generated_at: number;
+  hours: number;
+  points: MarketHistoryPoint[];
 }
 
 export interface AllAssetsResponse {
