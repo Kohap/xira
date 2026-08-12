@@ -223,7 +223,7 @@ export default function RootLayout({
                       </svg>
                     </a>
                     <a
-                      href="https://x.com/Kohap"
+                      href="https://x.com/Xirar1l"
                       target="_blank"
                       rel="noreferrer"
                       aria-label="XIRA on X"
