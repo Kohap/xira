@@ -22,6 +22,8 @@ jobs:
       - run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Generate types
+        run: npx next typegen
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.check.json
       - name: Build
@@ -58,7 +60,7 @@ jobs:
         with:
           version: stable
       - name: Install forge-std
-        run: forge install foundry-rs/forge-std --no-commit
+        run: forge install foundry-rs/forge-std --no-git
       - name: Build
         run: forge build --sizes
       - name: Test
