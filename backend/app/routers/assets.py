@@ -11,6 +11,8 @@ from app.models import (
     AssetDetailResponse,
     AttestationResponse,
     HealthResponse,
+    MarketHistoryPoint,
+    MarketHistoryResponse,
     MarketStatsResponse,
 )
 
@@ -65,8 +67,14 @@ def _analyze_all() -> AllAssetsResponse:
         )
 
         result.timestamp = now
-        if result.data_source == "finnhub":
+        if result.data_source == "yahoo":
             live_count += 1
+
+        # Previous stored score for delta arrows on the board.
+        prev_rows = history_db.get_history(asset["symbol"], limit=1)
+        if prev_rows:
+            result.previous_score = prev_rows[0]["risk_score"]
+            result.score_delta = result.risk_score - prev_rows[0]["risk_score"]
 
         results.append(result)
         if result.anomaly:
@@ -183,6 +191,31 @@ async def history_stats():
         "database": "sqlite",
         "stats": stats,
     }
+
+
+@router.get("/history", response_model=MarketHistoryResponse)
+async def market_history(hours: int = Query(default=24, ge=1, le=168)):
+    """Average board risk score bucketed over time (1-hour buckets)."""
+    cutoff = int(time.time()) - hours * 3600
+    rows = history_db.get_market_history(cutoff)
+    if not rows:
+        return MarketHistoryResponse(generated_at=int(time.time()), hours=hours, points=[])
+
+    bucket_size = 3600
+    buckets: dict[int, list[int]] = {}
+    for row in rows:
+        b = (row["ts"] // bucket_size) * bucket_size
+        buckets.setdefault(b, []).append(row["risk_score"])
+
+    points = [
+        MarketHistoryPoint(
+            ts=b,
+            avg_score=round(sum(v) / len(v), 1),
+            count=len(v),
+        )
+        for b, v in sorted(buckets.items())
+    ]
+    return MarketHistoryResponse(generated_at=int(time.time()), hours=hours, points=points)
 
 
 @router.get("/{symbol}", response_model=AssetDetailResponse)

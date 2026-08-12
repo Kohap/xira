@@ -14,7 +14,6 @@ const MENU_GROUPS = [
   {
     heading: "Product",
     items: [
-      { label: "Alerts", href: "/alerts", note: "Anomalies across the board" },
       { label: "How to verify", href: "/#verify", note: "Check a score onchain" },
       { label: "FAQ", href: "/#faq", note: "Quick answers" },
     ],

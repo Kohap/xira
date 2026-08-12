@@ -171,6 +171,24 @@ class HistoryDB:
             logger.error(f"Failed to get stats: {e}")
             return {}
 
+    def get_market_history(self, cutoff_ts: int) -> list[dict]:
+        """All (timestamp, risk_score) rows at or after cutoff, for market-level aggregation."""
+        try:
+            with self._connect() as conn:
+                cursor = conn.execute("""
+                    SELECT timestamp, risk_score
+                    FROM scores
+                    WHERE timestamp >= ?
+                    ORDER BY timestamp ASC
+                """, (cutoff_ts,))
+                return [
+                    {"ts": row[0], "risk_score": row[1]}
+                    for row in cursor.fetchall()
+                ]
+        except Exception as e:
+            logger.error(f"Failed to get market history: {e}")
+            return []
+
 
 # Singleton instance
 history_db = HistoryDB()

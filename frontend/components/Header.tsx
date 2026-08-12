@@ -6,6 +6,7 @@ import Image from "next/image";
 import xiraLogo from "@/app/xira-logo.jpg";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileMenu } from "@/components/MobileMenu";
+import { AlertBell } from "@/components/AlertBell";
 
 export function Header() {
   const pathname = usePathname();
@@ -62,6 +63,8 @@ export function Header() {
           </Link>
 
           <ThemeToggle />
+
+          <AlertBell />
 
           <MobileMenu />
         </nav>

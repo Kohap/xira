@@ -38,6 +38,8 @@ class AttestationResponse(BaseModel):
     chain_explorer: Optional[str] = None
     chain_block: Optional[int] = None
     chain_id: Optional[int] = None
+    previous_score: Optional[int] = None
+    score_delta: Optional[int] = None
 
 
 class AttestationHistory(BaseModel):
@@ -120,3 +122,15 @@ class MarketStatsResponse(BaseModel):
     anomalies: int
     best: Optional[dict] = None
     worst: Optional[dict] = None
+
+
+class MarketHistoryPoint(BaseModel):
+    ts: int
+    avg_score: float
+    count: int
+
+
+class MarketHistoryResponse(BaseModel):
+    generated_at: int
+    hours: int
+    points: list[MarketHistoryPoint]
