@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_BASE } from "@/lib/api";
 
 interface Candle {
   t: number;
@@ -25,7 +26,7 @@ export function CandleStickChart({ symbol }: { symbol: string }) {
   useEffect(() => {
     let cancelled = false;
     fetch(
-      `https://xira-gsb3.onrender.com/api/assets/${encodeURIComponent(symbol)}/candles`
+      `${API_BASE}/api/assets/${encodeURIComponent(symbol)}/candles`
     )
       .then((r) => r.json())
       .then((d: { candles: Candle[] }) => {
