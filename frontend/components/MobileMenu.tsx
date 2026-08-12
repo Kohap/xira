@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import xiraLogo from "@/app/xira-logo.jpg";
+import { LogoMark } from "@/components/LogoMark";
 import { CopyButton } from "@/components/landing/CopyButton";
 
 const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
@@ -87,13 +86,7 @@ export function MobileMenu() {
       >
         <div className="flex items-center justify-between px-5 h-16 border-b border-[var(--card-border)] shrink-0">
           <div className="flex items-center gap-3">
-            <Image
-              src={xiraLogo}
-              alt=""
-              width={32}
-              height={32}
-              className="w-8 h-8 rounded-lg object-cover"
-            />
+            <LogoMark />
             <span className="font-semibold text-base leading-tight">XIRA</span>
           </div>
           <button

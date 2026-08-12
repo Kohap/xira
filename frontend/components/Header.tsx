@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import xiraLogo from "@/app/xira-logo.jpg";
+import { LogoMark } from "@/components/LogoMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileMenu } from "@/components/MobileMenu";
 import { AlertBell } from "@/components/AlertBell";
@@ -19,13 +18,7 @@ export function Header() {
     <header className="border-b border-[var(--card-border)] bg-[var(--background)]/80 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group min-w-0" aria-label="XIRA home">
-          <Image
-            src={xiraLogo}
-            alt=""
-            width={32}
-            height={32}
-            className="w-8 h-8 shrink-0 rounded-lg object-cover"
-          />
+          <LogoMark />
           <div className="min-w-0">
             <span className="font-semibold text-lg leading-tight block truncate">XIRA</span>
             <span className="hidden min-[400px]:block text-[11px] text-neutral-500 leading-tight block truncate">

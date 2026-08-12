@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
-import Image from "next/image";
 import { Header } from "@/components/Header";
 import { CopyButton } from "@/components/landing/CopyButton";
-import xiraLogo from "./xira-logo.jpg";
+import { LogoMark } from "@/components/LogoMark";
 import xlayerLogo from "./xlayer-logo-light.png";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import "./globals.css";
@@ -101,13 +100,7 @@ export default function RootLayout({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
             <div className="max-w-md">
                 <div className="flex items-center gap-3">
-                  <Image
-                    src={xiraLogo}
-                    alt=""
-                    width={36}
-                    height={36}
-                    className="w-9 h-9 rounded-lg object-cover"
-                  />
+                  <LogoMark size={36} />
                   <div>
                     <span className="font-semibold text-base leading-tight block">
                       XIRA
