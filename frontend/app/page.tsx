@@ -7,7 +7,7 @@ import { LiveHeatmap } from "@/components/landing/LiveHeatmap";
 import { CopyButton } from "@/components/landing/CopyButton";
 
 export const metadata: Metadata = {
-  title: "XIRA — Risk Intelligence on X Layer",
+  title: "XIRA: Risk Intelligence on X Layer",
   description:
     "One honest 0–100 risk score for every tokenized equity, signed onto X Layer as a verifiable attestation.",
 };
@@ -36,7 +36,7 @@ const PIPELINE = [
 const CAPABILITIES = [
   {
     title: "Risk heatmap",
-    copy: "The whole market at a glance — every asset color-coded and sorted by score, with confidence and anomaly flags on hover.",
+    copy: "The whole market at a glance, every asset color-coded and sorted by score, with confidence and anomaly flags on hover.",
   },
   {
     title: "Factor breakdown",
@@ -52,7 +52,7 @@ const CAPABILITIES = [
   },
   {
     title: "Proof trail",
-    copy: "Every score keeps its history — past attestations, score deltas, and the chain transaction hash of each one.",
+    copy: "Every score keeps its history: past attestations, score deltas, and the chain transaction hash of each one.",
   },
   {
     title: "Batch reads",
@@ -70,12 +70,12 @@ const RWA_GAPS = [
   {
     problem: "Price isn't risk",
     answer:
-      "A 0–100 score built from momentum, volatility, sentiment, volume, and liquidity — with a readable reason, so the number explains itself.",
+      "A 0–100 score built from momentum, volatility, sentiment, volume, and liquidity, with a readable reason so the number explains itself.",
   },
   {
     problem: "Risk data is fragmented",
     answer:
-      "One compact attestation per market — score, factors, evidence hash — queryable by contract or agent, no scraping.",
+      "One compact attestation per market: score, factors, and evidence hash, queryable by contract or agent with no scraping.",
   },
   {
     problem: "Dashboards ignore agents",
@@ -111,7 +111,7 @@ export default function LandingPage() {
               <Reveal delay={90}>
                 <p className="mt-6 text-lg text-neutral-400 max-w-xl leading-relaxed">
                   XIRA weighs volatility, momentum, news, volume, and beta into a
-                  single 0–100 score — then signs it onto X Layer so the number
+                  single 0–100 score, then signs it onto X Layer so the number
                   you see is the transaction anyone can verify.
                 </p>
               </Reveal>
@@ -184,7 +184,7 @@ export default function LandingPage() {
             Data in. Signed truth out.
           </h2>
           <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
-            The pipeline is short on purpose — every step is accountable, so a
+            The pipeline is short on purpose: every step is accountable, so a
             score can be traced back to the feed it came from.
           </p>
         </Reveal>
@@ -224,7 +224,7 @@ export default function LandingPage() {
       >
         <Reveal>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-            Built for desks, agents, and auditors.
+            Built for trading teams, agents, and auditors.
           </h2>
         </Reveal>
 
@@ -258,7 +258,7 @@ export default function LandingPage() {
           <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
             The contract is live on X Layer testnet. The oracle re-scores all
             15 markets every 30 minutes and signs each meaningful change to
-            the chain — open a transaction and check it against the model.
+            the chain, open a transaction, and check it against the model.
           </p>
         </Reveal>
 

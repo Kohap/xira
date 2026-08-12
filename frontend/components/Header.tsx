@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
+import xiraLogo from "@/app/xira-logo.jpg";
 
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
 
@@ -27,9 +29,13 @@ export function Header() {
     <header className="border-b border-[var(--card-border)] bg-[var(--background)]/80 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group" aria-label="XIRA home">
-          <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center font-bold text-white text-sm transition-transform group-hover:scale-105 group-active:scale-95">
-            X
-          </div>
+          <Image
+            src={xiraLogo}
+            alt=""
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-lg object-cover transition-transform group-hover:scale-105 group-active:scale-95"
+          />
           <div>
             <span className="font-semibold text-lg leading-tight block">XIRA</span>
             <span className="text-[11px] text-neutral-500 leading-tight block">

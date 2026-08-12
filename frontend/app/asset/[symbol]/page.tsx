@@ -11,7 +11,7 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-  title: "Asset Detail — XIRA",
+    title: "Asset Detail: XIRA",
 };
 
 export default function AssetDetailPage({

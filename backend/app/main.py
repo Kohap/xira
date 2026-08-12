@@ -40,7 +40,7 @@ def _build_endpoints() -> dict:
 
 
 app = FastAPI(
-    title="XIRA — X-Layer Intelligence & Risk Analytics",
+    title="XIRA: X-Layer Intelligence & Risk Analytics",
     description="AI-powered risk intelligence and signals for tokenized equities on X Layer.",
     version="1.0.0",
 )

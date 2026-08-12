@@ -260,7 +260,7 @@ class AIEngine:
         if anomaly and critical_scoring:
             anomaly_reason = f"Critical alert: {', '.join(f.name for f in critical_scoring)} at critically low levels."
         elif anomaly and low_scoring:
-            anomaly_reason = f"Alert on {', '.join(f.name for f in low_scoring)} — scores concerning."
+            anomaly_reason = f"Alert on {', '.join(f.name for f in low_scoring)}: scores concerning."
         elif anomaly:
             anomaly_reason = "Multiple risk factors indicate elevated uncertainty."
         else:

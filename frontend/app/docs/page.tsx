@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "API Docs — XIRA",
+  title: "API Docs: XIRA",
   description:
-    "XIRA API reference: attestation endpoints, payload shapes, the on-chain contract, and MCP tooling — as implemented in v1.0.0.",
+    "XIRA API reference: attestation endpoints, payload shapes, the on-chain contract, and MCP tooling, as implemented in v1.0.0.",
 };
 
 const API_BASE = "https://xira-gsb3.onrender.com";
@@ -38,7 +38,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/assets/health",
     desc: "Service health: version, chain, contract address, tracked asset count, and whether live data is enabled.",
-    query: "—",
+    query: "",
     returns: "HealthResponse",
     note: "The landing page's oracle card mirrors this data.",
   },
@@ -46,7 +46,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/assets/history/stats",
     desc: "SQLite store statistics (row counts per symbol).",
-    query: "—",
+    query: "",
     returns: "{ status, database, stats }",
     note: "Diagnostics.",
   },
@@ -54,7 +54,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/debug/data-sources",
     desc: "Per-ticker data source, cache age, and live-data flag.",
-    query: "—",
+    query: "",
     returns: "{ use_live_data, cache_ttl, cached_tickers, cache_details, env_vars }",
     note: "Diagnostics; may be disabled in stricter deployments.",
   },
@@ -100,7 +100,7 @@ const CONTRACT_FUNCTIONS = [
   {
     sig: "getScore(asset)",
     access: "anyone · view",
-    note: "The single uint8 risk score — one call, one number.",
+    note: "The single uint8 risk score: one call, one number.",
   },
   {
     sig: "getScoreBatch(assets[])",
@@ -216,7 +216,7 @@ export default function DocsPage() {
               <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
                 {e.desc}
               </p>
-              {e.query !== "—" && (
+              {e.query !== "" && (
                 <p className="mt-1 text-xs text-neutral-500 font-mono">{e.query}</p>
               )}
               {e.note && (
@@ -295,7 +295,7 @@ export default function DocsPage() {
               </code>
               <p className="text-xs text-neutral-400">
                 <span className="text-neutral-600 font-mono">{t.maps}</span>{" "}
-                — {t.returns}
+                : {t.returns}
               </p>
             </div>
           ))}
@@ -324,7 +324,7 @@ curl ${API_BASE}/api/assets/health`}
         <p className="mt-3 text-xs text-neutral-500 leading-relaxed">
           Endpoints are additive; breaking changes will bump the
           model version and the docs page together. The contract ABI is fixed
-          at the deployed address and is the compatibility boundary — a
+          at the deployed address and is the compatibility boundary. A
           future verify() addition would be an additive function.
         </p>
       </section>

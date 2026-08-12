@@ -345,7 +345,7 @@ export default function DashboardPage() {
           role="status"
         >
           <p className="text-xs text-yellow-400/90">
-            Last refresh failed — showing the most recent attestations. Auto-retry continues.
+            Last refresh failed. Showing the most recent attestations. Auto-retry continues.
           </p>
           <button
             onClick={() => fetchData(false)}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Use — XIRA",
+  title: "Terms of Use: XIRA",
   description: "Terms governing the use of the XIRA risk analytics service.",
 };
 
@@ -115,7 +115,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-white tracking-tight">9. Contact</h2>
           <p className="mt-3">
-            The project is public at github.com/Kohap/xira — open an issue
+            The project is public at github.com/Kohap/xira. Open an issue
             there for questions, corrections, or security concerns.
           </p>
         </section>

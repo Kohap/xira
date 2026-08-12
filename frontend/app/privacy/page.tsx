@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — XIRA",
+  title: "Privacy Policy: XIRA",
   description: "How XIRA handles (and doesn't handle) your data.",
 };
 
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
           <p className="mt-3">
             Computed risk scores are stored in an SQLite database to provide
             the per-symbol history trail. This store contains symbols, scores,
-            factor values, explanations, and timestamps only — no user data,
+            factor values, explanations, and timestamps only; no user data,
             no IPs, no device fingerprints.
           </p>
         </section>

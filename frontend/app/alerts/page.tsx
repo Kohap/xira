@@ -46,7 +46,7 @@ export default function AlertsPage() {
         setTimeout(() => fetchData(false), RETRY_DELAY_MS);
       }
       if (dataRef.current) {
-        setError("Last refresh failed — showing the most recent alerts.");
+        setError("Last refresh failed. Showing the most recent alerts.");
       } else {
         setError(msg);
       }
@@ -78,7 +78,7 @@ export default function AlertsPage() {
             Anomaly <span className="font-serif italic text-[var(--accent-glow)]">alerts</span>
           </h1>
           <p className="text-sm text-neutral-400 mt-1">
-            Assets where the factor model&apos;s expectations broke — flags
+            Assets where the factor model&apos;s expectations broke. These flags
             carried in the attestation itself.
           </p>
         </div>

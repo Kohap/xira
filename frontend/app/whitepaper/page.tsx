@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Whitepaper — XIRA",
+  title: "Whitepaper: XIRA",
   description:
     "XIRA v1.0.0: five-factor risk scoring for tokenized equities, attested on X Layer. Model definition, formulas, and validation of the logic as implemented.",
 };
@@ -57,7 +57,7 @@ const PIPELINE = [
   },
   {
     step: "Attest",
-    detail: "The result is hashed into an evidence fingerprint (SHA-256 over the canonical JSON payload) and, when a funded oracle key is configured, submitted to the XIRA contract on X Layer testnet via updateAttestation — one transaction per attestation.",
+    detail: "The result is hashed into an evidence fingerprint (SHA-256 over the canonical JSON payload) and, when a funded oracle key is configured, submitted to the XIRA contract on X Layer testnet via updateAttestation. One transaction is used per attestation.",
   },
   {
     step: "Verify",
@@ -93,7 +93,7 @@ const VALIDATION = [
   },
   {
     check: "On-chain bounds enforced twice",
-    detail: "The contract reverts on score > 100 or confidence > 100 (and on zero asset address), and only the owner or authorized updater addresses can write — the same bounds the engine clamps to.",
+    detail: "The contract reverts on score > 100 or confidence > 100 (and on zero asset address), and only the owner or authorized updater addresses can write. These are the same bounds enforced by the engine.",
     verdict: "pass",
   },
   {
@@ -111,7 +111,7 @@ const VALIDATION = [
 const KNOWN_LIMITS = [
   "The current model is heuristic-only: the OpenAI path exists in the engine signature but analyze() always runs the deterministic factor model. Scores are fully reproducible given the same inputs.",
   "The evidence hash does not include timestamp, model version, or the anomaly flag. In v1 the on-chain block timestamp is the source of truth for time; hashing the full payload (modelVersion included) is planned so a later model revision is provable.",
-  "Sentiment is an English keyword classifier and a price-proxy fallback — it measures headline tone, not reported fundamentals or news quality.",
+  "Sentiment is an English keyword classifier and a price-proxy fallback. It measures headline tone, not reported fundamentals or news quality.",
   "The contract stores one latest attestation per asset. There is no per-asset on-chain history and no batch root, so cross-asset proofs use getScoreBatch (reads) rather than a merkle commitment.",
   "Attestations on X Layer testnet are non-final by design; a mainnet deployment would require re-scoping the oracle key custody and gas model.",
 ];
@@ -119,7 +119,7 @@ const KNOWN_LIMITS = [
 const RWA_GAPS: { gap: string; answer: string }[] = [
   {
     gap: "Price alone is insufficient",
-    answer: "A multi-factor 0–100 risk score — momentum, volatility, sentiment, volume anomaly, liquidity — with per-factor breakdown and a human-readable reason, never a bare number.",
+    answer: "A multi-factor 0–100 risk score built from momentum, volatility, sentiment, volume anomaly, and liquidity, with a per-factor breakdown and a human-readable reason.",
   },
   {
     gap: "Risk data is fragmented and off-chain",
@@ -127,11 +127,11 @@ const RWA_GAPS: { gap: string; answer: string }[] = [
   },
   {
     gap: "Agents cannot reliably use RWAs",
-    answer: "Machine-readable attestations plus MCP tooling: one asset, the whole board, or full history — no scraping, no opaque vendor API.",
+    answer: "Machine-readable attestations plus MCP tooling: one asset, the whole board, or full history. No scraping or opaque vendor API.",
   },
   {
     gap: "Low DeFi utilization of tokenized equities",
-    answer: "Collateralized lending is xStocks' most active real-world use — depositing a position to borrow stablecoins without selling it. Lending venues are price-safe but risk-blind; a signed 0–100 risk score is the input their collateral logic is missing.",
+    answer: "Collateralized lending is xStocks' most active real-world use: depositing a position to borrow stablecoins without selling it. Lending venues are price-safe but risk-blind; a signed 0–100 risk score is the input their collateral logic is missing.",
   },
   {
     gap: "No transparency behind the number",
@@ -152,7 +152,7 @@ export default function WhitepaperPage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       <header>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-          XIRA Whitepaper — v1.0.0
+          XIRA Whitepaper: v1.0.0
         </h1>
         <p className="mt-4 text-neutral-400 leading-relaxed">
           X-Layer Intelligence &amp; Risk Analytics produces a single, auditable
@@ -188,13 +188,13 @@ export default function WhitepaperPage() {
             Tokenized equities carry a data problem: the token trades on a
             chain, but the risk that matters is priced in a market elsewhere.
             A holder of an xStock cannot read one credible, dated number about
-            how volatile, crowded, or news-sensitive that position is — and no
+            how volatile, crowded, or news-sensitive that position is, and no
             off-chain vendor produces a number that can be verified without
             trusting them.
           </p>
           <p>
             The mismatch is structural: xStocks trade 24/7 on-chain, while the
-            underlying equity settles during market sessions — so volatility
+            underlying equity settles during market sessions, so volatility
             and liquidity risk accumulate in hours the price ticker never
             shows. The most active real-world use, lending against the token
             as collateral, under prices those hours entirely: a venue can
@@ -228,12 +228,12 @@ export default function WhitepaperPage() {
           <p>
             The scope is deliberate: XIRA does not attempt legal ownership,
             custody, or compliance. It closes the intelligence-and-usability
-            gap — turning price-tracked tokens into assets a vault or agent can
+            gap, turning price-tracked tokens into assets a vault or agent can
             assess and use with a number it can verify.
           </p>
           <p>
             XIRA is also deliberately single-chain. Cross-chain protocols such
-            as Chainlink CCIP solve the <em>movement</em> problem — how assets
+            as Chainlink CCIP solve the <em>movement</em> problem: how assets
             and data travel between networks. XIRA solves the{" "}
             <em>intelligence</em> problem where they arrive: continuous,
             explainable risk context for the assets trading on X Layer. The two
@@ -275,8 +275,8 @@ export default function WhitepaperPage() {
           research: momentum and volatility together cover fast market
           movement (30% combined), volume anomaly and liquidity proxy cover
           the liquidity and market-quality dimension (35% combined),
-          sentiment covers information flow (20%), and holder concentration —
-          an on-chain HHI over balances — is the fourth dimension, planned as
+            sentiment covers information flow (20%), and holder concentration,
+            an on-chain HHI over balances, is the fourth dimension, planned as
           the next factor once the X Layer indexer is wired in (see roadmap).
           Weights are chosen so the most immediately observable risks
           dominate, while noisier signals stay bounded.
@@ -380,15 +380,15 @@ export default function WhitepaperPage() {
           <ul className="space-y-2 font-mono text-[12px] text-neutral-300">
             <li className="flex items-start gap-2">
               <span className="text-[var(--accent-glow)]">getScore(asset)</span>
-              <span className="text-neutral-500">— latest uint8 score</span>
+              <span className="text-neutral-500">latest uint8 score</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--accent-glow)]">getScoreBatch(assets[])</span>
-              <span className="text-neutral-500">— many scores, one call</span>
+              <span className="text-neutral-500">many scores, one call</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--accent-glow)]">getLatestAttestation(asset)</span>
-              <span className="text-neutral-500">— score, confidence, hash, timestamp, version, anomaly</span>
+              <span className="text-neutral-500">score, confidence, hash, timestamp, version, anomaly</span>
             </li>
           </ul>
           <p>
@@ -416,7 +416,7 @@ export default function WhitepaperPage() {
             feed fails or falls behind, the engine serves a deterministic
             simulator and marks{" "}
             <code className="font-mono text-neutral-300">data_source</code>{" "}
-            accordingly — the attestation always states which world the number
+            accordingly. The attestation always states which world the number
             came from.
           </p>
           <p>
@@ -425,7 +425,7 @@ export default function WhitepaperPage() {
             (default 30) the backend re-scores each tracked market and writes a
             new on-chain attestation only if the score moved by at least{" "}
             <code className="font-mono text-neutral-300">XIRA_DEVIATION_THRESHOLD</code>{" "}
-            points (default ±3) — no tx on a flat market. All 15 assets are
+            points (default ±3). There is no tx on a flat market. All 15 assets are
             passed in one pass, and simulated (non-live) data is never
             published on-chain, so every attestation transaction corresponds to
             a real score. The first pass runs 60s after startup, so the oracle
