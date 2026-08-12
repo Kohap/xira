@@ -28,40 +28,47 @@ scripts/rotate-key.sh
 
 ## Deployment Steps
 
-### Option 1: Using the Deploy Script (Recommended)
+### V2 (upgraded contract — history ring buffer, batch updates)
+
+The deployed contract predates the V2 features (`getHistory`, `batchUpdateAttestations`,
+`getAllTrackedAssetsWithScores`, `symbolAddresses`). Deploy the new version and point
+the backend at it:
 
 ```bash
 cd contracts
 
-# Set your private key
-export PRIVATE_KEY=
+# PRIVATE_KEY + ADDRESS live in contracts/.env.deploy (gitignored).
+# The deployer wallet needs testnet OKB from the faucet.
+set -a && source .env.deploy && set +a
 
-# Deploy and register all 15 assets
-forge script script/DeployAll.s.sol \
+forge script script/DeployV2.s.sol \
   --rpc-url https://testrpc.xlayer.tech \
   --broadcast \
   --legacy
 ```
 
-### Option 2: Manual Deployment
+`DeployV2.s.sol` deploys XIRA, registers all 15 xStocks with their **real** EVM
+addresses, and authorizes the deployer as updater.
+
+After deploy:
+1. Copy the new contract address from the output.
+2. Update `XIRA_CONTRACT_ADDRESS` in the Render dashboard env vars.
+3. Update `backend/.env` locally.
+4. Restart the backend (or it picks up on redeploy).
+5. Confirm: `cast call <ADDRESS> "getAllTrackedSymbols()(string[])" --rpc-url https://testrpc.xlayer.tech`
+
+> If the deployer key is not in `.env.deploy`, paste it locally (never commit),
+> or run with `PRIVATE_KEY=0x… forge script …`.
+
+### V1 (original, superseded)
 
 ```bash
 cd contracts
-
-# Deploy the contract
-export PRIVATE_KEY=
-forge script script/Deploy.s.sol \
+export PRIVATE_KEY=<deployer key with testnet OKB>
+forge script script/DeployAll.s.sol \
   --rpc-url https://testrpc.xlayer.tech \
-  --broadcast
-
-# Copy the contract address from the output
-
-# Register assets manually (repeat for each asset)
-cast send <CONTRACT_ADDRESS> \
-  "registerAsset(address,string)" \
-  0xc845b2894dbddd03858fd2d643b4ef725fe0849d NVDAx \
-  --rpc-url https://testrpc.xlayer.tech \
-  --private-key $PRIVATE_KEY
+  --broadcast \
+  --legacy
 ```
 
 > **Token keys:** attestations are keyed by the real X Layer xStock ERC-20 addresses

@@ -45,6 +45,13 @@ class HistoryDB:
                 CREATE INDEX IF NOT EXISTS idx_scores_timestamp 
                 ON scores(timestamp DESC)
             """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS thresholds (
+                    symbol TEXT PRIMARY KEY,
+                    threshold INTEGER,
+                    enabled INTEGER DEFAULT 1
+                )
+            """)
         logger.info(f"History DB initialized at {self.db_path}")
 
     @contextmanager
@@ -188,6 +195,33 @@ class HistoryDB:
         except Exception as e:
             logger.error(f"Failed to get market history: {e}")
             return []
+
+    def get_thresholds(self) -> dict[str, dict]:
+        try:
+            with self._connect() as conn:
+                cursor = conn.execute("SELECT symbol, threshold, enabled FROM thresholds")
+                return {
+                    row[0]: {"threshold": row[1], "enabled": bool(row[2])}
+                    for row in cursor.fetchall()
+                }
+        except Exception as e:
+            logger.error(f"Failed to get thresholds: {e}")
+            return {}
+
+    def set_threshold(self, symbol: str, threshold: int, enabled: bool = True) -> bool:
+        try:
+            with self._connect() as conn:
+                conn.execute("""
+                    INSERT INTO thresholds (symbol, threshold, enabled)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(symbol) DO UPDATE SET
+                        threshold = excluded.threshold,
+                        enabled = excluded.enabled
+                """, (symbol, threshold, 1 if enabled else 0))
+            return True
+        except Exception as e:
+            logger.error(f"Failed to set threshold for {symbol}: {e}")
+            return False
 
 
 # Singleton instance

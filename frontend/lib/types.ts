@@ -41,6 +41,38 @@ export interface MarketHistoryResponse {
   points: MarketHistoryPoint[];
 }
 
+export interface VerifyResult {
+  symbol: string;
+  contract: string;
+  chain_id: number;
+  api: {
+    symbol: string;
+    risk_score: number;
+    confidence: number;
+    evidence_hash: string;
+    timestamp: number;
+    anomaly: boolean;
+  } | null;
+  onchain: {
+    score: number;
+    confidence: number;
+    evidence_hash: string;
+    timestamp: number;
+    model_version: string;
+    anomaly: boolean;
+  } | null;
+  match: {
+    score_matches: boolean;
+    hash_matches: boolean;
+    verified: boolean;
+  } | null;
+  checked_at: number;
+}
+
+export interface ThresholdsResponse {
+  thresholds: Record<string, { threshold: number; enabled: boolean }>;
+}
+
 export interface AllAssetsResponse {
   generated_at: number;
   model_version: string;

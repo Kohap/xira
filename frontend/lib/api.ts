@@ -6,6 +6,8 @@ import type {
   AlertsResponse,
   MarketStats,
   MarketHistoryResponse,
+  VerifyResult,
+  ThresholdsResponse,
 } from "./types";
 
 function normalizeBase(url: string): string {
@@ -69,4 +71,28 @@ export async function fetchMarketHistory(
   return fetchJSON<MarketHistoryResponse>(
     `${API_BASE}/api/assets/history?hours=${hours}`
   );
+}
+
+export async function fetchVerify(symbol: string): Promise<VerifyResult> {
+  return fetchJSON<VerifyResult>(
+    `${API_BASE}/api/assets/verify/${encodeURIComponent(symbol)}`
+  );
+}
+
+export async function fetchThresholds(): Promise<ThresholdsResponse> {
+  return fetchJSON<ThresholdsResponse>(`${API_BASE}/api/alerts/thresholds`);
+}
+
+export async function saveThreshold(
+  symbol: string,
+  threshold: number,
+  enabled: boolean
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${API_BASE}/api/alerts/thresholds`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ symbol, threshold, enabled }),
+  });
+  if (!res.ok) throw new Error(`Threshold API error: ${res.status}`);
+  return res.json();
 }

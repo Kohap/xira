@@ -220,6 +220,47 @@ async def market_history(hours: int = Query(default=24, ge=1, le=168)):
     return MarketHistoryResponse(generated_at=int(time.time()), hours=hours, points=points)
 
 
+@router.get("/verify/{symbol}")
+async def verify_attestation(symbol: str):
+    """Compare the API attestation against what is stored on-chain."""
+    match = _find_asset(symbol)
+
+    board = _get_board()
+    api_att = next((a for a in board.assets if a.symbol == match["symbol"]), None)
+    api_data = None
+    if api_att:
+        api_data = {
+            "symbol": api_att.symbol,
+            "risk_score": api_att.risk_score,
+            "confidence": api_att.confidence,
+            "evidence_hash": api_att.evidence_hash,
+            "timestamp": api_att.timestamp,
+            "anomaly": api_att.anomaly,
+        }
+
+    onchain_data = publisher.read_latest(match["token_address"])
+
+    match_result = None
+    if api_data and onchain_data:
+        same_score = api_data["risk_score"] == onchain_data["score"]
+        same_hash = api_data["evidence_hash"].lower() == onchain_data["evidence_hash"].lower()
+        match_result = {
+            "score_matches": same_score,
+            "hash_matches": same_hash,
+            "verified": same_score and same_hash,
+        }
+
+    return {
+        "symbol": match["symbol"],
+        "contract": publisher.contract_address,
+        "chain_id": publisher.chain_id,
+        "api": api_data,
+        "onchain": onchain_data,
+        "match": match_result,
+        "checked_at": int(time.time()),
+    }
+
+
 @router.get("/{symbol}", response_model=AssetDetailResponse)
 async def get_asset_detail(symbol: str):
     """Single-asset detail: metadata, current score, 24h score delta."""

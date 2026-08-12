@@ -2,13 +2,18 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import type { AlertsResponse } from "@/lib/types";
-import { API_BASE, fetchAlerts } from "@/lib/api";
+import type { AlertsResponse, ThresholdsResponse } from "@/lib/types";
+import { API_BASE, fetchAlerts, fetchThresholds, saveThreshold } from "@/lib/api";
 import { RiskBadge } from "@/components/ScoreCard";
 
 const POLL_SECONDS = 60;
 const MAX_RETRIES = 8;
 const RETRY_DELAY_MS = 10000;
+
+const ALL_SYMBOLS = [
+  "NVDAx", "TSLAx", "AAPLx", "MSFTx", "GOOGLx", "AMZNx", "METAx",
+  "SPYx", "QQQx", "AMDx", "INTCx", "NFLXx", "BAx", "JPMx", "XOMx",
+];
 
 function formatAge(now: number, ts: number): string {
   const s = Math.max(0, Math.round(now - ts));
@@ -28,9 +33,39 @@ export default function AlertsPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [thresholds, setThresholds] = useState<ThresholdsResponse["thresholds"]>({});
+  const [thresholdDrafts, setThresholdDrafts] = useState<Record<string, string>>({});
+  const [thresholdMsg, setThresholdMsg] = useState<string | null>(null);
   const retriesRef = useRef(0);
   const dataRef = useRef<AlertsResponse | null>(null);
   const fetchDataRef = useRef<((showLoading?: boolean) => Promise<void>) | null>(null);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      fetchThresholds()
+        .then((t) => setThresholds(t.thresholds))
+        .catch(() => {});
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
+
+  const applyThreshold = async (symbol: string) => {
+    const raw = thresholdDrafts[symbol]?.trim();
+    if (raw === "") {
+      await saveThreshold(symbol, 0, false);
+    } else {
+      const value = Number(raw);
+      if (Number.isNaN(value) || value < 0 || value > 100) {
+        setThresholdMsg(`Threshold for ${symbol} must be 0-100.`);
+        return;
+      }
+      await saveThreshold(symbol, Math.round(value), true);
+    }
+    setThresholdMsg(`Threshold saved for ${symbol}.`);
+    const t = await fetchThresholds();
+    setThresholds(t.thresholds);
+    void fetchData(false);
+  };
 
   const fetchData = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -126,6 +161,70 @@ export default function AlertsPage() {
 
       {data && (
         <>
+          <div className="mb-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <h2 className="text-sm font-semibold">Risk thresholds</h2>
+              <p className="text-[11px] text-neutral-500">
+                Alert me when a market&apos;s score reaches or exceeds…
+              </p>
+            </div>
+            {thresholdMsg && (
+              <p className="mb-3 text-xs text-emerald-400">{thresholdMsg}</p>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              {ALL_SYMBOLS.map((sym) => {
+                const current = thresholds[sym];
+                const active = current?.enabled && current.threshold !== 0;
+                return (
+                  <div
+                    key={sym}
+                    className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 ${
+                      active
+                        ? "border-[var(--accent)]/50 bg-[var(--accent)]/10"
+                        : "border-[var(--card-border)] bg-black/10"
+                    }`}
+                  >
+                    <span className="text-[11px] font-mono text-neutral-300 shrink-0">
+                      {sym}
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      placeholder={active ? String(current.threshold) : "off"}
+                      value={thresholdDrafts[sym] ?? ""}
+                      onChange={(e) =>
+                        setThresholdDrafts((prev) => ({
+                          ...prev,
+                          [sym]: e.target.value,
+                        }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void applyThreshold(sym);
+                      }}
+                      aria-label={`${sym} threshold`}
+                      className="w-full min-w-0 h-7 px-1.5 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-600 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void applyThreshold(sym)}
+                      aria-label={`Save ${sym} threshold`}
+                      className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md text-neutral-400 hover:text-white hover:bg-[var(--card-border)]/50 transition-colors"
+                    >
+                      <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M3.5 8.5l3 3 6-6" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-[11px] text-neutral-600">
+              Clear the input and save to remove a threshold. Breached
+              thresholds appear in the list and the header bell.
+            </p>
+          </div>
+
           {data.total_alerts === 0 ? (
             <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-12 text-center">
               <div className="mx-auto mb-4 flex items-center justify-center w-12 h-12 rounded-full bg-green-900/40 border border-green-700/50">

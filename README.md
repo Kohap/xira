@@ -197,6 +197,22 @@ anomaly count, and best/worst scoring assets.
 
 ### `GET /api/alerts`
 Returns all currently flagged anomaly alerts, sorted by risk score descending.
+Thresholds set via `PUT /api/alerts/thresholds` are included as alerts too.
+
+### `GET /api/alerts/thresholds` · `PUT /api/alerts/thresholds`
+Read or set per-asset risk thresholds (body: `{"symbol","threshold","enabled"}`).
+When a market's score reaches its threshold, it shows up in `/api/alerts` and
+the header bell.
+
+### `GET /api/assets/verify/{symbol}`
+Compares the API attestation against the on-chain record stored in the XIRA
+contract: score, evidence hash, timestamp, anomaly — with a match verdict.
+
+### `GET /api/assets/history?hours=24`
+Average board risk score in 1-hour buckets, for the dashboard trend chart.
+
+### `GET /api/assets/{symbol}/candles`
+OHLC candles for the underlying ticker (Finnhub), powering the asset detail chart.
 
 ### `GET /api/attestations/{symbol}`
 Returns detailed attestation for a single asset (runs AI analysis on demand, publishes on-chain).
