@@ -86,7 +86,7 @@ def _analyze_all() -> AllAssetsResponse:
     else:
         summary = f"Market outlook: High risk. Avg {avg_score:.0f}/100 across {len(results)} assets. {anomaly_count} alerts."
 
-    summary += f" Data: {source_label} ({live_count}/{len(results)} from Yahoo Finance)."
+    summary += f" Data: {source_label} ({live_count}/{len(results)} live)."
 
     return AllAssetsResponse(
         generated_at=now,
