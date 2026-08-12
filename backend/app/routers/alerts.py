@@ -1,9 +1,7 @@
 from __future__ import annotations
-import os, time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.services.ai_engine import ai_engine
 from app.services.history_db import history_db
 from app.models import AlertItem, AlertsResponse
 

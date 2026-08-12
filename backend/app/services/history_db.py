@@ -3,7 +3,7 @@ import sqlite3
 import json
 import time
 import logging
-from typing import Optional, List
+from typing import List
 from contextlib import contextmanager
 from pathlib import Path
 

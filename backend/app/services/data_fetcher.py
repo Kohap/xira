@@ -3,7 +3,6 @@ import os, logging, time, random, re
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from functools import lru_cache
 import httpx
 
 logger = logging.getLogger(__name__)

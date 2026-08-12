@@ -15,7 +15,8 @@ const MENU_GROUPS = [
     heading: "Product",
     items: [
       { label: "Live board", href: "/dashboard", note: "All 15 xStocks, real-time" },
-      { label: "How to verify", href: "/#verify", note: "Check a score onchain" },
+      { label: "Verify a score", href: "/verify", note: "API vs on-chain comparison" },
+      { label: "How to verify", href: "/#verify", note: "Step-by-step guide" },
       { label: "FAQ", href: "/#faq", note: "Quick answers" },
     ],
   },

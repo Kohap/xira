@@ -21,6 +21,12 @@
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
+    <loc>https://xira-tan.vercel.app/verify</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-08-12</lastmod>
+  </url>
+  <url>
     <loc>https://xira-tan.vercel.app/whitepaper</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

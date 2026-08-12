@@ -10,7 +10,7 @@ import { AlertBell } from "@/components/AlertBell";
 export function Header() {
   const navItems = [
     { label: "How it works", href: "/#how" },
-    { label: "Verify", href: "/#verify" },
+    { label: "Verify", href: "/verify" },
     { label: "Methodology", href: "/whitepaper" },
     { label: "API", href: "/docs" },
   ];
