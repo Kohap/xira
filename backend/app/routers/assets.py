@@ -160,6 +160,31 @@ async def market_stats():
     )
 
 
+@router.get("/health", response_model=HealthResponse)
+async def health_check():
+    contract_addr = os.getenv("XIRA_CONTRACT_ADDRESS", "0x0000000000000000000000000000000000000000")
+    live = os.getenv("USE_LIVE_DATA", "true").lower() == "true"
+    return HealthResponse(
+        status="ok",
+        version=os.getenv("MODEL_VERSION", "v1.0.0"),
+        chain="xlayer-testnet",
+        contract=contract_addr,
+        tracked_assets=len(get_tracked_assets()),
+        live_data=live,
+    )
+
+
+@router.get("/history/stats")
+async def history_stats():
+    """Get database statistics."""
+    stats = history_db.get_stats()
+    return {
+        "status": "ok",
+        "database": "sqlite",
+        "stats": stats,
+    }
+
+
 @router.get("/{symbol}", response_model=AssetDetailResponse)
 async def get_asset_detail(symbol: str):
     """Single-asset detail: metadata, current score, 24h score delta."""
@@ -215,28 +240,3 @@ async def get_asset_detail(symbol: str):
         data_source=current.data_source,
         data_freshness_ms=current.data_freshness_ms,
     )
-
-
-@router.get("/health", response_model=HealthResponse)
-async def health_check():
-    contract_addr = os.getenv("XIRA_CONTRACT_ADDRESS", "0x0000000000000000000000000000000000000000")
-    live = os.getenv("USE_LIVE_DATA", "true").lower() == "true"
-    return HealthResponse(
-        status="ok",
-        version=os.getenv("MODEL_VERSION", "v1.0.0"),
-        chain="xlayer-testnet",
-        contract=contract_addr,
-        tracked_assets=len(get_tracked_assets()),
-        live_data=live,
-    )
-
-
-@router.get("/history/stats")
-async def history_stats():
-    """Get database statistics."""
-    stats = history_db.get_stats()
-    return {
-        "status": "ok",
-        "database": "sqlite",
-        "stats": stats,
-    }
