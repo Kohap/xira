@@ -83,7 +83,17 @@ def _run_pass() -> None:
                 logger.info(f"Scheduler: {symbol} on simulated data — no on-chain publish.")
                 continue
 
-            prev = _last_published.get(symbol)
+            # Use the on-chain value as the source of truth so two instances
+            # evaluate the same state and don't both publish the same score.
+            chain_latest = publisher.read_latest(asset["token_address"])
+            chain_score = chain_latest["score"] if chain_latest else None
+            if chain_latest is not None and chain_latest.get("evidence_hash", "").replace("0x", "").lower() == result.evidence_hash.lower():
+                _diag["skipped_threshold"] += 1
+                logger.info(f"Scheduler: {symbol} already published (same evidence hash).")
+                _last_published[symbol] = result.risk_score
+                continue
+
+            prev = chain_score if chain_score is not None else _last_published.get(symbol)
             if _deviation_ok(prev, result.risk_score):
                 _diag["skipped_threshold"] += 1
                 logger.info(

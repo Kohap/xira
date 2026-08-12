@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 XLAYER_TESTNET_RPC = "https://testrpc.xlayer.tech"
 XLAYER_EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test"
 
+MAX_NONCE_RETRIES = int(os.getenv("XIRA_MAX_NONCE_RETRIES", "3"))
+
 
 def _get_abi() -> list:
     return [
@@ -137,46 +139,59 @@ class OnchainPublisher:
         if not self.enabled or not self.contract or not self.w3 or not self.account:
             return None
 
-        try:
-            evidence_bytes = bytes.fromhex(evidence_hash_hex.replace("0x", ""))
-            if len(evidence_bytes) != 32:
-                evidence_bytes = evidence_bytes.ljust(32, b"\x00")[:32]
+        evidence_bytes = bytes.fromhex(evidence_hash_hex.replace("0x", ""))
+        if len(evidence_bytes) != 32:
+            evidence_bytes = evidence_bytes.ljust(32, b"\x00")[:32]
 
-            tx = self.contract.functions.updateAttestation(
-                self.w3.to_checksum_address(token_address),
-                score,
-                confidence,
-                evidence_bytes,
-                model_version,
-                anomaly,
-                anomaly_reason or "",
-            ).build_transaction({
-                "from": self.account.address,
-                "nonce": self.w3.eth.get_transaction_count(self.account.address),
-                "gas": 300000,
-                "gasPrice": self.w3.eth.gas_price,
-                "chainId": self.chain_id,
-            })
+        for attempt in range(MAX_NONCE_RETRIES):
+            try:
+                tx = self.contract.functions.updateAttestation(
+                    self.w3.to_checksum_address(token_address),
+                    score,
+                    confidence,
+                    evidence_bytes,
+                    model_version,
+                    anomaly,
+                    anomaly_reason or "",
+                ).build_transaction({
+                    "from": self.account.address,
+                    "nonce": self.w3.eth.get_transaction_count(self.account.address),
+                    "gas": 300000,
+                    "gasPrice": self.w3.eth.gas_price,
+                    "chainId": self.chain_id,
+                })
 
-            signed = self.account.sign_transaction(tx)
-            tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
-            receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+                signed = self.account.sign_transaction(tx)
+                tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+                receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
 
-            h = tx_hash.hex()
-            explorer = f"{XLAYER_EXPLORER}/tx/{h}"
-            logger.info(f"Attestation published: {h[:20]}... ({explorer})")
-            self.publishes += 1
+                h = tx_hash.hex()
+                explorer = f"{XLAYER_EXPLORER}/tx/{h}"
+                logger.info(f"Attestation published: {h[:20]}... ({explorer})")
+                self.publishes += 1
 
-            return {
-                "tx_hash": h,
-                "explorer_url": explorer,
-                "block": receipt.get("blockNumber", 0),
-                "gas_used": receipt.get("gasUsed", 0),
-            }
-        except Exception as e:
-            self.last_tx_error = f"{type(e).__name__}: {e}"
-            logger.error(f"Tx failed for {token_address}: {e}")
-            return None
+                return {
+                    "tx_hash": h,
+                    "explorer_url": explorer,
+                    "block": receipt.get("blockNumber", 0),
+                    "gas_used": receipt.get("gasUsed", 0),
+                }
+            except Exception as e:
+                err = f"{e}"
+                # Another instance raced us to the same nonce. Re-fetch and retry.
+                if "nonce too low" in err.lower() and attempt < MAX_NONCE_RETRIES - 1:
+                    logger.warning(
+                        f"Nonce race for {token_address} (nonce too low), retrying "
+                        f"{attempt + 1}/{MAX_NONCE_RETRIES} with a fresh nonce."
+                    )
+                    time.sleep(1.0 * (attempt + 1))
+                    continue
+                self.last_tx_error = f"{type(e).__name__}: {e}"
+                logger.error(f"Tx failed for {token_address}: {e}")
+                return None
+
+        self.last_tx_error = f"tx: exceeded {MAX_NONCE_RETRIES} nonce retries"
+        return None
 
     def read_latest(self, token_address: str) -> Optional[dict]:
         if not self.contract or not self.w3:
