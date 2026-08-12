@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Whitepaper: XIRA",
   description:
-    "XIRA v1.0.0: five-factor risk scoring for tokenized equities, attested on X Layer. Model definition, formulas, and validation of the logic as implemented.",
+    "XIRA: five-factor risk scoring for tokenized equities, attested on X Layer. Model definition, formulas, and validation of the logic as implemented.",
 };
 
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
@@ -152,7 +152,7 @@ export default function WhitepaperPage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       <header>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-          XIRA Whitepaper: v1.0.0
+          XIRA Whitepaper
         </h1>
         <p className="mt-4 text-neutral-400 leading-relaxed">
           X-Layer Intelligence &amp; Risk Analytics produces a single, auditable

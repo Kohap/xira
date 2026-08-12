@@ -172,7 +172,7 @@ export default function AlertsPage() {
                       </p>
                       <p className="text-[11px] text-neutral-600 mt-1 tabular-nums">
                         flagged {formatAge(now, a.timestamp)} · confidence{" "}
-                        {a.confidence}% · model {a.model_version}
+                        {a.confidence}%
                       </p>
                     </div>
                     <div className="flex items-center gap-3 sm:flex-col sm:items-end">

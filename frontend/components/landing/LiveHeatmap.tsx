@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { fetchAllAssets } from "@/lib/api";
+import { fetchBoard } from "@/lib/board-cache";
 import type { AllAssetsResponse } from "@/lib/types";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
 
@@ -17,7 +17,7 @@ export function LiveHeatmap() {
     let localTries = 0;
 
     const attempt = () => {
-      fetchAllAssets()
+      fetchBoard()
         .then((d) => {
           if (cancelled) return;
           setData(d);

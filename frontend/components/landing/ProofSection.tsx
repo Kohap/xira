@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchAllAssets, fetchAttestation } from "@/lib/api";
+import { fetchAttestation } from "@/lib/api";
+import { fetchBoard } from "@/lib/board-cache";
 import type { Attestation } from "@/lib/types";
 import { CopyButton } from "./CopyButton";
 
@@ -12,7 +13,7 @@ export function ProofSection() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchAllAssets()
+    fetchBoard()
       .then((d) => {
         if (cancelled) return;
         const entry = d.assets[0];

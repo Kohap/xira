@@ -173,10 +173,6 @@ export function AssetDetailClient() {
             <div className="text-xs text-neutral-500">Confidence</div>
           </div>
           <div className="bg-neutral-900/50 rounded-lg p-3">
-            <div className="text-lg font-bold">{attestation.model_version}</div>
-            <div className="text-xs text-neutral-500">Model Version</div>
-          </div>
-          <div className="bg-neutral-900/50 rounded-lg p-3">
             <div className="text-lg font-bold">{attestation.factors.length}</div>
             <div className="text-xs text-neutral-500">Factors</div>
           </div>

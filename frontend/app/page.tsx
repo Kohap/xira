@@ -110,7 +110,7 @@ const FAQ = [
   },
   {
     q: "Is this live on mainnet?",
-    a: "Currently live on X Layer Testnet (Chain ID 1952). Mainnet deployment is planned after the hackathon.",
+    a: "Currently live on X Layer Testnet. Mainnet deployment is coming soon.",
   },
 ];
 

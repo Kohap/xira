@@ -232,9 +232,7 @@ export default function DocsPage() {
               Each address below is called an <em>endpoint</em>: you visit it,
               and it returns a JSON response your app (or you, in a browser)
               can read. The base URL for every endpoint is{" "}
-              <code className="font-mono text-[12px] text-neutral-300 break-all">{API_BASE}</code>,
-              and the model currently served is{" "}
-              <code className="font-mono text-[12px] text-neutral-300">v1.0.0</code>.
+              <code className="font-mono text-[12px] text-neutral-300 break-all">{API_BASE}</code>.
             </p>
             <p className="mt-3 text-sm text-neutral-500">
               The frontend is statically hosted; the API is a separate server

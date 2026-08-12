@@ -15,12 +15,20 @@ export const API_BASE = normalizeBase(
   process.env.NEXT_PUBLIC_API_URL || "https://xira-gsb3.onrender.com"
 );
 
+const FETCH_TIMEOUT_MS = 25_000;
+
 async function fetchJSON<T>(url: string): Promise<T> {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { cache: "no-store", signal: controller.signal });
+    if (!res.ok) {
+      throw new Error(`API error: ${res.status} ${res.statusText}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json();
 }
 
 export async function fetchAllAssets(): Promise<AllAssetsResponse> {

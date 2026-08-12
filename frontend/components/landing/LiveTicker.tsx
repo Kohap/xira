@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchAllAssets } from "@/lib/api";
+import { fetchBoard } from "@/lib/board-cache";
 import type { AllAssetsResponse } from "@/lib/types";
 
 const FALLBACK = [
@@ -21,7 +21,7 @@ export function LiveTicker() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchAllAssets()
+    fetchBoard()
       .then((d: AllAssetsResponse) => {
         if (cancelled) return;
         setItems(d.assets.map((a) => `${a.symbol} ${a.risk_score}`));

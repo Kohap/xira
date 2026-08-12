@@ -113,7 +113,6 @@ function SummaryBar({
   summary,
   generatedAt,
   now,
-  modelVersion,
   anomalyCount,
   totalAssets,
   nextRefresh,
@@ -122,7 +121,6 @@ function SummaryBar({
   summary: string;
   generatedAt: number;
   now: number;
-  modelVersion: string;
   anomalyCount: number;
   totalAssets: number;
   nextRefresh: number;
@@ -157,9 +155,6 @@ function SummaryBar({
           <span>
             Next attestation in{" "}
             <span className="text-neutral-300 tabular-nums">{nextRefresh}s</span>
-          </span>
-          <span>
-            Model: <span className="text-neutral-300">{modelVersion}</span>
           </span>
           {anomalyCount > 0 && (
             <span className="px-2 py-0.5 bg-red-900/40 text-red-400 rounded-full font-medium">
@@ -481,7 +476,6 @@ export default function DashboardPage() {
         summary={data.summary}
         generatedAt={data.generated_at}
         now={now}
-        modelVersion={data.model_version}
         anomalyCount={anomalyCount}
         totalAssets={data.assets.length}
         nextRefresh={countdown}
@@ -793,9 +787,6 @@ export default function DashboardPage() {
             Auto-refresh every {POLL_SECONDS}s
           </span>
         </div>
-        <span className="text-xs text-neutral-500">
-          XIRA v{data.model_version}
-        </span>
       </div>
     </div>
   );

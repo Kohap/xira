@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { fetchAllAssets } from "@/lib/api";
+import { fetchBoard } from "@/lib/board-cache";
 import { riskLevelColor } from "@/lib/types";
 import type { AllAssetsResponse } from "@/lib/types";
 import type React from "react";
@@ -52,7 +52,7 @@ export function LiveBars() {
     let localTries = 0;
 
     const attempt = () => {
-      fetchAllAssets()
+      fetchBoard()
         .then((d) => {
           if (cancelled) return;
           setData(d);

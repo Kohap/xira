@@ -66,10 +66,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
-    >
+      <html
+        lang="en"
+        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+      >
+        <head>
+          <link rel="preconnect" href="https://xira-gsb3.onrender.com" crossOrigin="anonymous" />
+          <link rel="dns-prefetch" href="https://xira-gsb3.onrender.com" />
+        </head>
       <body
         className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]"
         style={{
