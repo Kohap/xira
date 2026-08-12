@@ -94,8 +94,8 @@ export function LiveBars() {
             className={`w-2.5 h-2.5 rounded-full ${offline ? "bg-yellow-400" : "bg-emerald-400"} live-dot`}
             aria-hidden="true"
           />
-          <span className="text-xs font-mono font-medium tracking-widest text-neutral-300">
-            LIVE RISK BOARD
+          <span className="text-xs font-mono font-medium text-neutral-300">
+            Live risk board
           </span>
         </div>
         <span className="text-[11px] text-neutral-400 font-mono tabular-nums" role="status">
@@ -144,7 +144,7 @@ export function LiveBars() {
       {data && top.length > 1 && (
         <div className="mt-4 pt-3.5 border-t border-[var(--card-border)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-500">
+            <span className="text-[10px] text-neutral-500">
               Market risk curve
             </span>
             <span className="text-[10px] font-mono tabular-nums text-neutral-600">
@@ -162,20 +162,19 @@ export function LiveBars() {
             >
               <defs>
                 <linearGradient id="xira-curve-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#8b7cf6" stopOpacity="0.32" />
-                  <stop offset="100%" stopColor="#8b7cf6" stopOpacity="0" />
+                  <stop offset="0%" stopColor="var(--accent-glow)" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="var(--accent-glow)" stopOpacity="0" />
                 </linearGradient>
               </defs>
               <polygon
                 points={`0,40 ${curvePoints} 100,40`}
                 fill="url(#xira-curve-fill)"
-                className="animate-fade-in"
               />
               <polyline
                 ref={curveLineRef}
                 points={curvePoints}
                 fill="none"
-                stroke="#8b7cf6"
+                stroke="var(--accent-glow)"
                 strokeWidth="1.5"
                 pathLength={100}
                 vectorEffect="non-scaling-stroke"
@@ -191,7 +190,7 @@ export function LiveBars() {
                     cy={y}
                     r="1.6"
                     fill={scoreStroke(asset.risk_score)}
-                    stroke="#0a0a0f"
+                    stroke="var(--background)"
                     strokeWidth="0.4"
                     vectorEffect="non-scaling-stroke"
                   />
@@ -200,7 +199,7 @@ export function LiveBars() {
             </svg>
             <div
               ref={curveDotRef}
-              className="absolute top-0 left-0 w-2 h-2 rounded-full bg-[var(--accent-glow)] shadow-[0_0_8px_var(--accent-glow)] opacity-0 motion-reduce:hidden"
+              className="absolute top-0 left-0 w-2 h-2 rounded-full bg-[var(--accent-glow)] opacity-0 motion-reduce:hidden"
               aria-hidden="true"
             />
           </div>

@@ -41,7 +41,7 @@ export function DocsToc() {
     <>
       <aside className="hidden lg:block sticky top-24">
         <nav aria-label="On this page">
-          <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500 mb-3">
+          <h2 className="text-[11px] font-medium text-neutral-500 mb-3">
             On this page
           </h2>
           <ul className="space-y-1 border-l border-[var(--card-border)]">

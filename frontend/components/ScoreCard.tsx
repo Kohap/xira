@@ -87,9 +87,9 @@ export function ScoreCard({
 }) {
   const simulated = data_source !== undefined && data_source !== "yahoo";
   return (
-    <div className="group relative bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4 hover:border-neutral-600 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(10,10,15,0.12)] transition-[border-color,transform,box-shadow] duration-200 animate-fade-in">
+    <div className="group relative bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4 hover:border-neutral-600 transition-colors duration-200">
       {anomaly && (
-        <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+        <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-red-500 rounded-full" />
       )}
       <div className="flex items-start justify-between mb-3">
         <div className="min-w-0">

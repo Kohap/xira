@@ -24,7 +24,7 @@ export function Header() {
             alt=""
             width={32}
             height={32}
-            className="w-8 h-8 shrink-0 rounded-lg object-cover transition-transform group-hover:scale-105 group-active:scale-95"
+            className="w-8 h-8 shrink-0 rounded-lg object-cover"
           />
           <div className="min-w-0">
             <span className="font-semibold text-lg leading-tight block truncate">XIRA</span>
@@ -49,11 +49,10 @@ export function Header() {
 
           <Link
             href="/dashboard"
-            className="hidden lg:inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors active:scale-[0.98]"
+            className="hidden lg:inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-sm font-medium transition-colors"
           >
             <span className="relative flex w-1.5 h-1.5" aria-hidden="true">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-60 animate-ping" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--accent-ink)]" />
             </span>
             Live board
           </Link>

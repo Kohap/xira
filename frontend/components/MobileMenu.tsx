@@ -71,7 +71,7 @@ export function MobileMenu() {
     <>
       {open && (
         <div
-          className="fixed inset-0 z-[55] bg-black/50 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[55] bg-black/50 backdrop-blur-sm"
           onClick={close}
           aria-hidden="true"
         />
@@ -112,7 +112,7 @@ export function MobileMenu() {
         <div className="flex-1 overflow-y-auto px-5 py-6 space-y-8">
           {MENU_GROUPS.map((group) => (
             <div key={group.heading}>
-              <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500 mb-2">
+              <h2 className="text-[11px] font-medium text-neutral-500 mb-2">
                 {group.heading}
               </h2>
               <ul className="border-t border-[var(--card-border)]">
@@ -139,7 +139,7 @@ export function MobileMenu() {
           <Link
             href="/dashboard"
             onClick={close}
-            className="flex items-center justify-center gap-2 px-4 h-12 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 px-4 h-12 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-sm font-medium transition-colors"
           >
             Open live board
           </Link>

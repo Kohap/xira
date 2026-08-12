@@ -11,12 +11,12 @@ const SYMBOLS = [
 ];
 
 function fmt(ts: number): string {
-  if (!ts) return "—";
+  if (!ts) return "–";
   return new Date(ts * 1000).toLocaleString();
 }
 
 function shortHash(h: string): string {
-  if (!h) return "—";
+  if (!h) return "–";
   if (h.startsWith("0x") && h.length > 18) return `${h.slice(0, 10)}…${h.slice(-6)}`;
   if (h.length > 18) return `${h.slice(0, 10)}…${h.slice(-6)}`;
   return h;
@@ -126,7 +126,7 @@ export default function VerifyPage() {
           type="button"
           onClick={() => void run(symbol)}
           disabled={loading}
-          className="inline-flex items-center justify-center px-5 h-11 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors disabled:opacity-50 active:scale-[0.98]"
+          className="inline-flex items-center justify-center px-5 h-11 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-sm font-medium transition-colors disabled:opacity-50 active:scale-[0.98]"
         >
           {loading ? "Verifying…" : "Verify"}
         </button>
@@ -160,7 +160,7 @@ export default function VerifyPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-[11px] sm:text-[11px] font-mono uppercase tracking-widest text-neutral-600 border-b border-[var(--card-border)] pb-2">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-[11px] sm:text-[11px] font-medium text-neutral-600 border-b border-[var(--card-border)] pb-2">
             <span>Field</span>
             <span>API</span>
             <span>On-chain</span>
@@ -168,14 +168,14 @@ export default function VerifyPage() {
 
           <Row
             label="Risk score"
-            apiValue={result.api ? `${result.api.risk_score}/100` : "—"}
-            chainValue={result.onchain ? `${result.onchain.score}/100` : "—"}
+            apiValue={result.api ? `${result.api.risk_score}/100` : "–"}
+            chainValue={result.onchain ? `${result.onchain.score}/100` : "–"}
             match={result.match?.score_matches}
           />
           <Row
             label="Confidence"
-            apiValue={result.api ? `${result.api.confidence}%` : "—"}
-            chainValue={result.onchain ? `${result.onchain.confidence}%` : "—"}
+            apiValue={result.api ? `${result.api.confidence}%` : "–"}
+            chainValue={result.onchain ? `${result.onchain.confidence}%` : "–"}
           />
           <Row
             label="Evidence hash"
@@ -190,8 +190,8 @@ export default function VerifyPage() {
           />
           <Row
             label="Anomaly"
-            apiValue={result.api ? (result.api.anomaly ? "yes" : "no") : "—"}
-            chainValue={result.onchain ? (result.onchain.anomaly ? "yes" : "no") : "—"}
+            apiValue={result.api ? (result.api.anomaly ? "yes" : "no") : "–"}
+            chainValue={result.onchain ? (result.onchain.anomaly ? "yes" : "no") : "–"}
           />
 
           {!result.onchain && (

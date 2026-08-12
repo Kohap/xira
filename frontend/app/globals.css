@@ -2,20 +2,21 @@
 
 :root {
   color-scheme: dark;
-  --background: #0a0a0f;
-  --foreground: #eaeaec;
-  --card-bg: #111119;
-  --card-border: #1e1e2e;
-  --accent: #6c5ce7;
-  --accent-glow: #8b7cf6;
+  --background: #0d0c0b;
+  --foreground: #e9e7e2;
+  --card-bg: #161412;
+  --card-border: #28241e;
+  --accent: #e0dcd2;
+  --accent-glow: #c3bcae;
+  --accent-ink: #141210;
   --risk-low: #22c55e;
   --risk-moderate: #eab308;
   --risk-elevated: #f97316;
   --risk-high: #ef4444;
   --risk-critical: #dc2626;
   --supervisual-bg: url("/supervisual-bg.jpg");
-  --scrim-top: rgba(10, 10, 15, 0.48);
-  --scrim-bottom: rgba(10, 10, 15, 0.58);
+  --scrim-top: rgba(13, 12, 11, 0.48);
+  --scrim-bottom: rgba(13, 12, 11, 0.58);
   --band: #000000;
   --n-50: #fafafa;
   --n-100: #f5f5f5;
@@ -72,14 +73,16 @@
 
 [data-theme="light"] {
   color-scheme: light;
-  --background: #f4f4f8;
-  --foreground: #16161d;
-  --card-bg: #ffffff;
-  --card-border: #d9d9e3;
-  --accent-glow: #5b4bd0;
-  --scrim-top: rgba(244, 244, 248, 0.82);
-  --scrim-bottom: rgba(244, 244, 248, 0.92);
-  --band: #e9e9f0;
+  --background: #f5f3ee;
+  --foreground: #1d1b17;
+  --card-bg: #fdfcfa;
+  --card-border: #dfdbd1;
+  --accent: #1d1b17;
+  --accent-glow: #63562f;
+  --accent-ink: #ffffff;
+  --scrim-top: rgba(245, 243, 238, 0.82);
+  --scrim-bottom: rgba(245, 243, 238, 0.92);
+  --band: #eceae4;
   --n-50: #ffffff;
   --n-100: #2b2b34;
   --n-200: #2f2f38;
@@ -263,7 +266,7 @@ html {
 
 ::selection {
   background: var(--accent-glow);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 ::placeholder {
@@ -279,12 +282,12 @@ html {
   background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a35;
+  background: #2c2923;
   border-radius: 6px;
   border: 3px solid var(--background);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a48;
+  background: #3d3931;
 }
 
 textarea,
@@ -302,18 +305,7 @@ input {
   }
 }
 
-/* Scroll-reveal (used with the Reveal component) */
-.reveal {
-  opacity: 0;
-  transform: translateY(16px);
-  transition:
-    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.reveal.is-visible {
-  opacity: 1;
-  transform: none;
-}
+/* Scroll-reveal was removed: content is always visible by default. */
 
 /* Live score bars (height set statically; animation only refines it) */
 @keyframes bar-grow {
@@ -323,29 +315,6 @@ input {
 .score-bar {
   height: var(--bar-h);
   animation: bar-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* Moving highlight across the live bars */
-@keyframes bar-shine {
-  0% { background-position: 130% 0; }
-  100% { background-position: -30% 0; }
-}
-.score-bar {
-  position: relative;
-  overflow: hidden;
-}
-.score-bar::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.22) 50%,
-    transparent 65%
-  );
-  background-size: 250% 100%;
-  animation: bar-shine 3.2s ease-in-out infinite;
 }
 
 /* Risk-curve chart: continuous left-to-right draw so the line flows like
@@ -374,58 +343,18 @@ input {
   animation-play-state: paused;
 }
 
-/* Live status dot */
-@keyframes live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
+/* Live status dot: a static marker, no pulse */
 .live-dot {
-  animation: live-pulse 1.8s ease-in-out infinite;
-}
-
-/* Hero backdrop: one soft radial signal, ground stays plain */
-.hero-glow {
-  background: radial-gradient(
-    ellipse 70% 60% at 55% 0%,
-    rgba(108, 92, 231, 0.08) 0%,
-    transparent 70%
-  );
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(108, 92, 231, 0.3); }
-  50% { box-shadow: 0 0 18px rgba(108, 92, 231, 0.6); }
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.4s ease-out forwards;
+  border-radius: 9999px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
   .marquee-track,
-  .live-dot,
-  .animate-pulse-glow,
-  .animate-fade-in,
   .score-bar,
-  .score-bar::after,
   .chart-line {
     animation: none;
   }
-  .score-bar::after {
-    display: none;
+  .score-bar {
+    height: var(--bar-h);
   }
 }

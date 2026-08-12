@@ -146,7 +146,7 @@ export default function AlertsPage() {
           <p className="text-red-400/80 text-xs mb-5 font-mono break-all">{error}</p>
           <button
             onClick={refetch}
-            className="px-5 h-11 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors active:scale-[0.98]"
+            className="px-5 h-11 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-sm font-medium transition-colors active:scale-[0.98]"
           >
             Retry now
           </button>
@@ -280,7 +280,7 @@ export default function AlertsPage() {
                         {a.risk_score}
                       </span>
                       <RiskBadge level={a.risk_level} />
-                      <span className="hidden sm:block text-[10px] uppercase tracking-widest text-neutral-600">
+                      <span className="hidden sm:block text-[10px] font-medium text-neutral-600">
                         {severityOf(a.risk_score)}
                       </span>
                     </div>

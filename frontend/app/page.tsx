@@ -142,8 +142,7 @@ export default function LandingPage() {
     <>
       <LiveTicker />
 
-      <section className="relative overflow-hidden">
-        <div className="hero-glow absolute inset-0" aria-hidden="true" />
+      <section className="relative">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 lg:py-28">
           <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-16 items-center">
             <div>
@@ -168,7 +167,7 @@ export default function LandingPage() {
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
                   <a
                     href="/dashboard"
-                    className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-glow)] hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(108,92,231,0.35)] text-white font-medium transition-[background-color,transform,box-shadow] active:scale-[0.98]"
+                    className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-[var(--accent)] text-[var(--accent-ink)] hover:bg-[var(--accent-glow)] font-medium transition-colors"
                   >
                     Open live board
                   </a>
@@ -262,8 +261,8 @@ export default function LandingPage() {
             <Reveal key={step.verb} delay={i * 90}>
               <div className="relative">
                 <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-[var(--accent)]/15 border border-[var(--accent)]/30 flex items-center justify-center font-mono text-xs text-[var(--accent-glow)]">
-                    {i + 1}
+                  <span className="font-mono text-xs text-[var(--accent-glow)] tabular-nums">
+                    {String(i + 1).padStart(2, "0")}
                   </span>
                   <h3 className="font-semibold text-lg">{step.verb}</h3>
                 </div>
@@ -359,10 +358,10 @@ export default function LandingPage() {
             <Reveal key={step.title} delay={Math.min(i * 80, 240)}>
               <li className="flex gap-4 sm:gap-5">
                 <span
-                  className="shrink-0 w-9 h-9 rounded-lg bg-[var(--accent)]/15 border border-[var(--accent)]/30 flex items-center justify-center font-mono text-xs font-semibold text-[var(--accent-glow)]"
+                  className="shrink-0 font-mono text-xs font-semibold text-[var(--accent-glow)] tabular-nums pt-1"
                   aria-hidden="true"
                 >
-                  {i + 1}
+                  {String(i + 1).padStart(2, "0")}
                 </span>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-medium text-neutral-200 leading-snug">
@@ -451,10 +450,10 @@ export default function LandingPage() {
                 <summary className="flex items-center justify-between gap-4 cursor-pointer text-sm font-medium text-neutral-200 hover:text-white transition-colors list-none [&::-webkit-details-marker]:hidden">
                   <span>{item.q}</span>
                   <span
-                    className="shrink-0 w-5 h-5 rounded-md border border-[var(--card-border)] flex items-center justify-center text-[var(--accent-glow)] transition-transform group-open:rotate-45"
+                    className="shrink-0 w-5 h-5 flex items-center justify-center text-[var(--accent-glow)] transition-transform group-open:rotate-45"
                     aria-hidden="true"
                   >
-                    <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
                       <path d="M8 3v10M3 8h10" />
                     </svg>
                   </span>

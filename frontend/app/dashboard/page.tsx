@@ -443,7 +443,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => fetchData(true)}
-              className="inline-flex items-center justify-center px-5 h-11 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors active:scale-[0.98]"
+              className="inline-flex items-center justify-center px-5 h-11 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-sm font-medium transition-colors active:scale-[0.98]"
             >
               Retry now
             </button>
@@ -546,7 +546,7 @@ export default function DashboardPage() {
 
       <MarketPulse assets={data.assets} />
 
-      <div className="animate-fade-in">
+      <div>
         <AlertsStrip assets={data.assets} />
 
         <RiskHeatmap assets={data.assets} />
@@ -754,7 +754,7 @@ export default function DashboardPage() {
             <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-[var(--accent-glow)]" fill="currentColor" aria-hidden="true">
               <path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6-5.4-2.9-5.4 2.9 1-6L3.2 9.4l6.1-.9L12 3z" />
             </svg>
-            <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500">
+            <h2 className="text-[11px] font-medium text-neutral-500">
               Watchlist
             </h2>
             <span className="text-[11px] text-neutral-600 tabular-nums">
@@ -785,7 +785,7 @@ export default function DashboardPage() {
       {recentMoves.length > 0 && (
         <div className="mt-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500">
+            <h2 className="text-[11px] font-medium text-neutral-500">
               What&apos;s changed
             </h2>
             <span className="text-[10px] text-neutral-600">
@@ -822,7 +822,7 @@ export default function DashboardPage() {
       {marketHistory && marketHistory.points.length >= 2 && (
         <div className="mt-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500">
+            <h2 className="text-[11px] font-medium text-neutral-500">
               Market risk trend
             </h2>
             <span className="text-[10px] text-neutral-600 tabular-nums">
@@ -838,8 +838,8 @@ export default function DashboardPage() {
           >
             <defs>
               <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8b7cf6" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#8b7cf6" stopOpacity="0" />
+                <stop offset="0%" stopColor="var(--accent-glow)" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="var(--accent-glow)" stopOpacity="0" />
               </linearGradient>
             </defs>
             {(() => {
@@ -859,7 +859,7 @@ export default function DashboardPage() {
                   <polyline
                     points={line}
                     fill="none"
-                    stroke="#8b7cf6"
+                    stroke="var(--accent-glow)"
                     strokeWidth="1.5"
                     pathLength={100}
                     vectorEffect="non-scaling-stroke"
@@ -893,7 +893,7 @@ export default function DashboardPage() {
         <div className="mt-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl overflow-x-auto">
           <table className="w-full text-sm min-w-[560px]">
             <thead>
-              <tr className="text-left text-[11px] font-mono uppercase tracking-widest text-neutral-500 border-b border-[var(--card-border)]">
+              <tr className="text-left text-[11px] font-medium text-neutral-500 border-b border-[var(--card-border)]">
                 <th scope="col" className="px-4 py-3 font-medium">Asset</th>
                 <th scope="col" className="px-4 py-3 font-medium">Sector</th>
                 <th scope="col" className="px-4 py-3 font-medium">Risk</th>

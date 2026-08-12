@@ -39,7 +39,7 @@ export function NewsletterForm() {
       />
       <button
         type="submit"
-        className="shrink-0 h-9 px-3 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-xs font-medium transition-colors active:scale-[0.98]"
+        className="shrink-0 h-9 px-3 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-xs font-medium transition-colors active:scale-[0.98]"
       >
         Notify me
       </button>

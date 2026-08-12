@@ -60,7 +60,7 @@ export function RiskHeatmap({ assets }: HeatmapProps) {
 
               {isAnomaly && (
                 <span
-                  className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-pulse"
+                  className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full"
                   aria-hidden="true"
                 />
               )}
