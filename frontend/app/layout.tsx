@@ -169,8 +169,6 @@ export default function RootLayout({
                     links: [
                       { label: "Privacy Policy", href: "/privacy" },
                       { label: "Terms of Service", href: "/terms" },
-                      { label: "Cookie Settings", href: "/privacy" },
-                      { label: "Copyright Notice", href: "/terms" },
                     ],
                   },
                 ].map((col) => (
