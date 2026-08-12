@@ -9,6 +9,23 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+# Yahoo Finance now requires a proper User-Agent for API access.
+YF_SESSION = None
+try:
+    import requests as _requests
+    _session = _requests.Session()
+    _session.headers.update({
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json",
+        "Accept-Language": "en-US,en;q=0.9",
+    })
+    YF_SESSION = _session
+except ImportError:
+    pass
+
 # In-memory cache for price data (5 minute TTL)
 _price_cache: dict[str, tuple[PriceData, float]] = {}
 CACHE_TTL = 300  # 5 minutes
@@ -145,8 +162,8 @@ def fetch_price_data(ticker: str) -> Optional[PriceData]:
     for attempt in range(2):  # 2 attempts with retry
         try:
             logger.info(f"Fetching live data for {ticker} (attempt {attempt + 1})...")
-            stock = yf.Ticker(ticker)
-            
+            stock = yf.Ticker(ticker, session=YF_SESSION)
+
             # Single history call with timeout
             history = stock.history(period="1mo", timeout=15)
 
@@ -208,7 +225,7 @@ def fetch_price_data(ticker: str) -> Optional[PriceData]:
 
 def fetch_news_sentiment(ticker: str) -> SentimentData:
     try:
-        stock = yf.Ticker(ticker)
+        stock = yf.Ticker(ticker, session=YF_SESSION)
         news = stock.news
         if news and len(news) > 0:
             headlines = [
