@@ -243,7 +243,7 @@ export default function DocsPage() {
 
           <section id="endpoints" className="mt-14 scroll-mt-24">
             <h2 className="text-xl font-semibold tracking-tight">Endpoints</h2>
-            <p className="mt-3 text-sm text-neutral-400 leading-relaxed">
+            <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
               Every endpoint serves one job: the board, one asset, its
               history, market stats, alerts, or health. The interactive
               OpenAPI docs at <code className="font-mono text-[12px] text-neutral-300">/docs</code>{" "}
@@ -272,7 +272,7 @@ export default function DocsPage() {
                       {e.returns}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+                  <p className="mt-2 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
                     {e.desc}
                   </p>
                   {e.query !== "" && (
@@ -288,7 +288,7 @@ export default function DocsPage() {
 
           <section id="example" className="mt-12 scroll-mt-24">
             <h2 className="text-xl font-semibold tracking-tight">Example response</h2>
-            <p className="mt-3 text-sm text-neutral-400 leading-relaxed">
+            <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
               This is what one asset&apos;s record looks like. The important
               parts: <code className="font-mono text-[12px] text-neutral-300">risk_score</code>{" "}
               (the 0–100 number), <code className="font-mono text-[12px] text-neutral-300">factors</code>{" "}
@@ -316,7 +316,7 @@ export default function DocsPage() {
 
           <section id="contract" className="mt-12 scroll-mt-24">
             <h2 className="text-xl font-semibold tracking-tight">On-chain contract</h2>
-            <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+            <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
               Every score is also published to a small program on the X Layer
               blockchain, so the number does not live only on one server.
               Anyone can read it there, and the stored fingerprint lets you
@@ -324,7 +324,7 @@ export default function DocsPage() {
               Layer Testnet (chain 1952) at{" "}
               <code className="font-mono text-[12px] text-neutral-300 break-all">{CONTRACT}</code>.
             </p>
-            <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+            <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
               Think of it as a public notice board: the oracle posts the
               latest score for each market, and anyone can check the post.
               Read functions are open to everyone; only the oracle can write.
@@ -349,7 +349,7 @@ export default function DocsPage() {
 
           <section id="mcp" className="mt-12 scroll-mt-24">
             <h2 className="text-xl font-semibold tracking-tight">Agents (MCP tools)</h2>
-            <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+            <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
               AI agents can use the same data through MCP (Model Context
               Protocol) tools. Instead of reading a dashboard, an agent asks
               one of these tools and receives the answer directly, with the
@@ -376,7 +376,7 @@ export default function DocsPage() {
 
           <section id="quickstart" className="mt-12 scroll-mt-24">
             <h2 className="text-xl font-semibold tracking-tight">Quickstart</h2>
-            <p className="mt-3 text-sm text-neutral-400 leading-relaxed">
+            <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
               You do not need an API key. Copy any of these into a terminal:
             </p>
             <pre className="mt-3 p-4 rounded-xl bg-black/40 border border-[var(--card-border)] text-xs font-mono overflow-x-auto leading-relaxed text-neutral-300">

@@ -292,6 +292,16 @@ input {
   caret-color: var(--accent-glow);
 }
 
+/* iOS Safari zooms into any input below 16px on focus — enforce 16px
+   on touch devices so form taps don't zoom the page. */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* Scroll-reveal (used with the Reveal component) */
 .reveal {
   opacity: 0;

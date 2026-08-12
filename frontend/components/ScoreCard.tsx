@@ -115,7 +115,7 @@ export function ScoreCard({
             )}
             {simulated && (
               <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider text-yellow-400 bg-yellow-900/20 border border-yellow-700/40"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider text-yellow-400 bg-yellow-900/20 border border-yellow-700/40"
                 title="Score computed from simulated data"
               >
                 simulated

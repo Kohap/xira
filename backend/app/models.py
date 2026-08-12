@@ -134,18 +134,3 @@ class MarketHistoryResponse(BaseModel):
     generated_at: int
     hours: int
     points: list[MarketHistoryPoint]
-
-
-class Candle(BaseModel):
-    t: int       # unix timestamp
-    o: float     # open
-    h: float     # high
-    l: float     # low
-    c: float     # close
-    v: int = 0   # volume
-
-
-class CandlesResponse(BaseModel):
-    symbol: str
-    resolution: str = "D"
-    candles: list[Candle]

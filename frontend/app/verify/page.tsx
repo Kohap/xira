@@ -160,7 +160,7 @@ export default function VerifyPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-neutral-600 border-b border-[var(--card-border)] pb-2">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-[11px] sm:text-[11px] font-mono uppercase tracking-widest text-neutral-600 border-b border-[var(--card-border)] pb-2">
             <span>Field</span>
             <span>API</span>
             <span>On-chain</span>

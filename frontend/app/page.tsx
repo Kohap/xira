@@ -147,14 +147,6 @@ export default function LandingPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 lg:py-28">
           <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-16 items-center">
             <div>
-              <Reveal>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-1.5 mb-6">
-                  <span className="live-dot w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-                  <span className="text-[11px] font-mono text-neutral-400">
-                    LIVE ON X LAYER TESTNET · CHAIN 1952
-                  </span>
-                </div>
-              </Reveal>
               <Reveal delay={60}>
                 <h1 className="text-[2.6rem] leading-[1.05] sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
                   One risk number for every{" "}
@@ -285,7 +277,7 @@ export default function LandingPage() {
                     </svg>
                   </span>
                 )}
-                <p className="mt-3 text-sm text-neutral-400 leading-relaxed">
+                <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
                   {step.copy}
                 </p>
               </div>
@@ -314,7 +306,7 @@ export default function LandingPage() {
                   </span>
                   {cap.title}
                 </h3>
-                <p className="text-sm text-neutral-400 leading-relaxed max-w-xl">
+                <p className="text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-xl">
                   {cap.copy}
                 </p>
               </div>
@@ -385,7 +377,7 @@ export default function LandingPage() {
                         <CopyButton value={CONTRACT} label="contract address" />
                       </div>
                     ) : i === 1 ? (
-                      <p className="text-sm text-neutral-400 leading-relaxed">
+                      <p className="text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
                         <a
                           href={CONTRACT_URL}
                           target="_blank"
@@ -397,7 +389,7 @@ export default function LandingPage() {
                         and check its latest transactions.
                       </p>
                     ) : (
-                      <p className="text-sm text-neutral-400 leading-relaxed">
+                      <p className="text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
                         {step.detail}
                       </p>
                     )}
@@ -467,7 +459,7 @@ export default function LandingPage() {
                     </svg>
                   </span>
                 </summary>
-                <p className="mt-3 text-sm text-neutral-400 leading-relaxed pr-8">
+                <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed pr-8">
                   {item.a}
                 </p>
               </details>

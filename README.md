@@ -211,8 +211,6 @@ contract: score, evidence hash, timestamp, anomaly — with a match verdict.
 ### `GET /api/assets/history?hours=24`
 Average board risk score in 1-hour buckets, for the dashboard trend chart.
 
-### `GET /api/assets/{symbol}/candles`
-OHLC candles for the underlying ticker (Finnhub), powering the asset detail chart.
 
 ### `GET /api/attestations/{symbol}`
 Returns detailed attestation for a single asset (runs AI analysis on demand, publishes on-chain).

@@ -147,7 +147,7 @@ export function AlertBell() {
                         <span className="block text-xs text-neutral-400 leading-relaxed">
                           {a.anomaly_reason}
                         </span>
-                        <span className="block text-[10px] text-neutral-600 mt-0.5 tabular-nums">
+                        <span className="block text-[11px] text-neutral-600 mt-0.5 tabular-nums">
                           flagged {formatAge(now, a.timestamp)}
                         </span>
                       </span>

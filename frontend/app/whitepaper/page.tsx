@@ -183,7 +183,7 @@ export default function WhitepaperPage() {
 
       <section className="mt-14">
         <h2 className="text-xl font-semibold tracking-tight">1. Problem</h2>
-        <div className="mt-4 space-y-4 text-sm text-neutral-400 leading-relaxed">
+        <div className="mt-4 space-y-4 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
           <p>
             Tokenized equities carry a data problem: the token trades on a
             chain, but the risk that matters is priced in a market elsewhere.
@@ -254,7 +254,7 @@ export default function WhitepaperPage() {
               <h3 className="font-mono text-sm text-[var(--accent-glow)]">
                 {i + 1}. {p.step}
               </h3>
-              <p className="text-sm text-neutral-400 leading-relaxed">
+              <p className="text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
                 {p.detail}
               </p>
             </div>
@@ -264,13 +264,13 @@ export default function WhitepaperPage() {
 
       <section className="mt-12">
         <h2 className="text-xl font-semibold tracking-tight">3. The risk model</h2>
-        <p className="mt-4 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+        <p className="mt-4 text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
           The composite risk score is the weighted sum of five normalized
           factor scores. Every factor measures a distinct failure mode for a
           tokenized position; a high factor score always means <em>more</em>{" "}
           risk.
         </p>
-        <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+        <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
           The five factors map onto four risk dimensions identified in RWA
           research: momentum and volatility together cover fast market
           movement (30% combined), volume anomaly and liquidity proxy cover
@@ -312,10 +312,10 @@ export default function WhitepaperPage() {
         <div className="mt-8 space-y-6">
           <div>
             <h3 className="font-semibold text-sm">Composite score</h3>
-            <p className="mt-2 text-sm text-neutral-400 leading-relaxed font-mono">
+            <p className="mt-2 text-sm sm:text-[15px] text-neutral-400 leading-relaxed font-mono">
               risk = round(Σ weightᵢ × scoreᵢ), scoreᵢ ∈ [0, 100]
             </p>
-            <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+            <p className="mt-2 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
               Weighted sum, rounded, then mapped to a band:
             </p>
             <div className="mt-3 flex flex-col sm:flex-row flex-wrap gap-2 text-xs font-mono">
@@ -329,17 +329,17 @@ export default function WhitepaperPage() {
 
           <div>
             <h3 className="font-semibold text-sm">Anomaly and confidence</h3>
-            <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+            <p className="mt-2 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
               An attestation is flagged anomalous when{" "}
               <code className="font-mono text-neutral-300">any factor ≤ 15</code>{" "}
               or{" "}
               <code className="font-mono text-neutral-300">two or more factors ≤ 25</code>.
               Confidence is a deterministic function of the result:
             </p>
-            <p className="mt-2 text-sm text-neutral-400 leading-relaxed font-mono">
+            <p className="mt-2 text-sm sm:text-[15px] text-neutral-400 leading-relaxed font-mono">
               confidence = clamp(30, 100, 40 + healthy × 10 + (80 − risk) × 0.15)
             </p>
-            <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+            <p className="mt-2 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
               where healthy counts factors scored at 50 or above. The lower
               clamp never binds (minimum reachable is 37), so confidence
               reports genuine model agreement rather than a floor artifact.
@@ -352,7 +352,7 @@ export default function WhitepaperPage() {
         <h2 className="text-xl font-semibold tracking-tight">
           4. Attestation and verification
         </h2>
-        <div className="mt-4 space-y-4 text-sm text-neutral-400 leading-relaxed">
+        <div className="mt-4 space-y-4 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
           <p>
             Each attestation stores: symbol, composite score, confidence, the
             five factor scores with weights and descriptions, a plain-language
@@ -406,7 +406,7 @@ export default function WhitepaperPage() {
         <h2 className="text-xl font-semibold tracking-tight">
           5. Data pipeline
         </h2>
-        <div className="mt-4 space-y-4 text-sm text-neutral-400 leading-relaxed">
+        <div className="mt-4 space-y-4 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
           <p>
             In live mode the fetcher pulls daily price history, volume, 52-week
             range, and market cap per underlying from Yahoo Finance and scores
@@ -444,7 +444,7 @@ export default function WhitepaperPage() {
         <h2 className="text-xl font-semibold tracking-tight">
           6. History and trail
         </h2>
-        <div className="mt-4 space-y-4 text-sm text-neutral-400 leading-relaxed">
+        <div className="mt-4 space-y-4 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
           <p>
             Every computed attestation is appended to an SQLite store (with a
             bounded in-memory buffer of the most recent 50 per symbol). The{" "}
@@ -459,7 +459,7 @@ export default function WhitepaperPage() {
         <h2 className="text-xl font-semibold tracking-tight">
           7. Validation of the logic
         </h2>
-        <p className="mt-4 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+        <p className="mt-4 text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
           Each invariant below is checked against the running implementation
           (backend <code className="font-mono text-[12px]">services/ai_engine.py</code>,
           routers, and the deployed Solidity contract), not against the design
@@ -472,7 +472,7 @@ export default function WhitepaperPage() {
               className="grid sm:grid-cols-[170px_1fr_auto] gap-1 sm:gap-6 py-3 border-t border-[var(--card-border)] last:border-b items-baseline"
             >
               <h3 className="text-sm font-medium">{v.check}</h3>
-              <p className="text-sm text-neutral-400 leading-relaxed">{v.detail}</p>
+              <p className="text-sm sm:text-[15px] text-neutral-400 leading-relaxed">{v.detail}</p>
               <span
                 className={`text-[11px] font-mono uppercase tracking-wide whitespace-nowrap ${
                   v.verdict === "pass"
@@ -495,7 +495,7 @@ export default function WhitepaperPage() {
         </h2>
         <ul className="mt-4 space-y-3">
           {KNOWN_LIMITS.map((limit) => (
-            <li key={limit} className="flex items-start gap-3 text-sm text-neutral-400 leading-relaxed">
+            <li key={limit} className="flex items-start gap-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
               <svg viewBox="0 0 16 16" className="w-4 h-4 mt-0.5 shrink-0 text-neutral-600" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
                 <path d="M8 3v10M3 8h10" />
               </svg>
@@ -509,7 +509,7 @@ export default function WhitepaperPage() {
         <h2 className="text-xl font-semibold tracking-tight">9. Roadmap</h2>
         <ul className="mt-4 space-y-3">
           {ROADMAP.map((item) => (
-            <li key={item} className="flex items-start gap-3 text-sm text-neutral-400 leading-relaxed">
+            <li key={item} className="flex items-start gap-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
               <svg viewBox="0 0 16 16" className="w-4 h-4 mt-0.5 shrink-0 text-[var(--accent-glow)]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M3.5 8.5l3 3 6-6" />
               </svg>

@@ -70,7 +70,7 @@ export function RiskHeatmap({ assets }: HeatmapProps) {
               <div className="relative text-xl sm:text-2xl font-bold text-white tabular-nums">
                 {asset.risk_score}
               </div>
-              <div className="relative text-[10px] sm:text-[11px] text-white/85 mt-1 uppercase tracking-wide">
+              <div className="relative text-[11px] sm:text-[11px] text-white/85 mt-1 uppercase tracking-wide">
                 {asset.risk_level}
               </div>
 
