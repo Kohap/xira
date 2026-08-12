@@ -68,8 +68,8 @@ Landing → **Give your agents a risk desk**: `xira_get_asset_risk`,
 
 - Site: GitHub Pages (repo `Kohap/xira` → Actions → Deploy Frontend)
 - API: `https://xira-gsb3.onrender.com/docs` (OpenAPI)
-- Contract: `0x64288ccD936470f66D7035e824A9141C938C32AE` on
-  [OKX X Layer testnet explorer](https://www.okx.com/web3/explorer/xlayer-test/address/0x64288ccD936470f66D7035e824A9141C938C32AE)
+- Contract: `0xaa5f6215e947ffce2f46513a926af3239be545d0` on
+  [OKX X Layer testnet explorer](https://www.okx.com/web3/explorer/xlayer-test/address/0xaa5f6215e947ffce2f46513a926af3239be545d0)
 - MCP: `python3 mcp_server/server.py`
 
 ## Troubleshooting

@@ -84,11 +84,11 @@ forge script script/DeployAll.s.sol \
    ```bash
    cd ../backend
    # Update .env — or set the secret in the Render dashboard (recommended):
-   XIRA_CONTRACT_ADDRESS=0x64288ccD936470f66D7035e824A9141C938C32AE
+   XIRA_CONTRACT_ADDRESS=0xaa5f6215e947ffce2f46513a926af3239be545d0
    PRIVATE_KEY=<set-from-secret>
    ```
 3. **Restart the backend** to enable on-chain attestations
-4. **Verify on explorer**: https://www.okx.com/web3/explorer/xlayer-test/address/0x64288ccD936470f66D7035e824A9141C938C32AE
+4. **Verify on explorer**: https://www.okx.com/web3/explorer/xlayer-test/address/0xaa5f6215e947ffce2f46513a926af3239be545d0
 
 ## What Gets Deployed
 

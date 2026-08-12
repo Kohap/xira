@@ -6,7 +6,7 @@ import { fetchBoard } from "@/lib/board-cache";
 import type { Attestation } from "@/lib/types";
 import { CopyButton } from "./CopyButton";
 
-const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
+const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
 
 export function ProofSection() {
   const [latest, setLatest] = useState<Attestation | null>(null);

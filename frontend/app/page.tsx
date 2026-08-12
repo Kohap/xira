@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
 };
 
-const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
+const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
 const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
 const CONTRACT_URL = `${EXPLORER}/address/${CONTRACT}`;
 
