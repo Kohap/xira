@@ -168,11 +168,10 @@ def fetch_price_data(ticker: str) -> Optional[PriceData]:
     for attempt in range(2):  # 2 attempts with retry
         try:
             logger.info(f"Fetching live data for {ticker} (attempt {attempt + 1})...")
-            time.sleep(2)  # space requests to avoid Yahoo rate-limiting on shared IPs
-            stock = yf.Ticker(ticker, session=YF_SESSION)
+            time.sleep(3)  # space requests to avoid Yahoo rate-limiting on shared IPs
 
-            # Single history call with timeout
-            history = stock.history(period="1mo", timeout=15)
+            # Use download() instead of Ticker.history() — different endpoint.
+            history = yf.download(ticker, period="1mo", progress=False, session=YF_SESSION)
 
             if history.empty:
                 logger.warning(f"No price history for {ticker}")
@@ -181,7 +180,7 @@ def fetch_price_data(ticker: str) -> Optional[PriceData]:
             data = PriceData()
             data.daily_prices = history["Close"].tolist()
             closes = data.daily_prices
-            data.price = round(closes[-1], 2) if closes else 0.0
+            data.price = round(float(closes[-1]), 2) if len(closes) > 0 else 0.0
             data.source = "yahoo"
             data.fetched_at = time.time()
 
