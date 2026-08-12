@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import Image from "next/image";
 import { Header } from "@/components/Header";
 import { CopyButton } from "@/components/landing/CopyButton";
 import { LogoMark } from "@/components/LogoMark";
@@ -181,9 +182,6 @@ export default function RootLayout({
                         <li key={link.label}>
                           <a
                             href={link.href}
-                            {...(link.external
-                              ? { target: "_blank", rel: "noreferrer" }
-                              : {})}
                             className="text-sm text-neutral-400 hover:text-white transition-colors"
                           >
                             {link.label}
