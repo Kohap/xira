@@ -73,7 +73,8 @@ export function AssetDetailClient() {
   }, [symbol, apiBase]);
 
   useEffect(() => {
-    fetchData();
+    const id = setTimeout(() => void fetchData(), 0);
+    return () => clearTimeout(id);
   }, [fetchData]);
 
   if (loading) {

@@ -38,11 +38,13 @@ export function MobileMenu() {
   const pathname = usePathname();
 
   useEffect(() => {
-    setMounted(true);
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
   }, []);
 
   useEffect(() => {
-    setOpen(false);
+    const id = requestAnimationFrame(() => setOpen(false));
+    return () => cancelAnimationFrame(id);
   }, [pathname]);
 
   useEffect(() => {

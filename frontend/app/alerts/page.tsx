@@ -61,7 +61,8 @@ export default function AlertsPage() {
   }, [fetchData]);
 
   useEffect(() => {
-    fetchData();
+    const id = setTimeout(() => void fetchData(), 0);
+    return () => clearTimeout(id);
   }, [fetchData]);
 
   useEffect(() => {

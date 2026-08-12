@@ -117,7 +117,7 @@ export function LiveBars() {
             />
           ))
         ) : (
-          top.map((asset, i) => (
+          top.map((asset) => (
             <Link
               key={asset.symbol}
               href={`/asset/${asset.symbol}`}

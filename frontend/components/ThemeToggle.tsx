@@ -15,7 +15,8 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
-    setTheme(getInitialTheme());
+    const id = requestAnimationFrame(() => setTheme(getInitialTheme()));
+    return () => cancelAnimationFrame(id);
   }, []);
 
   const toggle = () => {
