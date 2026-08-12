@@ -68,6 +68,7 @@ export function ScoreCard({
   confidence,
   factors,
   anomaly,
+  data_source,
 }: {
   symbol: string;
   sector?: string;
@@ -76,7 +77,9 @@ export function ScoreCard({
   confidence: number;
   factors: { name: string; score: number }[];
   anomaly: boolean;
+  data_source?: string;
 }) {
+  const simulated = data_source !== undefined && data_source !== "yahoo";
   return (
     <div className="group relative bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4 hover:border-neutral-600 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(10,10,15,0.12)] transition-[border-color,transform,box-shadow] duration-200 animate-fade-in">
       {anomaly && (
@@ -92,8 +95,16 @@ export function ScoreCard({
               </span>
             )}
           </h3>
-          <div className="mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <RiskBadge level={risk_level} />
+            {simulated && (
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider text-yellow-400 bg-yellow-900/20 border border-yellow-700/40"
+                title="Score computed from simulated data"
+              >
+                simulated
+              </span>
+            )}
           </div>
         </div>
         <GaugeRing score={risk_score} size={56} />

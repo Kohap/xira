@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import type { AllAssetsResponse } from "@/lib/types";
 import { API_BASE } from "@/lib/api";
-import { ScoreCard } from "@/components/ScoreCard";
+import { ScoreCard, RiskBadge } from "@/components/ScoreCard";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
 
 const POLL_SECONDS = 60;
@@ -243,6 +243,10 @@ export default function DashboardPage() {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"score" | "symbol" | "confidence">("score");
   const [retryCount, setRetryCount] = useState(0);
+  const [levelFilter, setLevelFilter] = useState<string>("ALL");
+  const [anomalyOnly, setAnomalyOnly] = useState(false);
+  const [view, setView] = useState<"grid" | "table">("grid");
+  const [copied, setCopied] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retriesRef = useRef(0);
@@ -418,12 +422,18 @@ export default function DashboardPage() {
   if (!data) return null;
 
   const anomalyCount = data.assets.filter((a) => a.anomaly).length;
+  const levelCounts = RISK_ORDER.reduce<Record<string, number>>((acc, level) => {
+    acc[level] = data.assets.filter((a) => a.risk_level === level).length;
+    return acc;
+  }, {});
 
   const visibleAssets = data.assets
     .filter(
       (a) =>
-        query.trim() === "" ||
-        a.symbol.toLowerCase().includes(query.trim().toLowerCase())
+        (query.trim() === "" ||
+          a.symbol.toLowerCase().includes(query.trim().toLowerCase())) &&
+        (levelFilter === "ALL" || a.risk_level === levelFilter) &&
+        (!anomalyOnly || a.anomaly)
     )
     .slice()
     .sort((a, b) => {
@@ -437,6 +447,16 @@ export default function DashboardPage() {
           return b.risk_score - a.risk_score;
       }
     });
+
+  const copyBoard = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -531,17 +551,216 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="group"
+          aria-label="Filter by risk level"
+        >
+          {["ALL", ...RISK_ORDER].map((level) => {
+            const active = levelFilter === level;
+            const count = level === "ALL" ? data.assets.length : levelCounts[level];
+            return (
+              <button
+                key={level}
+                type="button"
+                onClick={() => setLevelFilter(level)}
+                aria-pressed={active}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-3 h-8 rounded-full border text-xs transition-colors ${
+                  active
+                    ? "border-[var(--accent)]/60 bg-[var(--accent)]/15 text-[var(--accent-glow)]"
+                    : "border-[var(--card-border)] bg-[var(--card-bg)] text-neutral-400 hover:text-white hover:border-neutral-600"
+                }`}
+              >
+                {level !== "ALL" && (
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${RISK_BAR_COLORS[level]}`}
+                    aria-hidden="true"
+                  />
+                )}
+                {level === "ALL" ? "All" : level.charAt(0) + level.slice(1).toLowerCase()}
+                <span className="text-neutral-600 tabular-nums">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <button
+            type="button"
+            onClick={() => setAnomalyOnly((v) => !v)}
+            aria-pressed={anomalyOnly}
+            className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-full border text-xs transition-colors ${
+              anomalyOnly
+                ? "border-red-700/60 bg-red-950/30 text-red-300"
+                : "border-[var(--card-border)] bg-[var(--card-bg)] text-neutral-400 hover:text-white hover:border-neutral-600"
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${anomalyOnly ? "bg-red-400" : "bg-neutral-600"}`} aria-hidden="true" />
+            Alerts only
+            <span className="text-neutral-600 tabular-nums">{anomalyCount}</span>
+          </button>
+
+          <div className="inline-flex items-center rounded-lg border border-[var(--card-border)] overflow-hidden" role="group" aria-label="View">
+            <button
+              type="button"
+              onClick={() => setView("grid")}
+              aria-pressed={view === "grid"}
+              className={`inline-flex items-center gap-1.5 h-8 px-2.5 text-xs transition-colors ${
+                view === "grid"
+                  ? "bg-[var(--accent)]/15 text-[var(--accent-glow)]"
+                  : "bg-[var(--card-bg)] text-neutral-400 hover:text-white"
+              }`}
+            >
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+                <rect x="2" y="2" width="5" height="5" rx="1" />
+                <rect x="9" y="2" width="5" height="5" rx="1" />
+                <rect x="2" y="9" width="5" height="5" rx="1" />
+                <rect x="9" y="9" width="5" height="5" rx="1" />
+              </svg>
+              Grid
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("table")}
+              aria-pressed={view === "table"}
+              className={`inline-flex items-center gap-1.5 h-8 px-2.5 text-xs transition-colors ${
+                view === "table"
+                  ? "bg-[var(--accent)]/15 text-[var(--accent-glow)]"
+                  : "bg-[var(--card-bg)] text-neutral-400 hover:text-white"
+              }`}
+            >
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+                <path d="M2 4h12M2 8h12M2 12h12" />
+                <path d="M6 4v8M11 4v8" />
+              </svg>
+              Table
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={copyBoard}
+            className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border text-xs transition-colors ${
+              copied
+                ? "border-emerald-700/60 bg-emerald-950/30 text-emerald-400"
+                : "border-[var(--card-border)] bg-[var(--card-bg)] text-neutral-400 hover:text-white hover:border-neutral-600"
+            }`}
+          >
+            {copied ? (
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3.5 8.5l3 3 6-6" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" />
+                <path d="M10.5 5.5v-2a1.5 1.5 0 00-1.5-1.5h-5a1.5 1.5 0 00-1.5 1.5v5a1.5 1.5 0 001.5 1.5h2" />
+              </svg>
+            )}
+            {copied ? "Copied" : "Copy JSON"}
+          </button>
+        </div>
+      </div>
+
       {visibleAssets.length === 0 ? (
         <div className="mt-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-8 text-center">
           <p className="text-sm text-neutral-400">
-            No assets match &quot;{query}&quot;.
+            No assets match your filters.
           </p>
           <button
-            onClick={() => setQuery("")}
+            onClick={() => {
+              setQuery("");
+              setLevelFilter("ALL");
+              setAnomalyOnly(false);
+            }}
             className="mt-3 text-xs text-[var(--accent-glow)] hover:underline underline-offset-4"
           >
-            Clear search
+            Clear filters
           </button>
+        </div>
+      ) : view === "table" ? (
+        <div className="mt-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl overflow-x-auto">
+          <table className="w-full text-sm min-w-[560px]">
+            <thead>
+              <tr className="text-left text-[11px] font-mono uppercase tracking-widest text-neutral-500 border-b border-[var(--card-border)]">
+                <th scope="col" className="px-4 py-3 font-medium">Asset</th>
+                <th scope="col" className="px-4 py-3 font-medium">Sector</th>
+                <th scope="col" className="px-4 py-3 font-medium">Risk</th>
+                <th scope="col" className="px-4 py-3 font-medium">Confidence</th>
+                <th scope="col" className="px-4 py-3 font-medium">Source</th>
+                <th scope="col" className="px-4 py-3"><span className="sr-only">Details</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleAssets.map((asset) => (
+                <tr
+                  key={asset.symbol}
+                  className="border-b border-[var(--card-border)] last:border-0 hover:bg-[var(--card-border)]/30 transition-colors"
+                >
+                  <td className="px-4 py-3">
+                    <Link href={`/asset/${asset.symbol}`} className="group flex items-center gap-2">
+                      <span className="font-mono font-medium text-neutral-200 group-hover:text-[var(--accent-glow)] transition-colors">
+                        {asset.symbol}
+                      </span>
+                      {asset.anomaly && (
+                        <span className="live-dot w-1.5 h-1.5 rounded-full bg-red-400" title="Anomaly" aria-label="Anomaly" />
+                      )}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-neutral-500">
+                    {SECTOR_MAP[asset.symbol] ?? "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-sm font-semibold tabular-nums ${
+                          asset.risk_score <= 20
+                            ? "text-green-400"
+                            : asset.risk_score <= 40
+                              ? "text-yellow-400"
+                              : asset.risk_score <= 60
+                                ? "text-orange-400"
+                                : asset.risk_score <= 80
+                                  ? "text-red-400"
+                                  : "text-red-500"
+                        }`}
+                      >
+                        {asset.risk_score}
+                      </span>
+                      <RiskBadge level={asset.risk_level} />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 min-w-[90px]">
+                      <div className="flex-1 h-1 bg-neutral-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[var(--accent-glow)]"
+                          style={{ width: `${asset.confidence}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-neutral-500 tabular-nums w-8 text-right">
+                        {asset.confidence}%
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono ${asset.data_source === "yahoo" ? "text-emerald-400" : "text-yellow-400"}`}>
+                      <span className={`w-1 h-1 rounded-full ${asset.data_source === "yahoo" ? "bg-emerald-400" : "bg-yellow-400"}`} aria-hidden="true" />
+                      {asset.data_source === "yahoo" ? "LIVE" : asset.data_source.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={`/asset/${asset.symbol}`}
+                      className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-[var(--accent-glow)] hover:underline hover:bg-[var(--card-border)]/50 transition-colors"
+                    >
+                      details →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
@@ -555,6 +774,7 @@ export default function DashboardPage() {
               confidence={asset.confidence}
               factors={asset.factors}
               anomaly={asset.anomaly}
+              data_source={asset.data_source}
             />
           ))}
         </div>
