@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
 from app.services.publisher import publisher
+from app.services.scheduler import scheduler_diag
 from app.services.history_db import history_db
 from app.models import (
     AllAssetsResponse,
@@ -181,6 +182,8 @@ async def health_check():
         tracked_assets=len(get_tracked_assets()),
         live_data=live,
         signer=signer,
+        scheduler=scheduler_diag(),
+        last_publish_error=publisher.last_tx_error,
     )
 
 

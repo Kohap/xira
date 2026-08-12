@@ -13,6 +13,25 @@ FIRST_PASS_DELAY_S = float(os.getenv("XIRA_FIRST_PASS_DELAY_S", "60"))
 
 _last_published: dict[str, int] = {}
 
+_diag: dict = {
+    "last_pass_at": None,
+    "pass_count": 0,
+    "publishes": 0,
+    "skipped_mock": 0,
+    "skipped_threshold": 0,
+    "missing_prices": 0,
+    "errors": [],
+}
+
+
+def scheduler_diag() -> dict:
+    return {
+        **_diag,
+        "heartbeat_minutes": HEARTBEAT_MINUTES,
+        "deviation_threshold": DEVIATION_THRESHOLD,
+        "last_published": dict(_last_published),
+    }
+
 
 def _store_history(symbol: str, result):
     from app.routers.attestations import _store_history as store
@@ -31,12 +50,16 @@ async def _run_pass() -> None:
         logger.info("Scheduler: publisher disabled (no contract/key). Skipping publish pass.")
         return
 
+    _diag["last_pass_at"] = int(time.time())
+    _diag["pass_count"] += 1
+
     for asset in get_tracked_assets():
         symbol = asset["symbol"]
         try:
             prices, _ = data_fetcher.fetch_all_prices([asset["underlying"]])
             price_data = prices.get(asset["underlying"])
             if price_data is None:
+                _diag["missing_prices"] += 1
                 continue
 
             sentiments, _ = data_fetcher.fetch_all_sentiments([asset["underlying"]], prices)
@@ -56,11 +79,13 @@ async def _run_pass() -> None:
             )
 
             if result.data_source == "mock":
+                _diag["skipped_mock"] += 1
                 logger.info(f"Scheduler: {symbol} on simulated data — no on-chain publish.")
                 continue
 
             prev = _last_published.get(symbol)
             if _deviation_ok(prev, result.risk_score):
+                _diag["skipped_threshold"] += 1
                 logger.info(
                     f"Scheduler: {symbol} score {result.risk_score} "
                     f"(prev {prev}) — within threshold, skipping tx."
@@ -79,9 +104,14 @@ async def _run_pass() -> None:
             )
             if tx:
                 _last_published[symbol] = result.risk_score
+                _diag["publishes"] += 1
                 _store_history(symbol, result)
                 logger.info(f"Scheduler: {symbol} published ({tx['tx_hash'][:14]}…).")
         except Exception as e:
+            msg = f"{symbol}: {e}"
+            if len(_diag["errors"]) >= 5:
+                _diag["errors"].pop(0)
+            _diag["errors"].append(msg)
             logger.error(f"Scheduler: pass failed for {symbol}: {e}")
 
 

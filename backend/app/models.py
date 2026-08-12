@@ -70,6 +70,8 @@ class HealthResponse(BaseModel):
     tracked_assets: int
     live_data: bool = False
     signer: Optional[str] = None
+    scheduler: Optional[dict] = None
+    last_publish_error: Optional[str] = None
 
 
 class AssetDetailResponse(BaseModel):

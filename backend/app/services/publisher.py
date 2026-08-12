@@ -93,6 +93,8 @@ class OnchainPublisher:
             and self.private_key
         )
         self.chain_id: Optional[int] = None
+        self.last_tx_error: Optional[str] = None
+        self.publishes: int = 0
         self._init_web3()
 
     def _init_web3(self):
@@ -163,6 +165,7 @@ class OnchainPublisher:
             h = tx_hash.hex()
             explorer = f"{XLAYER_EXPLORER}/tx/{h}"
             logger.info(f"Attestation published: {h[:20]}... ({explorer})")
+            self.publishes += 1
 
             return {
                 "tx_hash": h,
@@ -171,6 +174,7 @@ class OnchainPublisher:
                 "gas_used": receipt.get("gasUsed", 0),
             }
         except Exception as e:
+            self.last_tx_error = f"{type(e).__name__}: {e}"
             logger.error(f"Tx failed for {token_address}: {e}")
             return None
 
