@@ -211,7 +211,7 @@ def generate_explanation(
     if anomaly and anomaly_reason:
         base += f" ALERT: {anomaly_reason}"
 
-    src_label = "real-time" if data_source in ("finnhub", "yahoo") else "simulated"
+    src_label = "real-time" if data_source == "finnhub" else "simulated"
     base += f" Data: {src_label}."
 
     return base

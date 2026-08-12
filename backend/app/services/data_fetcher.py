@@ -4,41 +4,13 @@ from typing import Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import lru_cache
-import yfinance as yf
 import httpx
 
 logger = logging.getLogger(__name__)
 
-# Finnhub free tier: 60 req/min, quote + candles + company profile.
+# Finnhub free tier: 60 req/min, quote + candles + company profile + news.
 FINNHUB_KEY = os.getenv("FINNHUB_API_KEY", "")
 FINNHUB_BASE = "https://finnhub.io/api/v1"
-
-# Yahoo Finance session (fallback when Finnhub is unavailable).
-YF_SESSION = None
-try:
-    import requests as _requests
-    _session = _requests.Session()
-    _session.headers.update({
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/json",
-        "Accept-Language": "en-US,en;q=0.9",
-    })
-    from urllib3.util import Retry
-    adapter = _requests.adapters.HTTPAdapter(
-        pool_connections=20, pool_maxsize=20, max_retries=Retry(total=1, backoff_factor=0.5)
-    )
-    _session.mount("https://", adapter)
-    YF_SESSION = _session
-except ImportError:
-    pass
-
-# Finnhub session (shared to reuse connections).
-FH_SESSION = None
-if YF_SESSION:
-    FH_SESSION = YF_SESSION  # reuse the same session for fewer connections
 
 # In-memory cache for price data (5 minute TTL)
 _price_cache: dict[str, tuple[PriceData, float]] = {}
@@ -228,83 +200,41 @@ def fetch_price_data(ticker: str) -> Optional[PriceData]:
         if time.time() - cached_time < CACHE_TTL:
             return cached_data
 
-    # ── Finnhub (primary) ──────────────────────────────────────
-    if FINNHUB_KEY:
-        quote = _fetch_finnhub_quote(ticker)
-        if quote:
-            data = PriceData()
-            data.price = quote.get("c", 0.0)
-            data.change_24h = quote.get("dp", 0.0) or 0.0
-            data.source = "finnhub"
-            data.fetched_at = time.time()
+    if not FINNHUB_KEY:
+        return None
 
-            closes = _fetch_finnhub_candles(ticker, 21)
-            if closes:
-                data.daily_prices = closes
-                if len(closes) >= 2:
-                    data.volume = int(random.gauss(50_000_000, 15_000_000))
-                    data.avg_volume_20d = int(data.volume * random.gauss(1.0, 0.15))
-            else:
-                # Build minimal history from quote
-                pc = quote.get("pc", 0.0) or data.price
-                data.daily_prices = [pc] * 20 + [data.price]
-                data.volume = int(random.gauss(50_000_000, 15_000_000))
-                data.avg_volume_20d = int(data.volume * random.gauss(1.0, 0.15))
+    quote = _fetch_finnhub_quote(ticker)
+    if not quote:
+        return None
 
-            profile = _fetch_finnhub_profile(ticker)
-            data.market_cap = profile.get("marketCapitalization", 0.0) or 0.0
+    data = PriceData()
+    data.price = quote.get("c", 0.0)
+    data.change_24h = quote.get("dp", 0.0) or 0.0
+    data.source = "finnhub"
+    data.fetched_at = time.time()
 
-            data.high_52w = data.price * 1.3
-            data.low_52w = data.price * 0.7
-            data.beta = 1.0
+    closes = _fetch_finnhub_candles(ticker, 21)
+    if closes:
+        data.daily_prices = closes
+    else:
+        pc = quote.get("pc", 0.0) or data.price
+        data.daily_prices = [pc] * 20 + [data.price]
 
-            _price_cache[ticker] = (data, time.time())
-            logger.info(f"Finnhub: {ticker} ${data.price:.2f}")
-            return data
+    data.volume = int(random.gauss(50_000_000, 15_000_000))
+    data.avg_volume_20d = int(data.volume * random.gauss(1.0, 0.15))
+    data.high_52w = data.price * 1.3
+    data.low_52w = data.price * 0.7
+    data.beta = 1.0
 
-    # ── Yahoo Finance (fallback) ────────────────────────────────
-    for attempt in range(2):
-        try:
-            logger.info(f"Fetching {ticker} from Yahoo (attempt {attempt + 1})...")
-            time.sleep(3)
-            history = yf.download(ticker, period="1mo", progress=False, session=YF_SESSION)
-            if history.empty:
-                return None
+    profile = _fetch_finnhub_profile(ticker)
+    data.market_cap = profile.get("marketCapitalization", 0.0) or 0.0
 
-            data = PriceData()
-            data.daily_prices = history["Close"].tolist()
-            closes = data.daily_prices
-            data.price = round(float(closes[-1]), 2) if len(closes) > 0 else 0.0
-            data.source = "yahoo"
-            data.fetched_at = time.time()
-
-            if len(closes) >= 2:
-                data.change_24h = round(((closes[-1] - closes[-2]) / closes[-2]) * 100, 2)
-            if len(closes) >= 6:
-                data.change_7d = round(((closes[-1] - closes[-6]) / closes[-6]) * 100, 2)
-
-            data.volume = int(history["Volume"].iloc[-1]) if "Volume" in history.columns else 0
-            data.avg_volume_20d = (
-                int(history["Volume"].tail(20).mean())
-                if "Volume" in history.columns and len(history) >= 5
-                else data.volume
-            )
-
-            data.high_52w = data.price * 1.3
-            data.low_52w = data.price * 0.7
-            _price_cache[ticker] = (data, time.time())
-            logger.info(f"Yahoo: {ticker} ${data.price:.2f}")
-            return data
-        except Exception as e:
-            logger.error(f"Yahoo error {ticker}: {type(e).__name__}")
-            if attempt == 0:
-                time.sleep(1)
-
-    return None
+    _price_cache[ticker] = (data, time.time())
+    logger.info(f"Finnhub: {ticker} ${data.price:.2f}")
+    return data
 
 
 def fetch_news_sentiment(ticker: str) -> SentimentData:
-    # Finnhub news (free tier: company news, 7-day lookback)
     if FINNHUB_KEY:
         try:
             to_date = datetime.utcnow().strftime("%Y-%m-%d")
@@ -323,21 +253,6 @@ def fetch_news_sentiment(ticker: str) -> SentimentData:
                         return _extract_sentiment_from_headlines(headlines)
         except Exception:
             pass
-
-    # Yahoo fallback
-    try:
-        stock = yf.Ticker(ticker, session=YF_SESSION)
-        news = stock.news
-        if news and len(news) > 0:
-            headlines = [
-                item.get("content", {}).get("title", "")
-                for item in news[:20]
-                if item.get("content", {}).get("title")
-            ]
-            if headlines:
-                return _extract_sentiment_from_headlines(headlines)
-    except Exception:
-        pass
 
     return SentimentData()
 
@@ -379,15 +294,15 @@ class DataFetcher:
                 try:
                     data = future.result(timeout=25)
                     if data is None:
-                        logger.warning(f"Yahoo returned None for {ticker}, using mock")
+                        logger.warning(f"No data for {ticker}, using mock")
                         data = generate_mock_price_data(ticker)
                     results[ticker] = data
                 except Exception:
                     logger.error(f"Timeout/error for {ticker}, using mock")
                     results[ticker] = generate_mock_price_data(ticker)
 
-        live_count = sum(1 for d in results.values() if d and d.source in ("finnhub", "yahoo"))
-        logger.info(f"Price data: {live_count}/{len(tickers)} from live sources ({'finnhub' if FINNHUB_KEY else 'yahoo'})")
+        live_count = sum(1 for d in results.values() if d and d.source == "finnhub")
+        logger.info(f"Price data: {live_count}/{len(tickers)} from Finnhub")
 
         return results, time.time()
 

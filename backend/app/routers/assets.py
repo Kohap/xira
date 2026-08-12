@@ -65,7 +65,7 @@ def _analyze_all() -> AllAssetsResponse:
         )
 
         result.timestamp = now
-        if result.data_source in ("finnhub", "yahoo"):
+        if result.data_source == "finnhub":
             live_count += 1
 
         results.append(result)
