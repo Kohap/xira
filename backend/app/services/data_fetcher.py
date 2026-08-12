@@ -22,6 +22,12 @@ try:
         "Accept": "application/json",
         "Accept-Language": "en-US,en;q=0.9",
     })
+    # Prevent connection-pool exhaustion under concurrent fetches.
+    from urllib3.util import Retry
+    adapter = _requests.adapters.HTTPAdapter(
+        pool_connections=20, pool_maxsize=20, max_retries=Retry(total=1, backoff_factor=0.5)
+    )
+    _session.mount("https://", adapter)
     YF_SESSION = _session
 except ImportError:
     pass
@@ -271,7 +277,7 @@ class DataFetcher:
                 results[t] = generate_mock_price_data(t)
             return results, time.time()
 
-        with ThreadPoolExecutor(max_workers=15) as executor:
+        with ThreadPoolExecutor(max_workers=3) as executor:
             futures = {executor.submit(fetch_price_data, t): t for t in tickers}
             for future in as_completed(futures):
                 ticker = futures[future]
