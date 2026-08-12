@@ -39,6 +39,10 @@ const securityHeaders = [
       "upgrade-insecure-requests",
     ].join("; "),
   },
+  {
+    key: "Access-Control-Allow-Origin",
+    value: "https://xira-tan.vercel.app",
+  },
 ];
 
 const nextConfig: NextConfig = {
