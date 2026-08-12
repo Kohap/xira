@@ -1,6 +1,6 @@
 from __future__ import annotations
 import os, time
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from app.services.data_fetcher import data_fetcher, fetch_finnhub_ohlc, get_tracked_assets
 from app.services.ai_engine import ai_engine
