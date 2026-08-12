@@ -137,7 +137,7 @@ class HistoryDB:
                            anomaly, anomaly_reason, explanation, evidence_hash,
                            model_version, data_source, factors_json
                     FROM scores
-                    WHERE symbol = ?
+                    WHERE symbol = ? AND published = 1
                     ORDER BY timestamp DESC
                     LIMIT 1
                 """, (symbol,))
