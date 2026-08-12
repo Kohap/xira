@@ -168,6 +168,7 @@ def fetch_price_data(ticker: str) -> Optional[PriceData]:
     for attempt in range(2):  # 2 attempts with retry
         try:
             logger.info(f"Fetching live data for {ticker} (attempt {attempt + 1})...")
+            time.sleep(2)  # space requests to avoid Yahoo rate-limiting on shared IPs
             stock = yf.Ticker(ticker, session=YF_SESSION)
 
             # Single history call with timeout
@@ -277,7 +278,7 @@ class DataFetcher:
                 results[t] = generate_mock_price_data(t)
             return results, time.time()
 
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=1) as executor:
             futures = {executor.submit(fetch_price_data, t): t for t in tickers}
             for future in as_completed(futures):
                 ticker = futures[future]
