@@ -6,6 +6,7 @@ import { CopyButton } from "@/components/landing/CopyButton";
 import xiraLogo from "./xira-logo.jpg";
 import xlayerLogo from "./xlayer-logo-light.png";
 import { NewsletterForm } from "@/components/NewsletterForm";
+import { Analytics } from '@vercel/analytics/next';
 import "./globals.css";
 
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
@@ -289,6 +290,7 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
