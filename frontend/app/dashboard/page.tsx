@@ -972,9 +972,9 @@ export default function DashboardPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono ${asset.data_source === "yahoo" ? "text-emerald-400" : "text-yellow-400"}`}>
-                      <span className={`w-1 h-1 rounded-full ${asset.data_source === "yahoo" ? "bg-emerald-400" : "bg-yellow-400"}`} aria-hidden="true" />
-                      {asset.data_source === "yahoo" ? "LIVE" : asset.data_source.toUpperCase()}
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono ${asset.data_source !== "mock" ? "text-emerald-400" : "text-yellow-400"}`}>
+                      <span className={`w-1 h-1 rounded-full ${asset.data_source !== "mock" ? "bg-emerald-400" : "bg-yellow-400"}`} aria-hidden="true" />
+                      {asset.data_source !== "mock" ? "LIVE" : asset.data_source.toUpperCase()}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">

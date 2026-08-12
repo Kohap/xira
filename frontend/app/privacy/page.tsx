@@ -57,7 +57,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">4. Third-party data sources</h2>
           <p className="mt-3">
-            In live mode, the backend fetches market data (Yahoo Finance) and
+            In live mode, the backend fetches market data (Finnhub) and
             news headlines on your behalf, server-side. Your browser never
             talks to those providers directly, and the XIRA server forwards
             no personal data to them.

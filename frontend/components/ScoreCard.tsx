@@ -85,7 +85,7 @@ export function ScoreCard({
   pinned?: boolean;
   onTogglePin?: () => void;
 }) {
-  const simulated = data_source !== undefined && data_source !== "yahoo";
+  const simulated = data_source === "mock";
   return (
     <div className="group relative bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4 hover:border-neutral-600 transition-colors duration-200">
       {anomaly && (

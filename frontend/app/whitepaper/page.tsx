@@ -49,7 +49,7 @@ const FACTORS = [
 const PIPELINE = [
   {
     step: "Collect",
-    detail: "Price, volume, 52-week range, and 20-day average volume per underlying ticker (Yahoo Finance when live mode is enabled; a deterministic simulator otherwise). Headlines scored by positive/negative keyword counts; price momentum serves as a fallback sentiment proxy.",
+    detail: "Price, volume, 52-week range, and 20-day average volume per underlying ticker (Finnhub when live mode is enabled; a deterministic simulator otherwise). Headlines scored by positive/negative keyword counts; price momentum serves as a fallback sentiment proxy.",
   },
   {
     step: "Score",
@@ -176,7 +176,7 @@ export default function WhitepaperPage() {
           </div>
           <div>
             <dt className="inline text-neutral-500">data&nbsp;</dt>
-            <dd className="inline">Yahoo Finance / simulated</dd>
+            <dd className="inline">Finnhub / simulated</dd>
           </div>
         </dl>
       </header>
@@ -365,7 +365,7 @@ export default function WhitepaperPage() {
   "score": ...,
   "confidence": ...,
   "factors": [ {name, label, score, weight, description}, x5 ],
-  "data_source": ...       # "yahoo" | "simulated"
+  "data_source": ...       # "finnhub" | "mock"
 }, sort_keys=True) )`}
           </pre>
           <p>

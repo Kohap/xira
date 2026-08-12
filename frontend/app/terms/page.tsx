@@ -50,7 +50,7 @@ export default function TermsPage() {
             The service, the model, the API, and the contract are provided
             &quot;as is&quot; and &quot;as available&quot;, without warranty of any kind. Scores
             may be delayed, stale, incomplete, or wrong. In live mode the
-            data sources (Yahoo Finance and news feeds) are third-party
+            data sources (Finnhub and news feeds) are third-party
             services outside XIRA&apos;s control; in mock mode the data is
             simulated and must not be treated as market data. Testnet tokens
             and attestations have no value and can be reset by the network.

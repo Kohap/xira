@@ -68,7 +68,7 @@ def _analyze_all() -> AllAssetsResponse:
         )
 
         result.timestamp = now
-        if result.data_source == "yahoo":
+        if result.data_source == "finnhub":
             live_count += 1
 
         # Previous stored score for delta arrows on the board.

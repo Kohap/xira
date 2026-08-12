@@ -64,7 +64,7 @@ app.include_router(alerts.router)
 @app.on_event("startup")
 async def startup():
     live = os.getenv("USE_LIVE_DATA", "false").lower() == "true"
-    mode = "LIVE (Yahoo Finance + news)" if live else "MOCK (simulated data)"
+    mode = "LIVE (Finnhub + news)" if live else "MOCK (simulated data)"
     logger.info(f"XIRA backend starting | Mode: {mode}")
     logger.info(f"Model: {os.getenv('MODEL_VERSION', 'v1.0.0')}")
 

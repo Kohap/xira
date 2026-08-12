@@ -17,7 +17,7 @@ const ENDPOINTS = [
     desc: "The main board. Returns a risk score for every tracked market plus a one-line market summary.",
     query: "?fresh=true forces a recalculation instead of using the price cache",
     returns: "AllAssetsResponse",
-    note: "data_source is 'live', 'partial', or 'mock' depending on how many assets resolved from Yahoo Finance.",
+    note: "data_source is 'live', 'partial', or 'mock' depending on how many assets resolved from Finnhub.",
   },
   {
     method: "GET",
@@ -202,7 +202,7 @@ const SAMPLE_ATTESTATION = `{
   "evidence_hash": "0x4d8a…",
   "timestamp": 1786471527,
   "model_version": "v1.0.0",
-  "data_source": "yahoo",
+  "data_source": "finnhub",
   "data_freshness_ms": 4120,
   "chain_tx": "0xabf3…",
   "chain_explorer": "https://www.okx.com/web3/explorer/xlayer-test/tx/0xabf3…",
