@@ -7,6 +7,7 @@ import type { AssetDetail, Attestation, AttestationHistory } from "@/lib/types";
 import { API_BASE } from "@/lib/api";
 import { RiskBadge } from "@/components/ScoreCard";
 import { FactorBreakdown, HistoryChart, AlertBanner } from "@/components/FactorBreakdown";
+import { CandleStickChart } from "@/components/CandleStickChart";
 
 function formatTimestamp(ts: number): string {
   return new Date(ts * 1000).toLocaleString();
@@ -256,6 +257,10 @@ export function AssetDetailClient() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-6">
+        <CandleStickChart symbol={symbol} />
       </div>
 
       <div className="mt-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5">

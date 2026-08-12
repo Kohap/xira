@@ -2,7 +2,7 @@ from __future__ import annotations
 import os, time
 from fastapi import APIRouter, HTTPException
 
-from app.services.data_fetcher import data_fetcher, get_tracked_assets
+from app.services.data_fetcher import data_fetcher, fetch_finnhub_ohlc, get_tracked_assets
 from app.services.ai_engine import ai_engine
 from app.services.publisher import publisher
 from app.services.history_db import history_db
@@ -10,6 +10,8 @@ from app.models import (
     AllAssetsResponse,
     AssetDetailResponse,
     AttestationResponse,
+    Candle,
+    CandlesResponse,
     HealthResponse,
     MarketHistoryPoint,
     MarketHistoryResponse,
@@ -272,4 +274,15 @@ async def get_asset_detail(symbol: str):
         model_version=current.model_version,
         data_source=current.data_source,
         data_freshness_ms=current.data_freshness_ms,
+    )
+
+
+@router.get("/{symbol}/candles", response_model=CandlesResponse)
+async def get_candles(symbol: str):
+    match = _find_asset(symbol)
+    ohlc = fetch_finnhub_ohlc(match["underlying"], days=90)
+    return CandlesResponse(
+        symbol=match["symbol"],
+        resolution="D",
+        candles=[Candle(**c) for c in ohlc],
     )

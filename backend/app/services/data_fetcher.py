@@ -180,6 +180,46 @@ def _fetch_finnhub_candles(ticker: str, days: int = 21) -> list[float]:
         return []
 
 
+def fetch_finnhub_ohlc(ticker: str, days: int = 90) -> list[dict]:
+    """Fetch full OHLC candle data for candlestick charting."""
+    if not FINNHUB_KEY:
+        return []
+    try:
+        to_ts = int(time.time())
+        from_ts = int(time.time() - days * 86400 * 2)
+        url = (
+            f"{FINNHUB_BASE}/stock/candle"
+            f"?symbol={ticker}&resolution=D&from={from_ts}&to={to_ts}"
+            f"&token={FINNHUB_KEY}"
+        )
+        resp = httpx.get(url, timeout=15)
+        if resp.status_code != 200:
+            return []
+        data = resp.json()
+        if data.get("s") != "ok":
+            return []
+        t = data.get("t", [])
+        o = data.get("o", [])
+        h = data.get("h", [])
+        l = data.get("l", [])
+        c = data.get("c", [])
+        v = data.get("v", [])
+        candles = []
+        for i in range(min(len(t), len(c))):
+            candles.append({
+                "t": int(t[i]),
+                "o": float(o[i]) if i < len(o) else 0.0,
+                "h": float(h[i]) if i < len(h) else 0.0,
+                "l": float(l[i]) if i < len(l) else 0.0,
+                "c": float(c[i]),
+                "v": int(v[i]) if i < len(v) else 0,
+            })
+        return candles[-days:]
+    except Exception as e:
+        logger.warning(f"Finnhub OHLC failed for {ticker}: {e}")
+        return []
+
+
 def _fetch_finnhub_profile(ticker: str) -> dict:
     """Fetch company profile (market cap, etc.)."""
     if not FINNHUB_KEY:
