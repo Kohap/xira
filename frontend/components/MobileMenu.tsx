@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -31,9 +32,14 @@ const MENU_GROUPS = [
 
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setOpen(false);
@@ -58,22 +64,8 @@ export function MobileMenu() {
     toggleRef.current?.focus();
   };
 
-  return (
+  const drawer = (
     <>
-      <button
-        ref={toggleRef}
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Open menu"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-neutral-300 hover:text-white hover:bg-[var(--card-border)]/50 transition-colors active:scale-[0.98]"
-      >
-        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-          <path d="M4 7h16M4 12h16M4 17h16" />
-        </svg>
-      </button>
-
       {open && (
         <div
           className="fixed inset-0 z-[55] bg-black/50 backdrop-blur-sm animate-fade-in"
@@ -86,8 +78,8 @@ export function MobileMenu() {
         role="dialog"
         aria-modal="true"
         aria-label="Menu"
-        className={`fixed inset-y-0 right-0 z-[60] w-[85%] max-w-sm bg-[var(--background)] border-l border-[var(--card-border)] shadow-2xl flex flex-col transition-transform duration-300 ease-out motion-reduce:transition-none ${
-          open ? "translate-x-0" : "translate-x-full pointer-events-none"
+        className={`md:hidden fixed inset-y-0 right-0 z-[60] w-[85%] max-w-sm bg-[var(--background)] border-l border-[var(--card-border)] shadow-2xl flex flex-col transition-transform duration-300 ease-out motion-reduce:transition-none ${
+          open ? "translate-x-0" : "translate-x-full invisible"
         }`}
       >
         <div className="flex items-center justify-between px-5 h-16 border-b border-[var(--card-border)] shrink-0">
@@ -171,6 +163,25 @@ export function MobileMenu() {
           Mainnet: soon
         </p>
       </div>
+    </>
+  );
+
+  return (
+    <>
+      <button
+        ref={toggleRef}
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Open menu"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-neutral-300 hover:text-white hover:bg-[var(--card-border)]/50 transition-colors active:scale-[0.98]"
+      >
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+      {mounted ? createPortal(drawer, document.body) : null}
     </>
   );
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DocsToc } from "@/components/DocsToc";
 
 export const metadata: Metadata = {
   title: "API Docs: XIRA",
@@ -8,16 +9,6 @@ export const metadata: Metadata = {
 
 const API_BASE = "https://xira-gsb3.onrender.com";
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
-
-const TOC = [
-  { id: "overview", label: "Overview" },
-  { id: "endpoints", label: "Endpoints" },
-  { id: "example", label: "Example response" },
-  { id: "contract", label: "On-chain contract" },
-  { id: "mcp", label: "Agents (MCP tools)" },
-  { id: "quickstart", label: "Quickstart" },
-  { id: "versioning", label: "Versioning" },
-];
 
 const ENDPOINTS = [
   {
@@ -223,46 +214,8 @@ export default function DocsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       <div className="grid lg:grid-cols-[220px_1fr] gap-10 lg:gap-16 items-start">
-        {/* Sticky topic navigation */}
-        <aside className="hidden lg:block sticky top-24">
-          <nav aria-label="On this page">
-            <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500 mb-3">
-              On this page
-            </h2>
-            <ul className="space-y-1 border-l border-[var(--card-border)]">
-              {TOC.map((item) => (
-                <li key={item.id}>
-                  <a
-                    href={`#${item.id}`}
-                    className="block pl-4 -ml-px border-l border-transparent hover:border-[var(--accent-glow)] hover:text-white text-sm text-neutral-400 py-1 transition-colors"
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <p className="mt-8 text-[11px] text-neutral-600 leading-relaxed">
-            The dashboard, whitepaper, and this reference are generated from
-            the same running service.
-          </p>
-        </aside>
-
-        {/* Mobile topic chips */}
-        <nav
-          aria-label="On this page"
-          className="lg:hidden -mx-4 px-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex gap-2 pb-2"
-        >
-          {TOC.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              className="shrink-0 px-3 py-1.5 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] text-xs text-neutral-400 hover:text-white transition-colors"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
+        {/* Sticky topic navigation with scroll-spy */}
+        <DocsToc />
 
         <div className="min-w-0">
           <header id="overview" className="scroll-mt-24">
