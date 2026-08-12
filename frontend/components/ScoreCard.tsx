@@ -119,7 +119,7 @@ export function ScoreCard({
         <span>confidence {confidence}%</span>
         <a
           href={`/asset/${symbol}`}
-          className="inline-flex items-center gap-1 px-2 py-1.5 -mr-1.5 -my-1.5 rounded-lg text-[var(--accent-glow)] hover:underline hover:bg-white/5 transition-colors"
+          className="inline-flex items-center gap-1 px-2 py-1.5 -mr-1.5 -my-1.5 rounded-lg text-[var(--accent-glow)] hover:underline hover:bg-[var(--card-border)]/50 transition-colors"
           aria-label={`Open ${symbol} details`}
         >
           details →

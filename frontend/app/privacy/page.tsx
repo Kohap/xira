@@ -23,7 +23,7 @@ export default function PrivacyPage() {
 
       <div className="mt-10 space-y-8 text-sm text-neutral-400 leading-relaxed">
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">1. What we collect</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">1. What we collect</h2>
           <p className="mt-3">
             Nothing that identifies you. The frontend runs as a static site on
             GitHub Pages and does not set cookies, run analytics, or maintain
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">2. Requests and logs</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">2. Requests and logs</h2>
           <p className="mt-3">
             The API server (hosted on Render) receives HTTP requests
             containing your IP address, as any web server does, for standard
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">3. Attestation history</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">3. Attestation history</h2>
           <p className="mt-3">
             Computed risk scores are stored in an SQLite database to provide
             the per-symbol history trail. This store contains symbols, scores,
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">4. Third-party data sources</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">4. Third-party data sources</h2>
           <p className="mt-3">
             In live mode, the backend fetches market data (Yahoo Finance) and
             news headlines on your behalf, server-side. Your browser never
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">5. No selling, no ads</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">5. No selling, no ads</h2>
           <p className="mt-3">
             We do not sell, rent, or share personal data (we have none to
             sell). There is no advertising on the service and no third-party
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">6. Children</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">6. Children</h2>
           <p className="mt-3">
             The service is not directed at children under 13, and we do not
             knowingly process their data.
@@ -82,7 +82,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">7. Your rights</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">7. Your rights</h2>
           <p className="mt-3">
             Since no personal data is held, there is nothing to access,
             correct, or delete on your behalf. If you believe data about you
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">8. Changes</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">8. Changes</h2>
           <p className="mt-3">
             If this policy changes, the "last updated" date above will change
             accordingly. Material changes will be announced in the

@@ -148,6 +148,14 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-16 items-center">
             <div>
               <Reveal>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-1.5 mb-6">
+                  <span className="live-dot w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+                  <span className="text-[11px] font-mono text-neutral-400">
+                    LIVE ON X LAYER TESTNET · CHAIN 1952
+                  </span>
+                </div>
+              </Reveal>
+              <Reveal delay={60}>
                 <h1 className="text-[2.6rem] leading-[1.05] sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
                   One risk number for every{" "}
                   <span className="font-serif italic text-[var(--accent-glow)] tracking-normal">
@@ -189,6 +197,26 @@ export default function LandingPage() {
                   </code>
                   <CopyButton value={CONTRACT} label="contract address" />
                 </div>
+              </Reveal>
+
+              <Reveal delay={340}>
+                <dl className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-px overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-border)]">
+                  {[
+                    { value: "15", label: "Markets tracked" },
+                    { value: "5", label: "Risk factors" },
+                    { value: "30 min", label: "Update cadence" },
+                    { value: "1:1", label: "Score to attestation" },
+                  ].map((stat) => (
+                    <div key={stat.label} className="bg-[var(--card-bg)] px-4 py-3">
+                      <dd className="font-mono text-lg font-semibold text-[var(--accent-glow)] tabular-nums">
+                        {stat.value}
+                      </dd>
+                      <dt className="text-[11px] text-neutral-500 mt-0.5">
+                        {stat.label}
+                      </dt>
+                    </div>
+                  ))}
+                </dl>
               </Reveal>
             </div>
 

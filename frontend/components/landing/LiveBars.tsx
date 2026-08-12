@@ -9,6 +9,14 @@ import type React from "react";
 
 const RETRY_MS = 8000;
 
+function scoreStroke(score: number): string {
+  if (score <= 20) return "#22c55e";
+  if (score <= 40) return "#eab308";
+  if (score <= 60) return "#f97316";
+  if (score <= 80) return "#ef4444";
+  return "#dc2626";
+}
+
 export function LiveBars() {
   const [data, setData] = useState<AllAssetsResponse | null>(null);
   const [tries, setTries] = useState(0);
@@ -45,6 +53,14 @@ export function LiveBars() {
   const top = [...assets].sort((a, b) => b.risk_score - a.risk_score).slice(0, 8);
   const max = Math.max(1, ...top.map((a) => a.risk_score));
 
+  const curvePoints = top
+    .map((a, i) => {
+      const x = top.length > 1 ? (i / (top.length - 1)) * 100 : 50;
+      const y = 40 - (a.risk_score / 100) * 36;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+
   return (
     <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
@@ -53,9 +69,11 @@ export function LiveBars() {
             className={`w-2.5 h-2.5 rounded-full ${offline ? "bg-yellow-400" : "bg-emerald-400"} live-dot`}
             aria-hidden="true"
           />
-          <span className="text-xs font-medium text-neutral-300">LIVE RISK BOARD</span>
+          <span className="text-xs font-mono font-medium tracking-widest text-neutral-300">
+            LIVE RISK BOARD
+          </span>
         </div>
-        <span className="text-[11px] text-neutral-400 font-mono" role="status">
+        <span className="text-[11px] text-neutral-400 font-mono tabular-nums" role="status">
           {offline
             ? `reconnecting (retry ${tries})`
             : data
@@ -69,7 +87,7 @@ export function LiveBars() {
           Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="flex-1 rounded-t-md bg-white/5 animate-pulse"
+              className="flex-1 rounded-t-md bg-[var(--card-border)]/60 animate-pulse"
               style={{ height: `${30 + ((i * 37) % 60)}%` }}
             />
           ))
@@ -88,8 +106,8 @@ export function LiveBars() {
                 />
               </div>
               <div className="w-full text-center min-w-0">
-                <div className="text-[10px] font-mono text-neutral-400 truncate">{asset.symbol}</div>
-                <div className="text-xs font-semibold text-white tabular-nums leading-none">
+                <div className="text-[10px] font-mono text-neutral-400 truncate tracking-wide">{asset.symbol}</div>
+                <div className="text-xs font-semibold text-[var(--foreground)] font-mono tabular-nums leading-none">
                   {asset.risk_score}
                 </div>
               </div>
@@ -98,9 +116,66 @@ export function LiveBars() {
         )}
       </div>
 
+      {data && top.length > 1 && (
+        <div className="mt-4 pt-3.5 border-t border-[var(--card-border)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-500">
+              Market risk curve
+            </span>
+            <span className="text-[10px] font-mono tabular-nums text-neutral-600">
+              top {top.length} of {data.assets.length}
+            </span>
+          </div>
+          <svg
+            viewBox="0 0 100 40"
+            preserveAspectRatio="none"
+            className="w-full h-16"
+            role="img"
+            aria-label="Risk curve of the highest scoring markets"
+          >
+            <defs>
+              <linearGradient id="xira-curve-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#8b7cf6" stopOpacity="0.32" />
+                <stop offset="100%" stopColor="#8b7cf6" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <polygon
+              points={`0,40 ${curvePoints} 100,40`}
+              fill="url(#xira-curve-fill)"
+              className="animate-fade-in"
+            />
+            <polyline
+              points={curvePoints}
+              fill="none"
+              stroke="#8b7cf6"
+              strokeWidth="1.5"
+              pathLength={100}
+              vectorEffect="non-scaling-stroke"
+              className="chart-line"
+            />
+            {top.map((asset, i) => {
+              const x = top.length > 1 ? (i / (top.length - 1)) * 100 : 50;
+              const y = 40 - (asset.risk_score / 100) * 36;
+              return (
+                <circle
+                  key={asset.symbol}
+                  cx={x}
+                  cy={y}
+                  r="1.6"
+                  fill={scoreStroke(asset.risk_score)}
+                  stroke="#0a0a0f"
+                  strokeWidth="0.4"
+                  vectorEffect="non-scaling-stroke"
+                />
+              );
+            })}
+          </svg>
+        </div>
+      )}
+
       <div className="mt-4 pt-3.5 border-t border-[var(--card-border)] flex items-center justify-between gap-3 text-[11px] text-neutral-400">
-        <span>Verified on X Layer testnet</span>
-        <span className="font-mono whitespace-nowrap">1 score = 1 attestation tx</span>
+        <span className="font-mono">Verified on X Layer testnet</span>
+        <span className="font-mono whitespace-nowrap tabular-nums">1 score = 1 attestation tx</span>
       </div>
     </div>
   );

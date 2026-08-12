@@ -42,12 +42,12 @@ export function LiveHeatmap() {
     return (
       <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
-          <div className="h-5 w-40 bg-white/5 rounded animate-pulse" />
-          <div className="h-4 w-24 bg-white/5 rounded animate-pulse" />
+          <div className="h-5 w-40 bg-[var(--card-border)]/60 rounded animate-pulse" />
+          <div className="h-4 w-24 bg-[var(--card-border)]/60 rounded animate-pulse" />
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="h-24 rounded-lg bg-white/5 animate-pulse" />
+            <div key={i} className="h-24 rounded-lg bg-[var(--card-border)]/60 animate-pulse" />
           ))}
         </div>
         {tries > 0 && (

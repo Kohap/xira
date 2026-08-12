@@ -44,7 +44,7 @@ export function ProofSection() {
     <div className="space-y-6">
       <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-5 sm:p-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-white">XIRA Risk Oracle</h3>
+          <h3 className="text-sm font-semibold text-[var(--foreground)]">XIRA Risk Oracle</h3>
           <a
             href={contractUrl}
             target="_blank"
@@ -81,7 +81,7 @@ export function ProofSection() {
           <dl className="grid sm:grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
             <div className="flex items-center gap-3 sm:col-span-2 border-b border-[var(--card-border)] pb-3">
               <dt className="sr-only">Symbol</dt>
-              <dd className="font-mono text-base font-semibold text-white">{latest.symbol}</dd>
+              <dd className="font-mono text-base font-semibold text-[var(--foreground)]">{latest.symbol}</dd>
               <dd className="text-[11px] text-neutral-400 font-mono">score {latest.risk_score}/100</dd>
               <dd className="text-[11px] text-neutral-400 font-mono">conf {latest.confidence}%</dd>
             </div>
@@ -130,9 +130,9 @@ export function ProofSection() {
           </dl>
         ) : (
           <>
-            <div className="h-4 w-40 bg-white/5 rounded animate-pulse" />
-            <div className="mt-3 h-3 w-full bg-white/5 rounded animate-pulse" />
-            <div className="mt-2 h-3 w-3/4 bg-white/5 rounded animate-pulse" />
+            <div className="h-4 w-40 bg-[var(--card-border)]/60 rounded animate-pulse" />
+            <div className="mt-3 h-3 w-full bg-[var(--card-border)]/60 rounded animate-pulse" />
+            <div className="mt-2 h-3 w-3/4 bg-[var(--card-border)]/60 rounded animate-pulse" />
           </>
         )}
       </div>

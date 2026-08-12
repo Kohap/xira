@@ -22,7 +22,7 @@ export default function TermsPage() {
 
       <div className="mt-10 space-y-8 text-sm text-neutral-400 leading-relaxed">
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">1. The service</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">1. The service</h2>
           <p className="mt-3">
             XIRA provides informational risk analytics for the 15 tracked
             tokenized equities (xStocks) on X Layer testnet. The service
@@ -33,7 +33,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">2. Not financial advice</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">2. Not financial advice</h2>
           <p className="mt-3">
             Risk scores, factor breakdowns, explanations, anomaly flags, and
             any other output of XIRA are model outputs, not investment advice,
@@ -45,7 +45,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">3. No warranty</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">3. No warranty</h2>
           <p className="mt-3">
             The service, the model, the API, and the contract are provided
             "as is" and "as available", without warranty of any kind. Scores
@@ -58,7 +58,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">4. Acceptable use</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">4. Acceptable use</h2>
           <p className="mt-3">
             You agree not to use XIRA in a way that is unlawful, that overloads
             or disrupts the backend, that misrepresents scores as your own, or
@@ -69,7 +69,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">5. Intellectual property</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">5. Intellectual property</h2>
           <p className="mt-3">
             The XIRA model, names, and documentation are released as part of
             the open project; license terms for the code live in the
@@ -80,7 +80,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">6. Limitation of liability</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">6. Limitation of liability</h2>
           <p className="mt-3">
             To the maximum extent permitted by law, XIRA and its operator
             (Gift) shall not be liable for any loss or damage arising from use
@@ -92,7 +92,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">7. Changes and termination</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">7. Changes and termination</h2>
           <p className="mt-3">
             The service, its endpoints, the model, and these terms may change
             at any time. The frontend, backend, and contract are open source:
@@ -102,7 +102,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">8. Governing law</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">8. Governing law</h2>
           <p className="mt-3">
             These terms are governed by the laws of the jurisdiction in which
             you access the service, except where that conflicts with mandatory
@@ -113,7 +113,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white tracking-tight">9. Contact</h2>
+          <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">9. Contact</h2>
           <p className="mt-3">
             The project is public at github.com/Kohap/xira. Open an issue
             there for questions, corrections, or security concerns.

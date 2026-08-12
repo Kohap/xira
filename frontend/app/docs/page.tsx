@@ -3,42 +3,76 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "API Docs: XIRA",
   description:
-    "XIRA API reference: attestation endpoints, payload shapes, the on-chain contract, and MCP tooling, as implemented in v1.0.0.",
+    "A plain-language guide to the XIRA API: what it does, how to read a score, the on-chain contract, and how agents use it.",
 };
 
 const API_BASE = "https://xira-gsb3.onrender.com";
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
 
+const TOC = [
+  { id: "overview", label: "Overview" },
+  { id: "endpoints", label: "Endpoints" },
+  { id: "example", label: "Example response" },
+  { id: "contract", label: "On-chain contract" },
+  { id: "mcp", label: "Agents (MCP tools)" },
+  { id: "quickstart", label: "Quickstart" },
+  { id: "versioning", label: "Versioning" },
+];
+
 const ENDPOINTS = [
   {
     method: "GET",
     path: "/api/assets/all",
-    desc: "Risk attestations for all 15 tracked assets, plus market summary. The dashboard's main board.",
-    query: "?fresh=true forces a recalculation past the price cache",
+    desc: "The main board. Returns a risk score for every tracked market plus a one-line market summary.",
+    query: "?fresh=true forces a recalculation instead of using the price cache",
     returns: "AllAssetsResponse",
     note: "data_source is 'live', 'partial', or 'mock' depending on how many assets resolved from Yahoo Finance.",
   },
   {
     method: "GET",
     path: "/api/attestations/{symbol}",
-    desc: "Full attestation for one asset: score, confidence, five factors, explanation, anomaly, evidence hash, and on-chain tx when published.",
-    query: "symbol is case-insensitive; must be a tracked symbol (NVDAx, TSLAx, …)",
+    desc: "The full record for one asset: its score, confidence, the five factor scores, the explanation, and the on-chain transaction when one was published.",
+    query: "symbol is case-insensitive; must be a tracked symbol (NVDAx, TSLAx, ...)",
     returns: "AttestationResponse",
-    note: "Computes (or serves from the 5-minute price cache) and attempts an on-chain updateAttestation.",
+    note: "Computes fresh (or serves from the 5-minute cache) and attempts an on-chain updateAttestation.",
   },
   {
     method: "GET",
     path: "/api/attestations/{symbol}/history",
-    desc: "Trail of past attestations for a symbol, newest first, from the SQLite store with an in-memory fallback.",
+    desc: "A trail of past scores for one asset, newest first. Useful for spotting trends.",
     query: "?limit=N, 1–50, default 10",
     returns: "AttestationHistory",
     note: "Historical entries may omit evidence_hash and chain fields (they are retro-fit from the score log).",
   },
   {
     method: "GET",
+    path: "/api/assets/{symbol}",
+    desc: "A single asset's profile: which underlying ticker it tracks, its sector, the token address, and how the score moved since the last attestation.",
+    query: "symbol is case-insensitive",
+    returns: "AssetDetailResponse",
+    note: "score_delta_24h compares the latest score with the previous one.",
+  },
+  {
+    method: "GET",
+    path: "/api/assets/stats",
+    desc: "Market-level picture: the average score, how many assets sit in each risk band, and which markets score best and worst.",
+    query: "—",
+    returns: "MarketStatsResponse",
+    note: "Served from the shared board cache.",
+  },
+  {
+    method: "GET",
+    path: "/api/alerts",
+    desc: "Every market currently flagged as an anomaly, sorted from highest to lowest risk, with the reason for each flag.",
+    query: "—",
+    returns: "AlertsResponse",
+    note: "Anomalies are factors scoring at critically low levels.",
+  },
+  {
+    method: "GET",
     path: "/api/assets/health",
     desc: "Service health: version, chain, contract address, tracked asset count, and whether live data is enabled.",
-    query: "",
+    query: "—",
     returns: "HealthResponse",
     note: "The landing page's oracle card mirrors this data.",
   },
@@ -46,7 +80,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/assets/history/stats",
     desc: "SQLite store statistics (row counts per symbol).",
-    query: "",
+    query: "—",
     returns: "{ status, database, stats }",
     note: "Diagnostics.",
   },
@@ -54,7 +88,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/debug/data-sources",
     desc: "Per-ticker data source, cache age, and live-data flag.",
-    query: "",
+    query: "—",
     returns: "{ use_live_data, cache_ttl, cached_tickers, cache_details, env_vars }",
     note: "Diagnostics; may be disabled in stricter deployments.",
   },
@@ -93,9 +127,19 @@ const CONTRACT_FUNCTIONS = [
     note: "Requires score ≤ 100 and confidence ≤ 100; reverts otherwise.",
   },
   {
+    sig: "batchUpdateAttestations(inputs[])",
+    access: "owner / authorized updater",
+    note: "Write several attestations in one transaction.",
+  },
+  {
     sig: "getLatestAttestation(asset)",
     access: "anyone · view",
     note: "Returns the full stored attestation including evidenceHash and timestamp.",
+  },
+  {
+    sig: "getHistory(asset)",
+    access: "anyone · view",
+    note: "Returns the last 20 attestations for an asset, oldest first.",
   },
   {
     sig: "getScore(asset)",
@@ -106,6 +150,11 @@ const CONTRACT_FUNCTIONS = [
     sig: "getScoreBatch(assets[])",
     access: "anyone · view",
     note: "Many scores in one call; O(n) read, no per-call fee on testnet.",
+  },
+  {
+    sig: "getAllTrackedAssetsWithScores()",
+    access: "anyone · view",
+    note: "All registered symbols, their asset addresses, scores, and timestamps in one call.",
   },
   {
     sig: "getAllTrackedSymbols()",
@@ -135,6 +184,16 @@ const MCP_TOOLS = [
     maps: "GET /api/attestations/{symbol}/history",
     returns: "Recent score trail for one symbol.",
   },
+  {
+    name: "xira_get_alerts",
+    maps: "GET /api/alerts",
+    returns: "All currently flagged anomalies.",
+  },
+  {
+    name: "xira_get_market_stats",
+    maps: "GET /api/assets/stats",
+    returns: "Market-level risk statistics.",
+  },
 ];
 
 const SAMPLE_ATTESTATION = `{
@@ -162,149 +221,214 @@ const SAMPLE_ATTESTATION = `{
 
 export default function DocsPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-      <header>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-          XIRA API reference
-        </h1>
-        <p className="mt-4 text-neutral-400 leading-relaxed">
-          Everything below is generated from the running service: the base URL
-          is{" "}
-          <code className="font-mono text-[12px] text-neutral-300">
-            {API_BASE}
-          </code>
-          , the model is{" "}
-          <code className="font-mono text-[12px] text-neutral-300">
-            v1.0.0
-          </code>
-          , and every endpoint is also browsable via interactive OpenAPI docs
-          at <code className="font-mono text-[12px] text-neutral-300">/docs</code> of the
-          same origin.
-        </p>
-        <p className="mt-3 text-sm text-neutral-500">
-          The frontend is statically hosted; the API is a separate server with
-          a 5-minute in-memory price cache. A cold Render instance may take
-          30–60s to wake.
-        </p>
-      </header>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="grid lg:grid-cols-[220px_1fr] gap-10 lg:gap-16 items-start">
+        {/* Sticky topic navigation */}
+        <aside className="hidden lg:block sticky top-24">
+          <nav aria-label="On this page">
+            <h2 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500 mb-3">
+              On this page
+            </h2>
+            <ul className="space-y-1 border-l border-[var(--card-border)]">
+              {TOC.map((item) => (
+                <li key={item.id}>
+                  <a
+                    href={`#${item.id}`}
+                    className="block pl-4 -ml-px border-l border-transparent hover:border-[var(--accent-glow)] hover:text-white text-sm text-neutral-400 py-1 transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <p className="mt-8 text-[11px] text-neutral-600 leading-relaxed">
+            The dashboard, whitepaper, and this reference are generated from
+            the same running service.
+          </p>
+        </aside>
 
-      <section className="mt-14">
-        <h2 className="text-xl font-semibold tracking-tight">Endpoints</h2>
-        <div className="mt-4">
-          {ENDPOINTS.map((e) => (
-            <div
-              key={e.path}
-              className="border-t border-[var(--card-border)] py-5 last:border-b"
+        {/* Mobile topic chips */}
+        <nav
+          aria-label="On this page"
+          className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-none flex gap-2 pb-2"
+        >
+          {TOC.map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className="shrink-0 px-3 py-1.5 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] text-xs text-neutral-400 hover:text-white transition-colors"
             >
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span
-                  className={`font-mono text-[11px] px-2 py-0.5 rounded border ${
-                    e.method === "GET"
-                      ? "text-emerald-400 border-emerald-700/50 bg-emerald-900/20"
-                      : "text-[var(--accent-glow)] border-[var(--accent)]/40 bg-[var(--accent)]/10"
-                  }`}
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="min-w-0">
+          <header id="overview" className="scroll-mt-24">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
+              XIRA API reference
+            </h1>
+            <p className="mt-4 text-neutral-400 leading-relaxed">
+              XIRA turns messy market data into one clean, verifiable risk
+              score per asset. This page explains what that means in plain
+              terms, where to get the data, and how to check it for yourself.
+            </p>
+            <p className="mt-3 text-sm text-neutral-500 leading-relaxed">
+              An API is simply a set of web addresses that answer questions.
+              Each address below is called an <em>endpoint</em>: you visit it,
+              and it returns a JSON response your app (or you, in a browser)
+              can read. The base URL for every endpoint is{" "}
+              <code className="font-mono text-[12px] text-neutral-300 break-all">{API_BASE}</code>,
+              and the model currently served is{" "}
+              <code className="font-mono text-[12px] text-neutral-300">v1.0.0</code>.
+            </p>
+            <p className="mt-3 text-sm text-neutral-500">
+              The frontend is statically hosted; the API is a separate server
+              with a 5-minute in-memory price cache. A cold Render instance
+              may take 30–60s to wake.
+            </p>
+          </header>
+
+          <section id="endpoints" className="mt-14 scroll-mt-24">
+            <h2 className="text-xl font-semibold tracking-tight">Endpoints</h2>
+            <p className="mt-3 text-sm text-neutral-400 leading-relaxed">
+              Every endpoint serves one job: the board, one asset, its
+              history, market stats, alerts, or health. The interactive
+              OpenAPI docs at <code className="font-mono text-[12px] text-neutral-300">/docs</code>{" "}
+              of the same origin let you try each one in the browser.
+            </p>
+            <div className="mt-4">
+              {ENDPOINTS.map((e) => (
+                <div
+                  key={e.path}
+                  className="border-t border-[var(--card-border)] py-5 last:border-b"
                 >
-                  {e.method}
-                </span>
-                <code className="font-mono text-sm text-neutral-200 break-all">
-                  {e.path}
-                </code>
-                <span className="text-[11px] text-neutral-500 font-mono">
-                  {e.returns}
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
-                {e.desc}
-              </p>
-              {e.query !== "" && (
-                <p className="mt-1 text-xs text-neutral-500 font-mono">{e.query}</p>
-              )}
-              {e.note && (
-                <p className="mt-1 text-xs text-neutral-600">{e.note}</p>
-              )}
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span
+                      className={`font-mono text-[11px] px-2 py-0.5 rounded border ${
+                        e.method === "GET"
+                          ? "text-emerald-400 border-emerald-700/50 bg-emerald-900/20"
+                          : "text-[var(--accent-glow)] border-[var(--accent)]/40 bg-[var(--accent)]/10"
+                      }`}
+                    >
+                      {e.method}
+                    </span>
+                    <code className="font-mono text-sm text-neutral-200 break-all">
+                      {e.path}
+                    </code>
+                    <span className="text-[11px] text-neutral-500 font-mono">
+                      {e.returns}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+                    {e.desc}
+                  </p>
+                  {e.query !== "—" && (
+                    <p className="mt-1 text-xs text-neutral-500 font-mono">{e.query}</p>
+                  )}
+                  {e.note && (
+                    <p className="mt-1 text-xs text-neutral-600">{e.note}</p>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <section className="mt-12">
-        <h2 className="text-xl font-semibold tracking-tight">
-          Payload shapes
-        </h2>
-        <div className="mt-4 space-y-2">
-          {TYPES.map((t) => (
-            <div key={t.name} className="flex flex-col sm:flex-row gap-1 sm:gap-6 py-2 border-t border-[var(--card-border)] last:border-b">
-              <code className="font-mono text-xs text-[var(--accent-glow)] shrink-0 pt-0.5">
-                {t.name}
-              </code>
-              <p className="text-xs text-neutral-400 leading-relaxed">
-                {t.fields}
-              </p>
+          <section id="example" className="mt-12 scroll-mt-24">
+            <h2 className="text-xl font-semibold tracking-tight">Example response</h2>
+            <p className="mt-3 text-sm text-neutral-400 leading-relaxed">
+              This is what one asset&apos;s record looks like. The important
+              parts: <code className="font-mono text-[12px] text-neutral-300">risk_score</code>{" "}
+              (the 0–100 number), <code className="font-mono text-[12px] text-neutral-300">factors</code>{" "}
+              (why the number is what it is), and{" "}
+              <code className="font-mono text-[12px] text-neutral-300">evidence_hash</code>{" "}
+              (the fingerprint that proves this record matches what was
+              published onchain).
+            </p>
+            <div className="mt-4 space-y-2">
+              {TYPES.map((t) => (
+                <div key={t.name} className="flex flex-col sm:flex-row gap-1 sm:gap-6 py-2 border-t border-[var(--card-border)] last:border-b">
+                  <code className="font-mono text-xs text-[var(--accent-glow)] shrink-0 pt-0.5">
+                    {t.name}
+                  </code>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    {t.fields}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <h3 className="mt-8 font-semibold text-sm">Example attestation</h3>
-        <pre className="mt-3 p-4 rounded-xl bg-black/40 border border-[var(--card-border)] text-xs font-mono overflow-x-auto leading-relaxed text-neutral-300">
+            <pre className="mt-4 p-4 rounded-xl bg-black/40 border border-[var(--card-border)] text-xs font-mono overflow-x-auto leading-relaxed text-neutral-300">
 {SAMPLE_ATTESTATION}
-        </pre>
-      </section>
+            </pre>
+          </section>
 
-      <section className="mt-12">
-        <h2 className="text-xl font-semibold tracking-tight">
-          On-chain contract
-        </h2>
-        <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
-          The XIRA oracle contract on X Layer testnet (chain 1952) at{" "}
-          <code className="font-mono text-[12px] text-neutral-300 break-all">{CONTRACT}</code>.
-          See the whitepaper for how the evidence fingerprint is computed.
-        </p>
-        <div className="mt-4">
-          {CONTRACT_FUNCTIONS.map((f) => (
-            <div
-              key={f.sig}
-              className="border-t border-[var(--card-border)] py-3 last:border-b"
-            >
-              <code className="text-xs font-mono text-neutral-200 leading-relaxed block">
-                {f.sig}
-              </code>
-              <p className="mt-1 text-[11px] text-neutral-500 font-mono">
-                {f.access}
-              </p>
-              <p className="mt-1 text-xs text-neutral-500">{f.note}</p>
+          <section id="contract" className="mt-12 scroll-mt-24">
+            <h2 className="text-xl font-semibold tracking-tight">On-chain contract</h2>
+            <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+              Every score is also published to a small program on the X Layer
+              blockchain, so the number does not live only on one server.
+              Anyone can read it there, and the stored fingerprint lets you
+              confirm the API and the chain agree. The contract runs on X
+              Layer Testnet (chain 1952) at{" "}
+              <code className="font-mono text-[12px] text-neutral-300 break-all">{CONTRACT}</code>.
+            </p>
+            <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+              Think of it as a public notice board: the oracle posts the
+              latest score for each market, and anyone can check the post.
+              Read functions are open to everyone; only the oracle can write.
+            </p>
+            <div className="mt-4">
+              {CONTRACT_FUNCTIONS.map((f) => (
+                <div
+                  key={f.sig}
+                  className="border-t border-[var(--card-border)] py-3 last:border-b"
+                >
+                  <code className="text-xs font-mono text-neutral-200 leading-relaxed block break-all">
+                    {f.sig}
+                  </code>
+                  <p className="mt-1 text-[11px] text-neutral-500 font-mono">
+                    {f.access}
+                  </p>
+                  <p className="mt-1 text-xs text-neutral-500">{f.note}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <section className="mt-12">
-        <h2 className="text-xl font-semibold tracking-tight">MCP tools</h2>
-        <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
-          The API is exposed to agents as MCP tools with a one-to-one mapping
-          onto endpoints, so a model can ask about risk and read the
-          attestation behind the answer.
-        </p>
-        <div className="mt-4">
-          {MCP_TOOLS.map((t) => (
-            <div
-              key={t.name}
-              className="border-t border-[var(--card-border)] py-3 last:border-b flex flex-col sm:flex-row gap-1 sm:gap-6"
-            >
-              <code className="font-mono text-xs text-neutral-200 shrink-0">
-                {t.name}
-              </code>
-              <p className="text-xs text-neutral-400">
-                <span className="text-neutral-600 font-mono">{t.maps}</span>{" "}
-                : {t.returns}
-              </p>
+          <section id="mcp" className="mt-12 scroll-mt-24">
+            <h2 className="text-xl font-semibold tracking-tight">Agents (MCP tools)</h2>
+            <p className="mt-3 text-sm text-neutral-400 leading-relaxed max-w-2xl">
+              AI agents can use the same data through MCP (Model Context
+              Protocol) tools. Instead of reading a dashboard, an agent asks
+              one of these tools and receives the answer directly, with the
+              attestation behind it. Each tool maps one-to-one onto an
+              endpoint.
+            </p>
+            <div className="mt-4">
+              {MCP_TOOLS.map((t) => (
+                <div
+                  key={t.name}
+                  className="border-t border-[var(--card-border)] py-3 last:border-b flex flex-col sm:flex-row gap-1 sm:gap-6"
+                >
+                  <code className="font-mono text-xs text-neutral-200 shrink-0">
+                    {t.name}
+                  </code>
+                  <p className="text-xs text-neutral-400">
+                    <span className="text-neutral-600 font-mono">{t.maps}</span>{" "}
+                    : {t.returns}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <section className="mt-12">
-        <h2 className="text-xl font-semibold tracking-tight">Quickstart</h2>
-        <pre className="mt-3 p-4 rounded-xl bg-black/40 border border-[var(--card-border)] text-xs font-mono overflow-x-auto leading-relaxed text-neutral-300">
+          <section id="quickstart" className="mt-12 scroll-mt-24">
+            <h2 className="text-xl font-semibold tracking-tight">Quickstart</h2>
+            <p className="mt-3 text-sm text-neutral-400 leading-relaxed">
+              You do not need an API key. Copy any of these into a terminal:
+            </p>
+            <pre className="mt-3 p-4 rounded-xl bg-black/40 border border-[var(--card-border)] text-xs font-mono overflow-x-auto leading-relaxed text-neutral-300">
 {`# one market
 curl ${API_BASE}/api/attestations/NVDAx
 
@@ -314,20 +438,26 @@ curl ${API_BASE}/api/assets/all
 # a score trail
 curl "${API_BASE}/api/attestations/BAx/history?limit=20"
 
+# market stats and alerts
+curl ${API_BASE}/api/assets/stats
+curl ${API_BASE}/api/alerts
+
 # health + contract
 curl ${API_BASE}/api/assets/health`}
-        </pre>
-      </section>
+            </pre>
+          </section>
 
-      <section className="mt-14 border-t border-[var(--card-border)] pt-8">
-        <h2 className="text-sm font-semibold">Versioning and compatibility</h2>
-        <p className="mt-3 text-xs text-neutral-500 leading-relaxed">
-          Endpoints are additive; breaking changes will bump the
-          model version and the docs page together. The contract ABI is fixed
-          at the deployed address and is the compatibility boundary. A
-          future verify() addition would be an additive function.
-        </p>
-      </section>
+          <section id="versioning" className="mt-14 border-t border-[var(--card-border)] pt-8 scroll-mt-24">
+            <h2 className="text-sm font-semibold">Versioning and compatibility</h2>
+            <p className="mt-3 text-xs text-neutral-500 leading-relaxed">
+              Endpoints are additive; breaking changes will bump the model
+              version and the docs page together. The contract ABI is fixed at
+              the deployed address and is the compatibility boundary. A future
+              verify() addition would be an additive function.
+            </p>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }

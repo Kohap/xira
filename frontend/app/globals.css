@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: dark;
   --background: #0a0a0f;
   --foreground: #eaeaec;
   --card-bg: #111119;
@@ -13,6 +14,38 @@
   --risk-high: #ef4444;
   --risk-critical: #dc2626;
   --supervisual-bg: url("/supervisual-bg.jpg");
+  --band: #000000;
+  --n-50: #fafafa;
+  --n-100: #f5f5f5;
+  --n-200: #e5e5e5;
+  --n-300: #d4d4d4;
+  --n-400: #a3a3a3;
+  --n-500: #737373;
+  --n-600: #525252;
+  --n-700: #404040;
+  --n-800: #262626;
+  --n-900: #171717;
+  --n-950: #0a0a0a;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --background: #f4f4f8;
+  --foreground: #16161d;
+  --card-bg: #ffffff;
+  --card-border: #e2e2ea;
+  --band: #e9e9f0;
+  --n-50: #ffffff;
+  --n-100: #2b2b34;
+  --n-200: #2f2f38;
+  --n-300: #3b3b46;
+  --n-400: #55555f;
+  --n-500: #6f6f79;
+  --n-600: #8f8f98;
+  --n-700: #d6d6de;
+  --n-800: #e9e9ef;
+  --n-900: #e2e2ea;
+  --n-950: #dcdce5;
 }
 
 @theme inline {
@@ -27,6 +60,18 @@
   --color-risk-elevated: var(--risk-elevated);
   --color-risk-high: var(--risk-high);
   --color-risk-critical: var(--risk-critical);
+  --color-neutral-50: var(--n-50);
+  --color-neutral-100: var(--n-100);
+  --color-neutral-200: var(--n-200);
+  --color-neutral-300: var(--n-300);
+  --color-neutral-400: var(--n-400);
+  --color-neutral-500: var(--n-500);
+  --color-neutral-600: var(--n-600);
+  --color-neutral-700: var(--n-700);
+  --color-neutral-800: var(--n-800);
+  --color-neutral-900: var(--n-900);
+  --color-neutral-950: var(--n-950);
+  --color-black: var(--band);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-instrument-serif);
@@ -51,10 +96,32 @@ body {
 }
 
 /* iOS Safari ignores background-attachment: fixed and it causes scroll jank;
-   fall back to scroll attachment on touch/coarse pointers. */
+   fall back to scroll attachment on touch/coarse pointers, and anchor the
+   supervisual at the bottom of the page so it is visible there on mobile. */
 @media (pointer: coarse) {
   body {
     background-attachment: scroll;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 45vh;
+    background-image:
+      linear-gradient(
+        to top,
+        rgba(10, 10, 15, 0.55),
+        rgba(10, 10, 15, 0.08)
+      ),
+      var(--supervisual-bg);
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: -1;
   }
 }
 
@@ -122,6 +189,40 @@ input {
   animation: bar-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* Moving highlight across the live bars */
+@keyframes bar-shine {
+  0% { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
+}
+.score-bar {
+  position: relative;
+  overflow: hidden;
+}
+.score-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  animation: bar-shine 3.2s ease-in-out infinite;
+}
+
+/* Risk-curve chart draw-in */
+@keyframes chart-draw {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+.chart-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: chart-draw 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
+}
+
 /* Live ticker marquee */
 @keyframes marquee {
   from { transform: translateX(0); }
@@ -182,7 +283,12 @@ input {
   .live-dot,
   .animate-pulse-glow,
   .animate-fade-in,
-  .score-bar {
+  .score-bar,
+  .score-bar::after,
+  .chart-line {
     animation: none;
+  }
+  .score-bar::after {
+    display: none;
   }
 }

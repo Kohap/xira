@@ -75,6 +75,11 @@ export default function RootLayout({
           "--supervisual-bg": `url("${ASSET_BASE}/supervisual-bg.jpg")`,
         } as React.CSSProperties}
       >
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("xira-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}})();`,
+          }}
+        />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[60] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-[var(--accent)] focus:text-white focus:text-sm"
@@ -213,7 +218,7 @@ export default function RootLayout({
                 </a>
                 <span className="text-neutral-700" aria-hidden="true">·</span>
                 <span className="text-neutral-500">
-                  Built for the BuildX AI Season Hackathon
+                  Mainnet: soon
                 </span>
               </nav>
             </div>
