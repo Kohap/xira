@@ -25,17 +25,17 @@ export function Header() {
   return (
     <header className="border-b border-[var(--card-border)] bg-[var(--background)]/80 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group" aria-label="XIRA home">
+        <Link href="/" className="flex items-center gap-3 group min-w-0" aria-label="XIRA home">
           <Image
             src={xiraLogo}
             alt=""
             width={32}
             height={32}
-            className="w-8 h-8 rounded-lg object-cover transition-transform group-hover:scale-105 group-active:scale-95"
+            className="w-8 h-8 shrink-0 rounded-lg object-cover transition-transform group-hover:scale-105 group-active:scale-95"
           />
-          <div>
-            <span className="font-semibold text-lg leading-tight block">XIRA</span>
-            <span className="text-[11px] text-neutral-500 leading-tight block">
+          <div className="min-w-0">
+            <span className="font-semibold text-lg leading-tight block truncate">XIRA</span>
+            <span className="hidden min-[400px]:block text-[11px] text-neutral-500 leading-tight block truncate">
               X-Layer Intelligence &amp; Risk Analytics
             </span>
           </div>

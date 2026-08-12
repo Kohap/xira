@@ -21,6 +21,31 @@ export function LiveBars() {
   const [data, setData] = useState<AllAssetsResponse | null>(null);
   const [tries, setTries] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const curveLineRef = useRef<SVGPolylineElement | null>(null);
+  const curveDotRef = useRef<HTMLDivElement | null>(null);
+  const curveWrapRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const line = curveLineRef.current;
+    const dot = curveDotRef.current;
+    const wrap = curveWrapRef.current;
+    if (!line || !dot || !wrap) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
+    const total = line.getTotalLength();
+    if (!total) return;
+    let raf = 0;
+    const start = performance.now();
+    const tick = (t: number) => {
+      const progress = ((t - start) % 5000) / 5000;
+      const p = line.getPointAtLength(progress * total);
+      dot.style.opacity = "1";
+      dot.style.transform = `translate(calc(${(p.x / 100) * wrap.clientWidth}px - 50%), calc(${(p.y / 40) * wrap.clientHeight}px - 50%))`;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [data]);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,50 +151,59 @@ export function LiveBars() {
               top {top.length} of {data.assets.length}
             </span>
           </div>
-          <svg
-            viewBox="0 0 100 40"
-            preserveAspectRatio="none"
-            className="w-full h-16"
-            role="img"
-            aria-label="Risk curve of the highest scoring markets"
-          >
-            <defs>
-              <linearGradient id="xira-curve-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8b7cf6" stopOpacity="0.32" />
-                <stop offset="100%" stopColor="#8b7cf6" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <polygon
-              points={`0,40 ${curvePoints} 100,40`}
-              fill="url(#xira-curve-fill)"
-              className="animate-fade-in"
+          <div className="relative" ref={curveWrapRef}>
+            <svg
+              key={data.generated_at}
+              viewBox="0 0 100 40"
+              preserveAspectRatio="none"
+              className="w-full h-16"
+              role="img"
+              aria-label="Risk curve of the highest scoring markets"
+            >
+              <defs>
+                <linearGradient id="xira-curve-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8b7cf6" stopOpacity="0.32" />
+                  <stop offset="100%" stopColor="#8b7cf6" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <polygon
+                points={`0,40 ${curvePoints} 100,40`}
+                fill="url(#xira-curve-fill)"
+                className="animate-fade-in"
+              />
+              <polyline
+                ref={curveLineRef}
+                points={curvePoints}
+                fill="none"
+                stroke="#8b7cf6"
+                strokeWidth="1.5"
+                pathLength={100}
+                vectorEffect="non-scaling-stroke"
+                className="chart-line"
+              />
+              {top.map((asset, i) => {
+                const x = top.length > 1 ? (i / (top.length - 1)) * 100 : 50;
+                const y = 40 - (asset.risk_score / 100) * 36;
+                return (
+                  <circle
+                    key={asset.symbol}
+                    cx={x}
+                    cy={y}
+                    r="1.6"
+                    fill={scoreStroke(asset.risk_score)}
+                    stroke="#0a0a0f"
+                    strokeWidth="0.4"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                );
+              })}
+            </svg>
+            <div
+              ref={curveDotRef}
+              className="absolute top-0 left-0 w-2 h-2 rounded-full bg-[var(--accent-glow)] shadow-[0_0_8px_var(--accent-glow)] opacity-0 motion-reduce:hidden"
+              aria-hidden="true"
             />
-            <polyline
-              points={curvePoints}
-              fill="none"
-              stroke="#8b7cf6"
-              strokeWidth="1.5"
-              pathLength={100}
-              vectorEffect="non-scaling-stroke"
-              className="chart-line"
-            />
-            {top.map((asset, i) => {
-              const x = top.length > 1 ? (i / (top.length - 1)) * 100 : 50;
-              const y = 40 - (asset.risk_score / 100) * 36;
-              return (
-                <circle
-                  key={asset.symbol}
-                  cx={x}
-                  cy={y}
-                  r="1.6"
-                  fill={scoreStroke(asset.risk_score)}
-                  stroke="#0a0a0f"
-                  strokeWidth="0.4"
-                  vectorEffect="non-scaling-stroke"
-                />
-              );
-            })}
-          </svg>
+          </div>
         </div>
       )}
 
