@@ -37,7 +37,7 @@ export function LiveBars() {
     let raf = 0;
     const start = performance.now();
     const tick = (t: number) => {
-      const progress = ((t - start) % 5000) / 5000;
+      const progress = ((t - start) % 3000) / 3000;
       const p = line.getPointAtLength(progress * total);
       dot.style.opacity = "1";
       dot.style.transform = `translate(calc(${(p.x / 100) * wrap.clientWidth}px - 50%), calc(${(p.y / 40) * wrap.clientHeight}px - 50%))`;
