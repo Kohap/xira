@@ -6,6 +6,7 @@ import { CopyButton } from "@/components/landing/CopyButton";
 import xiraLogo from "./xira-logo.jpg";
 import xlayerLogo from "./xlayer-logo-light.png";
 import { NewsletterForm } from "@/components/NewsletterForm";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
@@ -91,6 +92,7 @@ export default function RootLayout({
         <main id="main" className="flex-1">
           {children}
         </main>
+        <SpeedInsights />
         <footer className="border-t border-[var(--card-border)] bg-black/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
             <div className="max-w-md">
