@@ -94,7 +94,7 @@ export PRIVATE_KEY=your_testnet_key
 forge script script/DeployAll.s.sol --rpc-url https://testrpc.xlayer.tech --broadcast --legacy
 ```
 
-**Deployment wallet:** `0x5368FB097E57F34020A8FAAA52a242eeF814f8AC`
+**Oracle wallet:** `0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0`
 
 ### 2. Backend
 

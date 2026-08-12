@@ -1,21 +1,30 @@
 # XIRA Smart Contract Deployment Guide
 
-## ⚠️ Secret hygiene
+## ⚠️ Secret hygiene & key rotation
 
-The oracle updater private key was previously committed in this repo's history
-(and in `render.yaml`). Treat it as **compromised and rotate it**: generate a
-new key (`cast wallet new`), fund it with testnet OKB, authorize it as updater,
-and set `PRIVATE_KEY` only in the Render dashboard secret / local `.env` —
-never in a committed file. `render.yaml` and `contracts/.env.deploy` no longer
-contain a key; leaving it unset simply runs the backend in off-chain mode.
+The original oracle private key was committed to git history (`render.yaml`,
+`contracts/.env.deploy`, `DEPLOYMENT.md`). It has been **fully rotated**:
+
+| Role | Old address | New address |
+|---|---|---|
+| Contract owner + oracle signer | `0x5368FB…f8AC` (leaked) | `0x0CE306…D3c0` |
+
+The new key must be set **only** in the Render dashboard secret `PRIVATE_KEY`
+and in your local `backend/.env` — never in any committed file. If the key is
+missing, the backend runs in off-chain mode (scores served, no on-chain txs).
+
+To run the on-chain rotation:
+```bash
+scripts/rotate-key.sh
+```
 
 ## Prerequisites
 
 1. **Foundry installed**: `curl -L https://foundry.paradigm.xyz | bash`
 2. **Wallet with testnet OKB**:
-   - Address: `0x5368FB097E57F34020A8FAAA52a242eeF814f8AC`
-   - Get testnet OKB from: https://www.okx.com/xlayer/faucet
-   - You need approximately 0.01 OKB for deployment
+   - Oracle address: `0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0`
+   - Fund via: https://www.okx.com/xlayer/faucet
+   - You need approximately 0.01 OKB
 
 ## Deployment Steps
 
