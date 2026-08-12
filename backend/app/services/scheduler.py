@@ -45,7 +45,7 @@ def _deviation_ok(prev: int | None, new_score: int) -> bool:
     return abs(new_score - prev) < DEVIATION_THRESHOLD
 
 
-async def _run_pass() -> None:
+def _run_pass() -> None:
     if not publisher.enabled:
         logger.info("Scheduler: publisher disabled (no contract/key). Skipping publish pass.")
         return
