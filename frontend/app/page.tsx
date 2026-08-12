@@ -362,41 +362,46 @@ export default function LandingPage() {
           </p>
         </Reveal>
 
-        <ol className="mt-10 space-y-6">
+        <ol className="mt-10 space-y-5">
           {VERIFY_STEPS.map((step, i) => (
             <Reveal key={step.title} delay={Math.min(i * 80, 240)}>
-              <li className="grid sm:grid-cols-[140px_1fr] gap-2 sm:gap-6 items-baseline">
-                <div className="flex items-center gap-3 sm:justify-end">
-                  <span className="w-8 h-8 rounded-lg bg-[var(--accent)]/15 border border-[var(--accent)]/30 flex items-center justify-center font-mono text-xs text-[var(--accent-glow)]">
-                    {i + 1}
-                  </span>
-                  <span className="text-sm text-neutral-500">{step.title}</span>
-                </div>
-                <div>
-                  {i === 0 ? (
-                    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
-                      <code className="font-mono text-[11px] text-neutral-300 break-all">
-                        {CONTRACT}
-                      </code>
-                      <CopyButton value={CONTRACT} label="contract address" />
-                    </div>
-                  ) : i === 1 ? (
-                    <p className="text-sm text-neutral-400 leading-relaxed">
-                      <a
-                        href={CONTRACT_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[var(--accent-glow)] hover:underline underline-offset-4"
-                      >
-                        Open the contract on the OKX Explorer
-                      </a>{" "}
-                      and check its latest transactions.
-                    </p>
-                  ) : (
-                    <p className="text-sm text-neutral-400 leading-relaxed">
-                      {step.detail}
-                    </p>
-                  )}
+              <li className="flex gap-4 sm:gap-5">
+                <span
+                  className="shrink-0 w-9 h-9 rounded-lg bg-[var(--accent)]/15 border border-[var(--accent)]/30 flex items-center justify-center font-mono text-xs font-semibold text-[var(--accent-glow)]"
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-medium text-neutral-200 leading-snug">
+                    {step.title}
+                  </h3>
+                  <div className="mt-2">
+                    {i === 0 ? (
+                      <div className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
+                        <code className="font-mono text-[11px] text-neutral-300 break-all">
+                          {CONTRACT}
+                        </code>
+                        <CopyButton value={CONTRACT} label="contract address" />
+                      </div>
+                    ) : i === 1 ? (
+                      <p className="text-sm text-neutral-400 leading-relaxed">
+                        <a
+                          href={CONTRACT_URL}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[var(--accent-glow)] hover:underline underline-offset-4"
+                        >
+                          Open the contract on the OKX Explorer
+                        </a>{" "}
+                        and check its latest transactions.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-neutral-400 leading-relaxed">
+                        {step.detail}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </li>
             </Reveal>

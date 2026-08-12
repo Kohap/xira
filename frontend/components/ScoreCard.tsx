@@ -62,6 +62,7 @@ export function RiskBadge({ level }: { level: RiskLevel }) {
 
 export function ScoreCard({
   symbol,
+  sector,
   risk_score,
   risk_level,
   confidence,
@@ -69,6 +70,7 @@ export function ScoreCard({
   anomaly,
 }: {
   symbol: string;
+  sector?: string;
   risk_score: number;
   risk_level: RiskLevel;
   confidence: number;
@@ -76,14 +78,23 @@ export function ScoreCard({
   anomaly: boolean;
 }) {
   return (
-    <div className="group relative bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4 hover:border-neutral-600 transition-all duration-200 animate-fade-in">
+    <div className="group relative bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4 hover:border-neutral-600 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(10,10,15,0.12)] transition-[border-color,transform,box-shadow] duration-200 animate-fade-in">
       {anomaly && (
         <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
       )}
       <div className="flex items-start justify-between mb-3">
-        <div>
-          <h3 className="font-semibold text-base">{symbol}</h3>
-          <RiskBadge level={risk_level} />
+        <div className="min-w-0">
+          <h3 className="font-semibold text-base flex items-baseline gap-2">
+            <span className="truncate">{symbol}</span>
+            {sector && (
+              <span className="shrink-0 text-[10px] font-mono uppercase tracking-wider text-neutral-600">
+                {sector}
+              </span>
+            )}
+          </h3>
+          <div className="mt-1">
+            <RiskBadge level={risk_level} />
+          </div>
         </div>
         <GaugeRing score={risk_score} size={56} />
       </div>
@@ -115,15 +126,29 @@ export function ScoreCard({
         ))}
       </div>
 
-      <div className="mt-3 pt-2 border-t border-[var(--card-border)] flex items-center justify-between text-xs text-neutral-500">
-        <span>confidence {confidence}%</span>
-        <a
-          href={`/asset/${symbol}`}
-          className="inline-flex items-center gap-1 px-2 py-1.5 -mr-1.5 -my-1.5 rounded-lg text-[var(--accent-glow)] hover:underline hover:bg-[var(--card-border)]/50 transition-colors"
-          aria-label={`Open ${symbol} details`}
-        >
-          details →
-        </a>
+      <div className="mt-3 pt-2 border-t border-[var(--card-border)] space-y-2">
+        <div className="flex items-center justify-between text-xs text-neutral-500">
+          <span>confidence</span>
+          <span className="text-neutral-300 tabular-nums">{confidence}%</span>
+        </div>
+        <div className="h-1 bg-neutral-800 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full bg-[var(--accent-glow)] transition-all duration-500"
+            style={{ width: `${confidence}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-neutral-600 font-mono">
+            {sector ?? symbol}
+          </span>
+          <a
+            href={`/asset/${symbol}`}
+            className="inline-flex items-center gap-1 px-2 py-1.5 -mr-1.5 -my-1.5 rounded-lg text-[var(--accent-glow)] hover:underline hover:bg-[var(--card-border)]/50 transition-colors"
+            aria-label={`Open ${symbol} details`}
+          >
+            details →
+          </a>
+        </div>
       </div>
     </div>
   );

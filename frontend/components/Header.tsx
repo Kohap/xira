@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import xiraLogo from "@/app/xira-logo.jpg";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { MobileMenu } from "@/components/MobileMenu";
 
 export function Header() {
   const pathname = usePathname();
@@ -63,15 +64,7 @@ export function Header() {
 
           <ThemeToggle />
 
-          <Link
-            href="/menu"
-            aria-label="Open menu"
-            className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-neutral-300 hover:text-white hover:bg-[var(--card-border)]/50 transition-colors active:scale-[0.98]"
-          >
-            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-          </Link>
+          <MobileMenu />
         </nav>
       </div>
     </header>

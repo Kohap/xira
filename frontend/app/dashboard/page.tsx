@@ -11,6 +11,98 @@ const POLL_SECONDS = 60;
 const MAX_COLD_START_RETRIES = 5;
 const RETRY_DELAY_MS = 8000;
 
+const SECTOR_MAP: Record<string, string> = {
+  NVDAx: "Technology",
+  TSLAx: "Consumer Cyclical",
+  AAPLx: "Technology",
+  MSFTx: "Technology",
+  GOOGLx: "Communication",
+  AMZNx: "Consumer Cyclical",
+  METAx: "Communication",
+  SPYx: "ETF",
+  QQQx: "ETF",
+  AMDx: "Technology",
+  INTCx: "Technology",
+  NFLXx: "Communication",
+  BAx: "Industrials",
+  JPMx: "Financial",
+  XOMx: "Energy",
+};
+
+const RISK_BAR_COLORS: Record<string, string> = {
+  LOW: "bg-[var(--risk-low)]",
+  MODERATE: "bg-[var(--risk-moderate)]",
+  ELEVATED: "bg-[var(--risk-elevated)]",
+  HIGH: "bg-[var(--risk-high)]",
+  CRITICAL: "bg-[var(--risk-critical)]",
+};
+
+const RISK_ORDER = ["LOW", "MODERATE", "ELEVATED", "HIGH", "CRITICAL"] as const;
+
+function MarketPulse({ assets }: { assets: AllAssetsResponse["assets"] }) {
+  if (assets.length === 0) return null;
+  const avg = Math.round(
+    assets.reduce((sum, a) => sum + a.risk_score, 0) / assets.length
+  );
+  const counts = RISK_ORDER.map((level) => ({
+    level,
+    count: assets.filter((a) => a.risk_level === level).length,
+  }));
+  const best = [...assets].sort((a, b) => a.risk_score - b.risk_score)[0];
+  const worst = [...assets].sort((a, b) => b.risk_score - a.risk_score)[0];
+
+  return (
+    <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5 mb-6">
+      <div className="grid sm:grid-cols-[auto_1fr_auto] gap-6 items-center">
+        <div className="text-center sm:text-left">
+          <div className="text-3xl font-bold tabular-nums text-[var(--accent-glow)]">
+            {avg}
+          </div>
+          <div className="text-[11px] text-neutral-500 mt-0.5">
+            Average risk / 100
+          </div>
+        </div>
+
+        <div>
+          <div className="flex h-2 rounded-full overflow-hidden bg-[var(--card-border)]">
+            {counts.map(({ level, count }) =>
+              count > 0 ? (
+                <div
+                  key={level}
+                  className={`${RISK_BAR_COLORS[level]} h-full`}
+                  style={{ width: `${(count / assets.length) * 100}%` }}
+                  title={`${level}: ${count}`}
+                />
+              ) : null
+            )}
+          </div>
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+            {counts.map(({ level, count }) => (
+              <span key={level} className="inline-flex items-center gap-1.5 text-[11px] text-neutral-500">
+                <span className={`w-2 h-2 rounded-sm ${RISK_BAR_COLORS[level]}`} aria-hidden="true" />
+                {level} <span className="text-neutral-300 tabular-nums">{count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex sm:flex-col gap-4 sm:gap-2 text-[11px]">
+          <Link href={`/asset/${best.symbol}`} className="group flex items-center gap-2">
+            <span className="text-neutral-500">Best</span>
+            <span className="font-mono text-green-400 group-hover:underline underline-offset-4">{best.symbol}</span>
+            <span className="text-neutral-300 tabular-nums">{best.risk_score}</span>
+          </Link>
+          <Link href={`/asset/${worst.symbol}`} className="group flex items-center gap-2">
+            <span className="text-neutral-500">Worst</span>
+            <span className="font-mono text-red-400 group-hover:underline underline-offset-4">{worst.symbol}</span>
+            <span className="text-neutral-300 tabular-nums">{worst.risk_score}</span>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function formatAge(now: number, generatedAt: number): string {
   const s = Math.max(0, Math.round(now - generatedAt));
   if (s < 90) return `${s}s ago`;
@@ -376,6 +468,8 @@ export default function DashboardPage() {
         dataSource={data.data_source || "mock"}
       />
 
+      <MarketPulse assets={data.assets} />
+
       <div className="animate-fade-in">
         <AlertsStrip assets={data.assets} />
 
@@ -455,6 +549,7 @@ export default function DashboardPage() {
             <ScoreCard
               key={asset.symbol}
               symbol={asset.symbol}
+              sector={SECTOR_MAP[asset.symbol]}
               risk_score={asset.risk_score}
               risk_level={asset.risk_level}
               confidence={asset.confidence}
