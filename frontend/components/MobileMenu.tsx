@@ -14,6 +14,7 @@ const MENU_GROUPS = [
   {
     heading: "Product",
     items: [
+      { label: "Live board", href: "/dashboard", note: "All 15 xStocks, real-time" },
       { label: "How to verify", href: "/#verify", note: "Check a score onchain" },
       { label: "FAQ", href: "/#faq", note: "Quick answers" },
     ],
@@ -21,8 +22,8 @@ const MENU_GROUPS = [
   {
     heading: "Learn",
     items: [
-      { label: "Whitepaper", href: "/whitepaper", note: "The model, exactly as built" },
-      { label: "API docs", href: "/docs", note: "Endpoints, types, contract ABI" },
+      { label: "Methodology", href: "/whitepaper", note: "The model, exactly as built" },
+      { label: "API", href: "/docs", note: "Endpoints, types, contract ABI" },
       { label: "How it works", href: "/#how", note: "Collect, score, sign, verify" },
       { label: "On-chain", href: "/#chain", note: "Open the oracle" },
     ],
@@ -139,7 +140,7 @@ export function MobileMenu() {
             onClick={close}
             className="flex items-center justify-center gap-2 px-4 h-12 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors active:scale-[0.98]"
           >
-            Open dashboard
+            Open live board
           </Link>
 
           <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4">

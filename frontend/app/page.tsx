@@ -178,7 +178,7 @@ export default function LandingPage() {
                     href="/dashboard"
                     className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-glow)] hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(108,92,231,0.35)] text-white font-medium transition-[background-color,transform,box-shadow] active:scale-[0.98]"
                   >
-                    Open dashboard
+                    Open live board
                   </a>
                   <a
                     href="#verify"

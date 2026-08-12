@@ -807,7 +807,7 @@ export default function DashboardPage() {
                 >
                   <span className="font-mono font-medium">{a.symbol}</span>
                   <span className="text-neutral-500 tabular-nums">
-                    {a.previous_score ?? "—"}→{a.risk_score}
+                    {a.previous_score ?? "-"}→{a.risk_score}
                   </span>
                   <span className={`tabular-nums ${up ? "text-red-400" : "text-emerald-400"}`}>
                     {up ? "▲" : "▼"} {Math.abs(a.score_delta ?? 0)}
@@ -920,7 +920,7 @@ export default function DashboardPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-xs text-neutral-500">
-                    {SECTOR_MAP[asset.symbol] ?? "—"}
+                    {SECTOR_MAP[asset.symbol] ?? "-"}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -955,7 +955,7 @@ export default function DashboardPage() {
                         {asset.score_delta > 0 ? "▲" : "▼"} {Math.abs(asset.score_delta)}
                       </span>
                     ) : (
-                      <span className="text-xs text-neutral-600">—</span>
+                      <span className="text-xs text-neutral-600">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3">

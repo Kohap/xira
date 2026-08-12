@@ -158,14 +158,14 @@ export default function RootLayout({
                     links: [
                       { label: "Live dashboard", href: "/dashboard" },
                       { label: "Alerts", href: "/alerts" },
-                      { label: "Whitepaper", href: "/whitepaper" },
+                      { label: "Methodology", href: "/whitepaper" },
                       { label: "Help / FAQ", href: "/#faq" },
                     ],
                   },
                   {
                     heading: "Developers",
                     links: [
-                      { label: "API docs", href: "/docs" },
+                      { label: "API", href: "/docs" },
                       { label: "On-chain verify", href: "/#verify" },
                       { label: "Evidence hash", href: "/docs" },
                       { label: "Contract ABI", href: "/docs" },

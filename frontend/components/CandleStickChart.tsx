@@ -79,7 +79,7 @@ export function CandleStickChart({ symbol }: { symbol: string }) {
   return (
     <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5">
       <h2 className="font-semibold text-sm text-neutral-300 mb-3">
-        {symbol} — Daily Candles (90d)
+        {symbol}: Daily Candles (90d)
       </h2>
       <div className="overflow-x-auto">
         <svg viewBox={`0 0 ${w} ${h}`} style={{ width: w, maxWidth: "100%", height: "auto" }}>

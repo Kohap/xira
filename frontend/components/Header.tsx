@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import Image from "next/image";
 import xiraLogo from "@/app/xira-logo.jpg";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -9,18 +8,11 @@ import { MobileMenu } from "@/components/MobileMenu";
 import { AlertBell } from "@/components/AlertBell";
 
 export function Header() {
-  const pathname = usePathname();
-  const onLanding = pathname === "/";
-
   const navItems = [
-    { label: "Whitepaper", href: "/whitepaper" },
-    { label: "Docs", href: "/docs" },
-    ...(onLanding
-      ? [
-          { label: "How it works", href: "/#how" },
-          { label: "On-chain", href: "/#chain" },
-        ]
-      : []),
+    { label: "How it works", href: "/#how" },
+    { label: "Verify", href: "/#verify" },
+    { label: "Methodology", href: "/whitepaper" },
+    { label: "API", href: "/docs" },
   ];
 
   return (
@@ -59,7 +51,11 @@ export function Header() {
             href="/dashboard"
             className="hidden lg:inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-white text-sm font-medium transition-colors active:scale-[0.98]"
           >
-            Open dashboard
+            <span className="relative flex w-1.5 h-1.5" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-60 animate-ping" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+            </span>
+            Live board
           </Link>
 
           <ThemeToggle />
