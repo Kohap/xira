@@ -99,8 +99,8 @@ export default function VerifyPage() {
         Verify a score <span className="font-serif italic text-[var(--accent-glow)]">onchain</span>
       </h1>
       <p className="mt-4 text-neutral-400 leading-relaxed max-w-2xl">
-        Pick a market and compare what the API says against what the XIRA
-        contract actually stores on X Layer Testnet (Chain ID 1952).
+        Pick a market and compare what the oracle last signed against what
+        the XIRA contract actually stores on X Layer Testnet (Chain ID 1952).
       </p>
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3">
@@ -162,7 +162,7 @@ export default function VerifyPage() {
 
           <div className="grid grid-cols-3 gap-2 sm:gap-4 text-[11px] sm:text-[11px] font-medium text-neutral-600 border-b border-[var(--card-border)] pb-2">
             <span>Field</span>
-            <span>API</span>
+            <span>Published</span>
             <span>On-chain</span>
           </div>
 
@@ -187,6 +187,7 @@ export default function VerifyPage() {
             label="Timestamp"
             apiValue={fmt(result.api?.timestamp ?? 0)}
             chainValue={fmt(result.onchain?.timestamp ?? 0)}
+            match={result.match?.time_matches}
           />
           <Row
             label="Anomaly"

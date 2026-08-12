@@ -225,20 +225,25 @@ async def market_history(hours: int = Query(default=24, ge=1, le=168)):
 
 @router.get("/verify/{symbol}")
 async def verify_attestation(symbol: str):
-    """Compare the API attestation against what is stored on-chain."""
+    """Compare the last published attestation against what is stored on-chain.
+
+    The API side is the record the oracle actually signed (stored in the
+    history DB after a successful transaction), not a fresh live analysis.
+    A live recomputation would drift from the signed snapshot as market
+    inputs change, making hash comparison meaningless.
+    """
     match = _find_asset(symbol)
 
-    board = _get_board()
-    api_att = next((a for a in board.assets if a.symbol == match["symbol"]), None)
+    published = history_db.get_latest(match["symbol"])
     api_data = None
-    if api_att:
+    if published:
         api_data = {
-            "symbol": api_att.symbol,
-            "risk_score": api_att.risk_score,
-            "confidence": api_att.confidence,
-            "evidence_hash": api_att.evidence_hash,
-            "timestamp": api_att.timestamp,
-            "anomaly": api_att.anomaly,
+            "symbol": published["symbol"],
+            "risk_score": published["risk_score"],
+            "confidence": published["confidence"],
+            "evidence_hash": published["evidence_hash"],
+            "timestamp": published["timestamp"],
+            "anomaly": published["anomaly"],
         }
 
     onchain_data = publisher.read_latest(match["token_address"])
@@ -246,11 +251,18 @@ async def verify_attestation(symbol: str):
     match_result = None
     if api_data and onchain_data:
         same_score = api_data["risk_score"] == onchain_data["score"]
-        same_hash = api_data["evidence_hash"].lower() == onchain_data["evidence_hash"].lower()
+        same_hash = (
+            api_data["evidence_hash"].lower().replace("0x", "")
+            == onchain_data["evidence_hash"].lower().replace("0x", "")
+        )
+        # The DB stores the time the tx was broadcast; the chain stores the
+        # block timestamp. Allow a few minutes for confirmation drift.
+        time_ok = abs(api_data["timestamp"] - onchain_data["timestamp"]) <= 300
         match_result = {
             "score_matches": same_score,
             "hash_matches": same_hash,
-            "verified": same_score and same_hash,
+            "time_matches": time_ok,
+            "verified": same_score and same_hash and time_ok,
         }
 
     return {

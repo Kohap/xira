@@ -36,7 +36,7 @@ def scheduler_diag() -> dict:
 def _store_history(symbol: str, result):
     from app.routers.attestations import _store_history as store
 
-    store(symbol, result)
+    store(symbol, result, published=True)
 
 
 def _deviation_ok(prev: int | None, new_score: int) -> bool:

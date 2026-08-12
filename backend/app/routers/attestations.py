@@ -12,8 +12,7 @@ router = APIRouter(prefix="/api/attestations", tags=["attestations"])
 HISTORY_STORE: dict[str, list[dict]] = {}
 
 
-def _store_history(symbol: str, result: AttestationResponse):
-    # Store in memory (for quick access)
+def _store_history(symbol: str, result: AttestationResponse, published: bool = False):
     if symbol not in HISTORY_STORE:
         HISTORY_STORE[symbol] = []
     entry = result.model_dump()
@@ -22,9 +21,8 @@ def _store_history(symbol: str, result: AttestationResponse):
     HISTORY_STORE[symbol].append(entry)
     if len(HISTORY_STORE[symbol]) > 50:
         HISTORY_STORE[symbol] = HISTORY_STORE[symbol][-50:]
-    
-    # Also persist to SQLite database
-    history_db.store_score(symbol, entry)
+
+    history_db.store_score(symbol, entry, published=published)
 
 
 @router.get("/{symbol}", response_model=AttestationResponse)

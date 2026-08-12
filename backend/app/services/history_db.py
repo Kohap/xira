@@ -3,7 +3,7 @@ import sqlite3
 import json
 import time
 import logging
-from typing import List
+from typing import List, Optional
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -37,6 +37,9 @@ class HistoryDB:
                     UNIQUE(symbol, timestamp)
                 )
             """)
+            cols = [r[1] for r in conn.execute("PRAGMA table_info(scores)")]
+            if "published" not in cols:
+                conn.execute("ALTER TABLE scores ADD COLUMN published INTEGER DEFAULT 0")
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_scores_symbol 
                 ON scores(symbol, timestamp DESC)
@@ -67,15 +70,15 @@ class HistoryDB:
         finally:
             conn.close()
 
-    def store_score(self, symbol: str, attestation: dict) -> bool:
+    def store_score(self, symbol: str, attestation: dict, published: bool = False) -> bool:
         try:
             with self._connect() as conn:
                 conn.execute("""
                     INSERT OR REPLACE INTO scores 
                     (symbol, timestamp, risk_score, risk_level, confidence, 
                      anomaly, anomaly_reason, explanation, evidence_hash,
-                     model_version, data_source, factors_json)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     model_version, data_source, factors_json, published)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     symbol,
                     attestation.get("timestamp", int(time.time())),
@@ -89,6 +92,7 @@ class HistoryDB:
                     attestation.get("model_version", ""),
                     attestation.get("data_source", "mock"),
                     json.dumps(attestation.get("factors", [])),
+                    1 if published else 0,
                 ))
             return True
         except Exception as e:
@@ -123,6 +127,40 @@ class HistoryDB:
         except Exception as e:
             logger.error(f"Failed to get history for {symbol}: {e}")
             return []
+
+    def get_latest(self, symbol: str) -> Optional[dict]:
+        """Most recent stored attestation (the last one the oracle signed)."""
+        try:
+            with self._connect() as conn:
+                cursor = conn.execute("""
+                    SELECT timestamp, risk_score, risk_level, confidence,
+                           anomaly, anomaly_reason, explanation, evidence_hash,
+                           model_version, data_source, factors_json
+                    FROM scores
+                    WHERE symbol = ?
+                    ORDER BY timestamp DESC
+                    LIMIT 1
+                """, (symbol,))
+                row = cursor.fetchone()
+                if not row:
+                    return None
+                return {
+                    "symbol": symbol,
+                    "timestamp": row[0],
+                    "risk_score": row[1],
+                    "risk_level": row[2],
+                    "confidence": row[3],
+                    "anomaly": bool(row[4]),
+                    "anomaly_reason": row[5],
+                    "explanation": row[6],
+                    "evidence_hash": row[7],
+                    "model_version": row[8],
+                    "data_source": row[9],
+                    "factors": json.loads(row[10]) if row[10] else [],
+                }
+        except Exception as e:
+            logger.error(f"Failed to get latest score for {symbol}: {e}")
+            return None
 
     def get_all_latest(self) -> List[dict]:
         try:

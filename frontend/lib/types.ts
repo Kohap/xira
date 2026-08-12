@@ -64,6 +64,7 @@ export interface VerifyResult {
   match: {
     score_matches: boolean;
     hash_matches: boolean;
+    time_matches?: boolean;
     verified: boolean;
   } | null;
   checked_at: number;

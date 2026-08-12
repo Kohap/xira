@@ -144,7 +144,7 @@ export default function RootLayout({
                 </div>
               </div>
 
-              <nav aria-label="Footer" className="mt-12 lg:mt-14 pt-10 border-t border-[var(--card-border)] grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-8 sm:gap-10">
+              <nav aria-label="Footer" className="mt-12 lg:mt-14 pt-10 border-t border-[var(--card-border)] grid grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
                 {[
                   {
                     heading: "Product",
@@ -171,15 +171,6 @@ export default function RootLayout({
                       { label: "Terms of Service", href: "/terms" },
                       { label: "Cookie Settings", href: "/privacy" },
                       { label: "Copyright Notice", href: "/terms" },
-                    ],
-                  },
-                  {
-                    heading: "Navigation & Corporate",
-                    links: [
-                      { label: "Contact Us", href: "https://github.com/Kohap/xira", external: true },
-                      { label: "About Us", href: "/" },
-                      { label: "Sitemap", href: "/sitemap.xml" },
-                      { label: "Careers", href: "https://github.com/Kohap/xira", external: true },
                     ],
                   },
                 ].map((col) => (
