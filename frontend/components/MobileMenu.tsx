@@ -13,7 +13,6 @@ const MENU_GROUPS = [
   {
     heading: "Product",
     items: [
-      { label: "Live dashboard", href: "/dashboard", note: "All 15 xStocks, real-time" },
       { label: "Alerts", href: "/alerts", note: "Anomalies across the board" },
       { label: "How to verify", href: "/#verify", note: "Check a score onchain" },
       { label: "FAQ", href: "/#faq", note: "Quick answers" },

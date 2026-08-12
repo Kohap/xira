@@ -12,7 +12,6 @@ export function Header() {
   const onLanding = pathname === "/";
 
   const navItems = [
-    { label: "Dashboard", href: "/dashboard" },
     { label: "Whitepaper", href: "/whitepaper" },
     { label: "Docs", href: "/docs" },
     ...(onLanding
