@@ -369,6 +369,12 @@ export default function DashboardPage() {
     };
   }, []);
 
+  const togglePin = useCallback((symbol: string) => {
+    setWatchlist((prev) =>
+      prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]
+    );
+  }, []);
+
   if (loading && !data) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -467,12 +473,6 @@ export default function DashboardPage() {
   const sectors = Array.from(
     new Set(data.assets.map((a) => SECTOR_MAP[a.symbol]).filter(Boolean))
   ).sort();
-
-  const togglePin = useCallback((symbol: string) => {
-    setWatchlist((prev) =>
-      prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]
-    );
-  }, []);
 
   const visibleAssets = data.assets
     .filter(
