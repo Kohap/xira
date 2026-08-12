@@ -69,6 +69,7 @@ class HealthResponse(BaseModel):
     contract: str
     tracked_assets: int
     live_data: bool = False
+    signer: Optional[str] = None
 
 
 class AssetDetailResponse(BaseModel):

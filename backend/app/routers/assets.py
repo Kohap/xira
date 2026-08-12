@@ -172,6 +172,7 @@ async def market_stats():
 async def health_check():
     contract_addr = os.getenv("XIRA_CONTRACT_ADDRESS", "0x0000000000000000000000000000000000000000")
     live = os.getenv("USE_LIVE_DATA", "true").lower() == "true"
+    signer = publisher.account.address if publisher.enabled and publisher.account else None
     return HealthResponse(
         status="ok",
         version=os.getenv("MODEL_VERSION", "v1.0.0"),
@@ -179,6 +180,7 @@ async def health_check():
         contract=contract_addr,
         tracked_assets=len(get_tracked_assets()),
         live_data=live,
+        signer=signer,
     )
 
 
