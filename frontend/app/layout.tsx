@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { CopyButton } from "@/components/landing/CopyButton";
 import xiraLogo from "./xira-logo.jpg";
 import xlayerLogo from "./xlayer-logo-light.png";
+import { NewsletterForm } from "@/components/NewsletterForm";
 import "./globals.css";
 
 const CONTRACT = "0x64288ccD936470f66D7035e824A9141C938C32AE";
@@ -92,8 +93,7 @@ export default function RootLayout({
         </main>
         <footer className="border-t border-[var(--card-border)] bg-black/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-            <div className="grid lg:grid-cols-[1fr_auto] gap-10 lg:gap-16 items-start">
-              <div className="max-w-md">
+            <div className="max-w-md">
                 <div className="flex items-center gap-3">
                   <Image
                     src={xiraLogo}
@@ -145,30 +145,42 @@ export default function RootLayout({
                 </div>
               </div>
 
-              <nav aria-label="Footer" className="grid grid-cols-2 sm:grid-cols-3 gap-10 sm:gap-14">
+              <nav aria-label="Footer" className="mt-12 lg:mt-14 pt-10 border-t border-[var(--card-border)] grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-8 sm:gap-10">
                 {[
                   {
-                    heading: "Explore",
+                    heading: "Product",
                     links: [
-                      { label: "Live board", href: "/dashboard" },
+                      { label: "Live dashboard", href: "/dashboard" },
                       { label: "Alerts", href: "/alerts" },
                       { label: "Whitepaper", href: "/whitepaper" },
+                      { label: "Help / FAQ", href: "/#faq" },
                     ],
                   },
                   {
                     heading: "Developers",
                     links: [
                       { label: "API docs", href: "/docs" },
-                      { label: "On-chain verify", href: "/#chain" },
+                      { label: "On-chain verify", href: "/#verify" },
                       { label: "Evidence hash", href: "/docs" },
+                      { label: "Contract ABI", href: "/docs" },
                     ],
                   },
                   {
-                    heading: "Legal",
+                    heading: "Legal & Compliance",
                     links: [
-                      { label: "Terms", href: "/terms" },
-                      { label: "Privacy", href: "/privacy" },
-                      { label: "Security", href: "/docs" },
+                      { label: "Privacy Policy", href: "/privacy" },
+                      { label: "Terms of Service", href: "/terms" },
+                      { label: "Cookie Settings", href: "/privacy" },
+                      { label: "Copyright Notice", href: "/terms" },
+                    ],
+                  },
+                  {
+                    heading: "Navigation & Corporate",
+                    links: [
+                      { label: "Contact Us", href: "https://github.com/Kohap/xira", external: true },
+                      { label: "About Us", href: "/" },
+                      { label: "Sitemap", href: "/sitemap.xml" },
+                      { label: "Careers", href: "https://github.com/Kohap/xira", external: true },
                     ],
                   },
                 ].map((col) => (
@@ -181,6 +193,9 @@ export default function RootLayout({
                         <li key={link.label}>
                           <a
                             href={link.href}
+                            {...(link.external
+                              ? { target: "_blank", rel: "noreferrer" }
+                              : {})}
                             className="text-sm text-neutral-400 hover:text-white transition-colors"
                           >
                             {link.label}
@@ -190,8 +205,41 @@ export default function RootLayout({
                     </ul>
                   </div>
                 ))}
+
+                <div>
+                  <h3 className="text-[11px] font-mono uppercase tracking-widest text-neutral-500 mb-3">
+                    Trust &amp; Social
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href="https://github.com/Kohap/xira"
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="XIRA on GitHub"
+                      className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.46-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.85.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05a9.36 9.36 0 015 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.94.68 1.9v2.81c0 .27.18.6.69.49A10.25 10.25 0 0022 12.25C22 6.58 17.52 2 12 2z" />
+                      </svg>
+                    </a>
+                    <a
+                      href="https://x.com/Kohap"
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="XIRA on X"
+                      className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true">
+                        <path d="M18.9 2.5h3.2l-7 8 8.2 11h-6.4l-5-6.6-5.8 6.6H2.9l7.5-8.6L2.5 2.5h6.6l4.5 6 5.3-6zm-1.1 17.1h1.8L7.9 4.3H6l11.8 15.3z" />
+                      </svg>
+                    </a>
+                  </div>
+                  <p className="mt-4 text-xs text-neutral-500 leading-relaxed">
+                    Market risk briefing, straight to your inbox.
+                  </p>
+                  <NewsletterForm />
+                </div>
               </nav>
-            </div>
 
             <div className="mt-12 pt-6 border-t border-[var(--card-border)] flex flex-col sm:flex-row items-center gap-3 justify-between">
               <p className="text-xs text-neutral-500">
