@@ -126,6 +126,31 @@ class OnchainPublisher:
             logger.warning(f"OnchainPublisher init failed: {e}. Running off-chain.")
             self.enabled = False
 
+    def _estimate_gas(
+        self,
+        token_address: str,
+        score: int,
+        confidence: int,
+        evidence_bytes: bytes,
+        model_version: str,
+        anomaly: bool,
+        anomaly_reason: str,
+    ) -> int:
+        try:
+            return self.contract.functions.updateAttestation(
+                self.w3.to_checksum_address(token_address),
+                score,
+                confidence,
+                evidence_bytes,
+                model_version,
+                anomaly,
+                anomaly_reason or "",
+            ).estimate_gas({
+                "from": self.account.address,
+            })
+        except Exception:
+            return 300000
+
     def update_attestation(
         self,
         token_address: str,
@@ -156,7 +181,7 @@ class OnchainPublisher:
                 ).build_transaction({
                     "from": self.account.address,
                     "nonce": self.w3.eth.get_transaction_count(self.account.address),
-                    "gas": 300000,
+                    "gas": self._estimate_gas(token_address, score, confidence, evidence_bytes, model_version, anomaly, anomaly_reason),
                     "gasPrice": self.w3.eth.gas_price,
                     "chainId": self.chain_id,
                 })
@@ -164,6 +189,14 @@ class OnchainPublisher:
                 signed = self.account.sign_transaction(tx)
                 tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
                 receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+
+                if receipt is None or receipt.get("status") != 1:
+                    logger.error(
+                        f"Attestation tx reverted (status {receipt.get('status') if receipt else None}) "
+                        f"for {token_address}. Not counting as published."
+                    )
+                    self.last_tx_error = f"tx reverted for {token_address}"
+                    return None
 
                 h = tx_hash.hex()
                 explorer = f"{XLAYER_EXPLORER}/tx/{h}"
