@@ -19,6 +19,8 @@ _scheduler_task: asyncio.Task | None = None
 # credentials is invalid and over-permissive for a public API.
 ALLOWED_ORIGINS = [
     "https://xira-tan.vercel.app",
+    "https://www.xira.surf",
+    "https://xira.surf",
     "https://kohap.github.io",
     "http://localhost:3000",
     "http://localhost:8000",
