@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import type { AssetDetail, Attestation, AttestationHistory } from "@/lib/types";
+import type { AssetDetail, Attestation, AttestationHistory, OnchainHistoryResponse } from "@/lib/types";
 import { API_BASE } from "@/lib/api";
 import { RiskBadge } from "@/components/ScoreCard";
 import { FactorBreakdown, HistoryChart, AlertBanner } from "@/components/FactorBreakdown";
@@ -41,6 +41,7 @@ export function AssetDetailClient() {
   const [attestation, setAttestation] = useState<Attestation | null>(null);
   const [history, setHistory] = useState<AttestationHistory | null>(null);
   const [detail, setDetail] = useState<AssetDetail | null>(null);
+  const [onchainHistory, setOnchainHistory] = useState<OnchainHistoryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -73,23 +74,27 @@ export function AssetDetailClient() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [aRes, hRes, dRes] = await Promise.all([
+      const [aRes, hRes, dRes, cRes] = await Promise.all([
         fetch(`${apiBase}/api/attestations/${encodeURIComponent(symbol)}`),
         fetch(`${apiBase}/api/attestations/${encodeURIComponent(symbol)}/history?limit=10`),
         fetch(`${apiBase}/api/assets/${encodeURIComponent(symbol)}`),
+        fetch(`${apiBase}/api/assets/${encodeURIComponent(symbol)}/onchain-history`),
       ]);
 
       if (!aRes.ok) throw new Error(`API error: ${aRes.status}`);
       if (!hRes.ok) throw new Error(`History API error: ${hRes.status}`);
       if (!dRes.ok) throw new Error(`Detail API error: ${dRes.status}`);
+      if (!cRes.ok) throw new Error(`On-chain history error: ${cRes.status}`);
 
       const aData: Attestation = await aRes.json();
       const hData: AttestationHistory = await hRes.json();
       const dData: AssetDetail = await dRes.json();
+      const cData: OnchainHistoryResponse = await cRes.json();
 
       setAttestation(aData);
       setHistory(hData);
       setDetail(dData);
+      setOnchainHistory(cData);
       setError(null);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -347,6 +352,63 @@ export function AssetDetailClient() {
               </span>
             )}
           </div>
+        )}
+      </div>
+
+      <div className="mt-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <h2 className="font-semibold text-sm text-neutral-300">
+            On-chain history
+          </h2>
+          <span className="text-[11px] text-neutral-500 font-mono">
+            last {onchainHistory?.count ?? 0} of 20 stored on contract
+          </span>
+        </div>
+        {onchainHistory && onchainHistory.count > 0 ? (
+          <ul className="space-y-2">
+            {onchainHistory.history
+              .slice()
+              .reverse()
+              .map((entry, i) => (
+                <li
+                  key={i}
+                  className="flex items-center justify-between gap-3 text-sm border-b border-[var(--card-border)] last:border-0 pb-2 last:pb-0"
+                >
+                  <span className="text-neutral-500 text-xs tabular-nums">
+                    {new Date(entry.timestamp * 1000).toLocaleString()}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {entry.anomaly && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400" title="Anomaly" aria-label="Anomaly" />
+                    )}
+                    <span
+                      className={`font-mono tabular-nums ${
+                        entry.score <= 20
+                          ? "text-green-400"
+                          : entry.score <= 40
+                            ? "text-yellow-400"
+                            : entry.score <= 60
+                              ? "text-orange-400"
+                              : entry.score <= 80
+                                ? "text-red-400"
+                                : "text-red-500"
+                      }`}
+                    >
+                      {entry.score}/100
+                    </span>
+                    <span className="text-[11px] text-neutral-600">
+                      conf {entry.confidence}%
+                    </span>
+                  </span>
+                </li>
+              ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-neutral-500 leading-relaxed">
+            No attestations stored on-chain for this market yet. The oracle
+            writes to the V2 contract once the backend is pointed at it and a
+            meaningful score change occurs.
+          </p>
         )}
       </div>
 

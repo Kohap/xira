@@ -49,6 +49,28 @@ def _get_abi() -> list:
             "stateMutability": "view",
             "type": "function",
         },
+        {
+            "inputs": [{"internalType": "address", "name": "asset", "type": "address"}],
+            "name": "getHistory",
+            "outputs": [
+                {
+                    "components": [
+                        {"internalType": "uint8", "name": "score", "type": "uint8"},
+                        {"internalType": "uint8", "name": "confidence", "type": "uint8"},
+                        {"internalType": "bytes32", "name": "evidenceHash", "type": "bytes32"},
+                        {"internalType": "uint64", "name": "timestamp", "type": "uint64"},
+                        {"internalType": "string", "name": "modelVersion", "type": "string"},
+                        {"internalType": "bool", "name": "anomaly", "type": "bool"},
+                        {"internalType": "string", "name": "anomalyReason", "type": "string"},
+                    ],
+                    "internalType": "struct XIRA.Attestation[]",
+                    "name": "",
+                    "type": "tuple[]",
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function",
+        },
     ]
 
 
@@ -171,6 +193,28 @@ class OnchainPublisher:
         except Exception as e:
             logger.warning(f"Read failed for {token_address}: {e}")
             return None
+
+    def read_history(self, token_address: str, limit: int = 20) -> list[dict]:
+        if not self.contract or not self.w3:
+            return []
+        try:
+            result = self.contract.functions.getHistory(
+                self.w3.to_checksum_address(token_address)
+            ).call()
+            entries = []
+            for entry in result[-limit:]:
+                entries.append({
+                    "score": entry[0],
+                    "confidence": entry[1],
+                    "evidence_hash": "0x" + entry[2].hex(),
+                    "timestamp": entry[3],
+                    "model_version": entry[4],
+                    "anomaly": entry[5],
+                })
+            return entries
+        except Exception as e:
+            logger.warning(f"History read failed for {token_address}: {e}")
+            return []
 
 
 publisher = OnchainPublisher()

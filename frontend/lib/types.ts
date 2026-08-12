@@ -73,6 +73,23 @@ export interface ThresholdsResponse {
   thresholds: Record<string, { threshold: number; enabled: boolean }>;
 }
 
+export interface OnchainHistoryEntry {
+  score: number;
+  confidence: number;
+  evidence_hash: string;
+  timestamp: number;
+  model_version: string;
+  anomaly: boolean;
+}
+
+export interface OnchainHistoryResponse {
+  symbol: string;
+  contract: string;
+  chain_id: number;
+  history: OnchainHistoryEntry[];
+  count: number;
+}
+
 export interface AllAssetsResponse {
   generated_at: number;
   model_version: string;

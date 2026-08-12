@@ -8,6 +8,7 @@ import type {
   MarketHistoryResponse,
   VerifyResult,
   ThresholdsResponse,
+  OnchainHistoryResponse,
 } from "./types";
 
 function normalizeBase(url: string): string {
@@ -62,6 +63,14 @@ export async function fetchStats(): Promise<MarketStats> {
 export async function fetchAssetDetail(symbol: string): Promise<AssetDetail> {
   return fetchJSON<AssetDetail>(
     `${API_BASE}/api/assets/${encodeURIComponent(symbol)}`
+  );
+}
+
+export async function fetchOnchainHistory(
+  symbol: string
+): Promise<OnchainHistoryResponse> {
+  return fetchJSON<OnchainHistoryResponse>(
+    `${API_BASE}/api/assets/${encodeURIComponent(symbol)}/onchain-history`
   );
 }
 

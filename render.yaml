@@ -20,4 +20,6 @@ services:
         value: "true"
       - key: AI_MODE
         value: heuristic
+      # FINNHUB_API_KEY must NOT be committed. Set it as a Render dashboard
+      # secret (finnhub.io free tier) to enable the OHLC candlestick chart.
     autoDeploy: true

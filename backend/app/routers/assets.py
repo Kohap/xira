@@ -261,6 +261,20 @@ async def verify_attestation(symbol: str):
     }
 
 
+@router.get("/{symbol}/onchain-history")
+async def onchain_history(symbol: str):
+    """Last N attestations stored on-chain for an asset (V2 contract)."""
+    match = _find_asset(symbol)
+    entries = publisher.read_history(match["token_address"])
+    return {
+        "symbol": match["symbol"],
+        "contract": publisher.contract_address,
+        "chain_id": publisher.chain_id,
+        "history": entries,
+        "count": len(entries),
+    }
+
+
 @router.get("/{symbol}", response_model=AssetDetailResponse)
 async def get_asset_detail(symbol: str):
     """Single-asset detail: metadata, current score, 24h score delta."""
