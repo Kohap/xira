@@ -46,8 +46,6 @@ export function AssetDetailClient() {
   const apiBase = API_BASE;
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
     try {
       const [aRes, hRes, dRes] = await Promise.all([
         fetch(`${apiBase}/api/attestations/${encodeURIComponent(symbol)}`),
@@ -66,6 +64,7 @@ export function AssetDetailClient() {
       setAttestation(aData);
       setHistory(hData);
       setDetail(dData);
+      setError(null);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {

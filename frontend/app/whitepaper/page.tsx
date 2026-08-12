@@ -201,7 +201,7 @@ export default function WhitepaperPage() {
             quote a position but cannot score how risky it is to hold.
           </p>
           <p>
-            XIRA's answer is not another dashboard look. It is a pipeline whose
+            XIRA&apos;s answer is not another dashboard look. It is a pipeline whose
             output must survive a specific test: <em>take the API response,
             recompute the evidence hash, and compare it to the bytes32 the
             oracle signed into the contract.</em> The number and the proof move

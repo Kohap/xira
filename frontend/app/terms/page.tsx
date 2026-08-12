@@ -48,10 +48,10 @@ export default function TermsPage() {
           <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">3. No warranty</h2>
           <p className="mt-3">
             The service, the model, the API, and the contract are provided
-            "as is" and "as available", without warranty of any kind. Scores
+            &quot;as is&quot; and &quot;as available&quot;, without warranty of any kind. Scores
             may be delayed, stale, incomplete, or wrong. In live mode the
             data sources (Yahoo Finance and news feeds) are third-party
-            services outside XIRA's control; in mock mode the data is
+            services outside XIRA&apos;s control; in mock mode the data is
             simulated and must not be treated as market data. Testnet tokens
             and attestations have no value and can be reset by the network.
           </p>

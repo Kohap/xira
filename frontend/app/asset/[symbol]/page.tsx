@@ -11,13 +11,9 @@ export function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-    title: "Asset Detail: XIRA",
+  title: "Asset Detail: XIRA",
 };
 
-export default function AssetDetailPage({
-  params,
-}: {
-  params: Promise<{ symbol: string }>;
-}) {
+export default function AssetDetailPage() {
   return <AssetDetailClient />;
 }

@@ -56,7 +56,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/assets/stats",
     desc: "Market-level picture: the average score, how many assets sit in each risk band, and which markets score best and worst.",
-    query: "—",
+    query: "",
     returns: "MarketStatsResponse",
     note: "Served from the shared board cache.",
   },
@@ -64,7 +64,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/alerts",
     desc: "Every market currently flagged as an anomaly, sorted from highest to lowest risk, with the reason for each flag.",
-    query: "—",
+    query: "",
     returns: "AlertsResponse",
     note: "Anomalies are factors scoring at critically low levels.",
   },
@@ -72,7 +72,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/assets/health",
     desc: "Service health: version, chain, contract address, tracked asset count, and whether live data is enabled.",
-    query: "—",
+    query: "",
     returns: "HealthResponse",
     note: "The landing page's oracle card mirrors this data.",
   },
@@ -80,7 +80,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/assets/history/stats",
     desc: "SQLite store statistics (row counts per symbol).",
-    query: "—",
+    query: "",
     returns: "{ status, database, stats }",
     note: "Diagnostics.",
   },
@@ -88,7 +88,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/debug/data-sources",
     desc: "Per-ticker data source, cache age, and live-data flag.",
-    query: "—",
+    query: "",
     returns: "{ use_live_data, cache_ttl, cached_tickers, cache_details, env_vars }",
     note: "Diagnostics; may be disabled in stricter deployments.",
   },
@@ -251,7 +251,7 @@ export default function DocsPage() {
         {/* Mobile topic chips */}
         <nav
           aria-label="On this page"
-          className="lg:hidden -mx-4 px-4 overflow-x-auto scrollbar-none flex gap-2 pb-2"
+          className="lg:hidden -mx-4 px-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex gap-2 pb-2"
         >
           {TOC.map((item) => (
             <a
@@ -324,7 +324,7 @@ export default function DocsPage() {
                   <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
                     {e.desc}
                   </p>
-                  {e.query !== "—" && (
+                  {e.query !== "" && (
                     <p className="mt-1 text-xs text-neutral-500 font-mono">{e.query}</p>
                   )}
                   {e.note && (

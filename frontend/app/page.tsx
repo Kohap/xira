@@ -207,13 +207,13 @@ export default function LandingPage() {
                     { value: "30 min", label: "Update cadence" },
                     { value: "1:1", label: "Score to attestation" },
                   ].map((stat) => (
-                    <div key={stat.label} className="bg-[var(--card-bg)] px-4 py-3">
-                      <dd className="font-mono text-lg font-semibold text-[var(--accent-glow)] tabular-nums">
-                        {stat.value}
-                      </dd>
-                      <dt className="text-[11px] text-neutral-500 mt-0.5">
+                    <div key={stat.label} className="bg-[var(--card-bg)] px-4 py-3 flex flex-col">
+                      <dt className="order-2 text-[11px] text-neutral-500 mt-0.5">
                         {stat.label}
                       </dt>
+                      <dd className="order-1 font-mono text-lg font-semibold text-[var(--accent-glow)] tabular-nums">
+                        {stat.value}
+                      </dd>
                     </div>
                   ))}
                 </dl>

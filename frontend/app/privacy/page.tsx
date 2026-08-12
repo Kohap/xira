@@ -95,7 +95,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">8. Changes</h2>
           <p className="mt-3">
-            If this policy changes, the "last updated" date above will change
+            If this policy changes, the &quot;last updated&quot; date above will change
             accordingly. Material changes will be announced in the
             repository.
           </p>

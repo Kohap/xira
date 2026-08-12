@@ -30,6 +30,7 @@ export default function AlertsPage() {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const retriesRef = useRef(0);
   const dataRef = useRef<AlertsResponse | null>(null);
+  const fetchDataRef = useRef<((showLoading?: boolean) => Promise<void>) | null>(null);
 
   const fetchData = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -43,7 +44,7 @@ export default function AlertsPage() {
       const msg = e instanceof Error ? e.message : "Unknown error";
       if (!dataRef.current && retriesRef.current < MAX_RETRIES) {
         retriesRef.current += 1;
-        setTimeout(() => fetchData(false), RETRY_DELAY_MS);
+        setTimeout(() => fetchDataRef.current?.(false), RETRY_DELAY_MS);
       }
       if (dataRef.current) {
         setError("Last refresh failed. Showing the most recent alerts.");
@@ -54,6 +55,10 @@ export default function AlertsPage() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchDataRef.current = fetchData;
+  }, [fetchData]);
 
   useEffect(() => {
     fetchData();

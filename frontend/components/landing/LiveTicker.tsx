@@ -39,7 +39,7 @@ export function LiveTicker() {
   return (
     <div
       className="marquee-hover overflow-hidden border-y border-[var(--card-border)] bg-black/30 py-3"
-      role="marquee"
+      role="region"
       aria-label="Live risk scores"
     >
       <div className="marquee-track" aria-hidden={false}>

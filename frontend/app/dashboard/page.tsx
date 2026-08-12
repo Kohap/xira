@@ -150,6 +150,7 @@ export default function DashboardPage() {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"score" | "symbol" | "confidence">("score");
+  const [retryCount, setRetryCount] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retriesRef = useRef(0);
@@ -161,6 +162,8 @@ export default function DashboardPage() {
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     retryTimerRef.current = setTimeout(fn, RETRY_DELAY_MS);
   }, []);
+
+  const fetchDataRef = useRef<((showLoading?: boolean) => Promise<void>) | null>(null);
 
   const fetchData = useCallback(
     async (showLoading = true) => {
@@ -177,6 +180,7 @@ export default function DashboardPage() {
         setColdStart(false);
         setRefreshError(false);
         retriesRef.current = 0;
+        setRetryCount(0);
         setCountdown(POLL_SECONDS);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Unknown error";
@@ -184,7 +188,8 @@ export default function DashboardPage() {
           setColdStart(true);
           if (!dataRef.current && retriesRef.current < MAX_COLD_START_RETRIES) {
             retriesRef.current += 1;
-            scheduleRetry(() => fetchData(false));
+            setRetryCount(retriesRef.current);
+            scheduleRetry(() => fetchDataRef.current?.(false));
           }
         } else {
           setColdStart(false);
@@ -200,6 +205,10 @@ export default function DashboardPage() {
     },
     [apiBase, scheduleRetry]
   );
+
+  useEffect(() => {
+    fetchDataRef.current = fetchData;
+  }, [fetchData]);
 
   useEffect(() => {
     fetchData();
@@ -247,7 +256,7 @@ export default function DashboardPage() {
             <span className="text-neutral-400">
               Waking up the backend (free-tier cold start, ~30s)… retrying{" "}
               <span className="text-neutral-300 tabular-nums">
-                {retriesRef.current}/{MAX_COLD_START_RETRIES}
+                {retryCount}/{MAX_COLD_START_RETRIES}
               </span>
             </span>
           ) : (

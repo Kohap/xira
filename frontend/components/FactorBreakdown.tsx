@@ -1,8 +1,6 @@
 "use client";
 
 import type { FactorScore } from "@/lib/types";
-import { riskLevelTextColor, riskLevelLabel } from "@/lib/types";
-import type { RiskLevel } from "@/lib/types";
 
 export function FactorBreakdown({ factors }: { factors: FactorScore[] }) {
   return (
@@ -63,8 +61,6 @@ export function HistoryChart({
   if (!history.length) return null;
 
   const maxScore = 100;
-  const height = 64;
-  const width = history.length * 16;
 
   const points = history
     .map((h, i) => {
