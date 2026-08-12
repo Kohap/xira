@@ -7,8 +7,8 @@ import { API_BASE, fetchAlerts } from "@/lib/api";
 import { RiskBadge } from "@/components/ScoreCard";
 
 const POLL_SECONDS = 60;
-const MAX_RETRIES = 5;
-const RETRY_DELAY_MS = 8000;
+const MAX_RETRIES = 8;
+const RETRY_DELAY_MS = 10000;
 
 function formatAge(now: number, ts: number): string {
   const s = Math.max(0, Math.round(now - ts));

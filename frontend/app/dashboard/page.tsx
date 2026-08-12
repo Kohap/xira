@@ -8,8 +8,8 @@ import { ScoreCard, RiskBadge } from "@/components/ScoreCard";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
 
 const POLL_SECONDS = 60;
-const MAX_COLD_START_RETRIES = 5;
-const RETRY_DELAY_MS = 8000;
+const MAX_COLD_START_RETRIES = 8;
+const RETRY_DELAY_MS = 10000;
 
 const SECTOR_MAP: Record<string, string> = {
   NVDAx: "Technology",
