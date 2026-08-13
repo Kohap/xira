@@ -9,6 +9,10 @@ mcp_server
 .github
 *.md
 .env*
+**/.env*
+**/xira_history.db*
+backend/render_start.sh
+render.yaml
 *__pycache__*
 *.pyc
 .gitignore
