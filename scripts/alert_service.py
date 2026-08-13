@@ -19,7 +19,7 @@ from typing import Optional, Dict, List
 import urllib.request
 import urllib.error
 
-API_URL = os.environ.get("XIRA_API_URL", "https://xira-gsb3.onrender.com")
+API_URL = os.environ.get("XIRA_API_URL", "https://xira-api-production.up.railway.app")
 WEBHOOK_URL = os.environ.get("ALERT_WEBHOOK_URL", "")
 INTERVAL = int(os.environ.get("ALERT_INTERVAL", "60"))
 

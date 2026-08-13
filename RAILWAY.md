@@ -25,7 +25,11 @@ over only after the Railway service is verified healthy.
    railway variables set AI_MODE="heuristic"
    railway variables set MODEL_VERSION="v1.0.0"
    railway variables set XIRA_DB_PATH="/data/xira_history.db"
+   railway variables set XIRA_API_URL="https://<railway-domain>"
    ```
+   `XIRA_API_URL` lets the hosted MCP endpoint (`/mcp`) resolve its own
+   public URL when making self-service calls; if unset it derives the base
+   from the incoming request.
    `railway.json` (repo root) wires the Docker build, the start command, the
    `/api/assets/health` healthcheck, and the `xira-data` volume mounted at
    `/data`. The volume is what makes `xira_history.db` survive redeploys —

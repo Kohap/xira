@@ -373,13 +373,29 @@ export default function DocsPage() {
                   <code className="font-mono text-xs text-neutral-200 shrink-0">
                     {t.name}
                   </code>
-                  <p className="text-xs text-neutral-400">
+                    <p className="text-xs text-neutral-400">
                     <span className="text-neutral-600 font-mono">{t.maps}</span>{" "}
                     : {t.returns}
                   </p>
                 </div>
               ))}
             </div>
+
+            <p className="mt-6 text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
+              The tools are served over HTTP at{" "}
+              <code className="font-mono text-xs text-neutral-300">{API_BASE}/mcp</code>,
+              so any MCP client can point straight at the hosted endpoint —
+              no local server to run:
+            </p>
+            <pre className="mt-3 p-4 rounded-xl bg-black/40 border border-[var(--card-border)] text-xs font-mono overflow-x-auto leading-relaxed text-neutral-300">
+{`{
+  "mcpServers": {
+    "XIRA": {
+      "url": "${API_BASE}/mcp"
+    }
+  }
+}`}
+            </pre>
           </section>
 
           <section id="quickstart" className="mt-12 scroll-mt-24">

@@ -6,7 +6,7 @@ Simulates an AI agent or DeFi vault consuming XIRA risk attestations
 and making automated decisions based on risk scores.
 
 Usage:
-  python scripts/mock_agent.py [--api-url https://xira-gsb3.onrender.com]
+  python scripts/mock_agent.py [--api-url https://xira-api-production.up.railway.app]
 """
 
 import sys, os, json, time, argparse
@@ -15,7 +15,7 @@ from typing import Optional
 import urllib.request
 import urllib.error
 
-API_URL = "https://xira-gsb3.onrender.com"
+API_URL = "https://xira-api-production.up.railway.app"
 RISK_THRESHOLDS = {
     "LOW": (0, 20),
     "MODERATE": (21, 40),

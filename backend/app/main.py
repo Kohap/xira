@@ -7,7 +7,7 @@ load_dotenv()
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import assets, attestations, alerts
+from app.routers import assets, attestations, alerts, mcp
 from app.services import scheduler as scheduler_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -36,6 +36,7 @@ def _build_endpoints() -> dict:
         "attestation": "/api/attestations/{symbol}",
         "attestation_history": "/api/attestations/{symbol}/history",
         "health": "/api/assets/health",
+        "mcp": "/mcp",
         "docs": "/docs",
         "live_data": live,
     }
@@ -58,6 +59,7 @@ app.add_middleware(
 app.include_router(assets.router)
 app.include_router(attestations.router)
 app.include_router(alerts.router)
+app.include_router(mcp.router)
 
 
 @app.on_event("startup")

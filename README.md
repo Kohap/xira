@@ -37,7 +37,10 @@ this site.
   (deviation threshold) as a transaction; `GET` endpoints are read-only and
   never spend gas.
 - **Agents** — the same data is exposed as MCP tools
-  (`xira_get_asset_risk`, `xira_get_all_assets`, `xira_get_attestation_history`).
+  (`xira_get_asset_risk`, `xira_get_all_assets`, `xira_get_attestation_history`),
+  served both locally (`python mcp_server/server.py`) and as a hosted
+  endpoint at `https://xira-api-production.up.railway.app/mcp` — point any
+  MCP client straight at the URL, no local server needed.
 
 Every score carries an `evidence_hash` (sha256 of score, confidence, factors
 and data source). Match it against the on-chain record and the number proves

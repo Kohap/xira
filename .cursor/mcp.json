@@ -6,7 +6,7 @@
         "/Users/mac/Documents/Default Project/xira/mcp_server/server.py"
       ],
       "env": {
-        "XIRA_API_URL": "https://xira-gsb3.onrender.com"
+        "XIRA_API_URL": "https://xira-api-production.up.railway.app"
       }
     }
   }
