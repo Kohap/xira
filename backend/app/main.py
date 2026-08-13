@@ -18,7 +18,6 @@ _scheduler_task: asyncio.Task | None = None
 # Explicit, known frontend origins only. Wildcard CORS combined with
 # credentials is invalid and over-permissive for a public API.
 ALLOWED_ORIGINS = [
-    "https://xira-tan.vercel.app",
     "https://www.xira.surf",
     "https://xira.surf",
     "https://kohap.github.io",

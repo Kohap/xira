@@ -4,12 +4,6 @@ import { useEffect, useState } from "react";
 import { fetchBoard } from "@/lib/board-cache";
 import type { AllAssetsResponse } from "@/lib/types";
 
-const FALLBACK = [
-  "NVDAx 66", "TSLAx 57", "AAPLx 31", "MSFTx 28", "GOOGLx 34",
-  "AMZNx 22", "METAx 41", "SPYx 19", "QQQx 24", "AMDx 71",
-  "INTCx 62", "NFLXx 45", "BAx 78", "JPMx 16", "XOMx 27",
-];
-
 const SCORE_COLOR = (score: number) =>
   score <= 20 ? "text-green-400" :
   score <= 40 ? "text-yellow-400" :
@@ -18,6 +12,7 @@ const SCORE_COLOR = (score: number) =>
 
 export function LiveTicker() {
   const [items, setItems] = useState<string[] | null>(null);
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,16 +20,31 @@ export function LiveTicker() {
       .then((d: AllAssetsResponse) => {
         if (cancelled) return;
         setItems(d.assets.map((a) => `${a.symbol} ${a.risk_score}`));
+        setOffline(false);
       })
       .catch(() => {
-        if (!cancelled) setItems(FALLBACK);
+        if (!cancelled) setOffline(true);
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const ticker = items ?? FALLBACK;
+  if (!items) {
+    return (
+      <div
+        className="overflow-hidden border-y border-[var(--card-border)] bg-black/30 py-3"
+        role="region"
+        aria-label="Live risk scores"
+      >
+        <div className="text-center text-[11px] font-mono text-neutral-600">
+          {offline ? "Risk board offline – scores unavailable" : "Loading risk scores…"}
+        </div>
+      </div>
+    );
+  }
+
+  const ticker = items;
 
   return (
     <div

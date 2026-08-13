@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://xira-tan.vercel.app/sitemap.xml
+Sitemap: https://www.xira.surf/sitemap.xml

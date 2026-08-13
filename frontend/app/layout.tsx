@@ -5,7 +5,6 @@ import { Header } from "@/components/Header";
 import { CopyButton } from "@/components/landing/CopyButton";
 import { LogoMark } from "@/components/LogoMark";
 import xlayerLogo from "./xlayer-logo-light.png";
-import { NewsletterForm } from "@/components/NewsletterForm";
 import "./globals.css";
 
 const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
@@ -31,7 +30,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://xira-tan.vercel.app"),
+  metadataBase: new URL("https://www.xira.surf"),
   title: "XIRA: One Verifiable Risk Number for Every xStock",
   description:
     "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
@@ -41,7 +40,7 @@ export const metadata: Metadata = {
       "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
     type: "website",
     siteName: "XIRA",
-    url: "https://xira-tan.vercel.app",
+    url: "https://www.xira.surf",
     images: [
       {
         url: "/og.png",
@@ -221,9 +220,9 @@ export default function RootLayout({
                     </a>
                   </div>
                   <p className="mt-4 text-xs text-neutral-500 leading-relaxed">
-                    Market risk briefing, straight to your inbox.
+                    The code is open source. Auditing questions, agent
+                    integrations, and feedback are welcome on GitHub.
                   </p>
-                  <NewsletterForm />
                 </div>
               </nav>
 

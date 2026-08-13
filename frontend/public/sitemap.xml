@@ -3,140 +3,140 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
   <url>
-    <loc>https://xira-tan.vercel.app/</loc>
+    <loc>https://www.xira.surf/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/dashboard</loc>
+    <loc>https://www.xira.surf/dashboard</loc>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/alerts</loc>
+    <loc>https://www.xira.surf/alerts</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/verify</loc>
+    <loc>https://www.xira.surf/verify</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/whitepaper</loc>
+    <loc>https://www.xira.surf/whitepaper</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/docs</loc>
+    <loc>https://www.xira.surf/docs</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/terms</loc>
+    <loc>https://www.xira.surf/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/privacy</loc>
+    <loc>https://www.xira.surf/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
 
   <url>
-    <loc>https://xira-tan.vercel.app/asset/NVDAx</loc>
+    <loc>https://www.xira.surf/asset/NVDAx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/TSLAx</loc>
+    <loc>https://www.xira.surf/asset/TSLAx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/AAPLx</loc>
+    <loc>https://www.xira.surf/asset/AAPLx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/MSFTx</loc>
+    <loc>https://www.xira.surf/asset/MSFTx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/GOOGLx</loc>
+    <loc>https://www.xira.surf/asset/GOOGLx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/AMZNx</loc>
+    <loc>https://www.xira.surf/asset/AMZNx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/METAx</loc>
+    <loc>https://www.xira.surf/asset/METAx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/SPYx</loc>
+    <loc>https://www.xira.surf/asset/SPYx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/QQQx</loc>
+    <loc>https://www.xira.surf/asset/QQQx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/AMDx</loc>
+    <loc>https://www.xira.surf/asset/AMDx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/INTCx</loc>
+    <loc>https://www.xira.surf/asset/INTCx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/NFLXx</loc>
+    <loc>https://www.xira.surf/asset/NFLXx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/BAx</loc>
+    <loc>https://www.xira.surf/asset/BAx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/JPMx</loc>
+    <loc>https://www.xira.surf/asset/JPMx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>
   </url>
   <url>
-    <loc>https://xira-tan.vercel.app/asset/XOMx</loc>
+    <loc>https://www.xira.surf/asset/XOMx</loc>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-08-12</lastmod>

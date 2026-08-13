@@ -8,6 +8,8 @@ import { API_BASE } from "@/lib/api";
 import { RiskBadge } from "@/components/ScoreCard";
 import { FactorBreakdown, HistoryChart, AlertBanner } from "@/components/FactorBreakdown";
 
+const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
+
 function formatTimestamp(ts: number): string {
   return new Date(ts * 1000).toLocaleString();
 }
@@ -312,7 +314,7 @@ export function AssetDetailClient() {
               Latest on-chain tx:{" "}
             </span>
             <a
-              href={attestation.chain_explorer}
+              href={attestation.chain_explorer ?? `${EXPLORER}/tx/${attestation.chain_tx}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-[var(--accent-glow)] hover:underline break-all font-mono"
@@ -401,8 +403,8 @@ export function AssetDetailClient() {
         ) : (
           <p className="text-xs text-neutral-500 leading-relaxed">
             No attestations stored on-chain for this market yet. The oracle
-            writes to the V2 contract once the backend is pointed at it and a
-            meaningful score change occurs.
+            writes a new attestation when the score moves past the deviation
+            threshold, so check back after the next publish pass.
           </p>
         )}
       </div>

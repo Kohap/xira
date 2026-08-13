@@ -25,7 +25,7 @@ const ENDPOINTS = [
     desc: "The full record for one asset: its score, confidence, the five factor scores, the explanation, and the on-chain transaction when one was published.",
     query: "symbol is case-insensitive; must be a tracked symbol (NVDAx, TSLAx, ...)",
     returns: "AttestationResponse",
-    note: "Computes fresh (or serves from the 5-minute cache) and attempts an on-chain updateAttestation.",
+    note: "Read-only: serves the latest published attestation from the store. A GET never writes on-chain; publishing happens on the oracle's schedule.",
   },
   {
     method: "GET",
