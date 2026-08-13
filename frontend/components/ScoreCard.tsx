@@ -178,7 +178,7 @@ export function ScoreCard({
                 }}
                 aria-label={pinned ? `Unpin ${symbol}` : `Pin ${symbol} to watchlist`}
                 title={pinned ? "Unpin" : "Pin to watchlist"}
-                className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
                   pinned
                     ? "text-[var(--accent-glow)] hover:text-white"
                     : "text-neutral-600 hover:text-neutral-300"

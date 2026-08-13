@@ -238,7 +238,7 @@ export function AlertBell() {
                           onClick={() => markRead(a.symbol, a.timestamp)}
                           aria-label={read ? `Mark ${a.symbol} alert as unread` : `Mark ${a.symbol} alert as read`}
                           title={read ? "Mark as unread" : "Mark as read"}
-                          className="shrink-0 self-center inline-flex items-center justify-center w-7 h-7 text-neutral-600 hover:text-[var(--accent-glow)] transition-colors"
+                          className="shrink-0 self-center inline-flex items-center justify-center w-9 h-9 text-neutral-600 hover:text-[var(--accent-glow)] transition-colors"
                         >
                           {read ? (
                             <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor" aria-hidden="true">

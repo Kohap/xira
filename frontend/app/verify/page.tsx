@@ -41,7 +41,7 @@ function Row({
         {chainValue}
         {match !== undefined && (
           <span
-            className={`text-[10px] font-sans font-medium px-1.5 py-0.5 rounded-full ${
+            className={`text-[11px] font-sans font-medium px-1.5 py-0.5 rounded-full ${
               match
                 ? "bg-emerald-900/40 text-emerald-400"
                 : "bg-red-900/40 text-red-400"

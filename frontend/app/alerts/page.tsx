@@ -209,7 +209,7 @@ export default function AlertsPage() {
                       type="button"
                       onClick={() => void applyThreshold(sym)}
                       aria-label={`Save ${sym} threshold`}
-                      className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md text-neutral-400 hover:text-white hover:bg-[var(--card-border)]/50 transition-colors"
+                      className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-white hover:bg-[var(--card-border)]/50 transition-colors"
                     >
                       <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M3.5 8.5l3 3 6-6" />

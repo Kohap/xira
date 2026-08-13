@@ -579,7 +579,7 @@ export default function DashboardPage() {
               type="button"
               onClick={() => setQuery("")}
               aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md flex items-center justify-center text-neutral-500 hover:text-white transition-colors"
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md flex items-center justify-center text-neutral-500 hover:text-white transition-colors"
             >
               <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
                 <path d="M4 4l8 8M12 4l-8 8" />
@@ -982,7 +982,7 @@ export default function DashboardPage() {
                       type="button"
                       onClick={() => togglePin(asset.symbol)}
                       aria-label={watchlist.includes(asset.symbol) ? `Unpin ${asset.symbol}` : `Pin ${asset.symbol}`}
-                      className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                      className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
                         watchlist.includes(asset.symbol)
                           ? "text-[var(--accent-glow)] hover:text-white"
                           : "text-neutral-600 hover:text-neutral-300"
