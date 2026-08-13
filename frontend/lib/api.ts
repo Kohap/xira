@@ -19,13 +19,21 @@ export const API_BASE = normalizeBase(
   process.env.NEXT_PUBLIC_API_URL || "https://xira-api-production.up.railway.app"
 );
 
+export const API_KEY =
+  process.env.NEXT_PUBLIC_XIRA_API_KEY ||
+  "xira_BIy-PMdDgiEKeMBFxt7pjAKsMd5tYMZ6SZmfdulKfJA";
+
 const FETCH_TIMEOUT_MS = 25_000;
 
 async function fetchJSON<T>(url: string): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(url, { cache: "no-store", signal: controller.signal });
+    const res = await fetch(url, {
+      cache: "no-store",
+      signal: controller.signal,
+      headers: { "X-API-Key": API_KEY },
+    });
     if (!res.ok) {
       throw new Error(`API error: ${res.status} ${res.statusText}`);
     }
@@ -99,7 +107,7 @@ export async function saveThreshold(
 ): Promise<{ ok: boolean }> {
   const res = await fetch(`${API_BASE}/api/alerts/thresholds`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
     body: JSON.stringify({ symbol, threshold, enabled }),
   });
   if (!res.ok) throw new Error(`Threshold API error: ${res.status}`);

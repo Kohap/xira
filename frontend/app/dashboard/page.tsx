@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import type { AllAssetsResponse, MarketHistoryResponse } from "@/lib/types";
-import { API_BASE, fetchMarketHistory } from "@/lib/api";
+import { API_BASE, API_KEY, fetchMarketHistory } from "@/lib/api";
 import { SECTOR_MAP, trackedAssets } from "@/lib/markets";
 import { ScoreCard, RiskBadge } from "@/components/ScoreCard";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
@@ -285,7 +285,9 @@ export default function DashboardPage() {
       if (showLoading) setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${apiBase}/api/assets/all`);
+        const res = await fetch(`${apiBase}/api/assets/all`, {
+          headers: { "X-API-Key": API_KEY },
+        });
         if (!res.ok) {
           throw new Error(`API error: ${res.status} ${res.statusText}`);
         }
