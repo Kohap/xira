@@ -4,9 +4,9 @@
 
 **One verifiable risk number for every xStock — signed onchain.**
 
-XIRA analyzes 15 xStocks, compresses momentum, volatility, sentiment, volume
+XIRA analyzes 50 xStocks, compresses momentum, volatility, sentiment, volume
 anomaly and liquidity into a single explainable 0–100 risk score, and publishes
-each meaningful change as an on-chain attestation on X Layer Testnet. Agents,
+each meaningful change as an on-chain attestation on X Layer Mainnet. Agents,
 protocols and humans read the same number, and can verify it without trusting
 this site.
 
@@ -21,7 +21,7 @@ this site.
 | **API base** | [https://xira-api-production.up.railway.app](https://xira-api-production.up.railway.app) |
 | **Docs** | [https://xira-api-production.up.railway.app/docs](https://xira-api-production.up.railway.app/docs) |
 | **Verify a score** | [https://www.xira.surf/verify](https://www.xira.surf/verify) |
-| **Oracle contract** | [`0xaa5f6215e947ffce2f46513a926af3239be545d0`](https://www.okx.com/web3/explorer/xlayer-test/address/0xaa5f6215e947ffce2f46513a926af3239be545d0) on OKX Explorer |
+| **Oracle contract** | [`0x22851e160aef3e3aeb373fd351a07ff7c65c9b57`](https://www.okx.com/web3/explorer/xlayer/address/0x22851e160aef3e3aeb373fd351a07ff7c65c9b57) on OKX Explorer |
 | **Source** | [github.com/Kohap/xira](https://github.com/Kohap/xira) |
 
 ## The build in 30 seconds
@@ -30,10 +30,10 @@ this site.
   live risk board, per-asset factor breakdowns, anomaly alerts, a published
   vs on-chain verify tool, and docs.
 - **Backend** — FastAPI on Railway. Pulls live quotes from Finnhub (with a
-  deterministic simulator as fallback), scores 15 markets with a transparent
-  five-factor model, and serves the board over JSON.
-- **On-chain** — Solidity attestation contract on X Layer Testnet (Chain ID
-  1952). A heartbeat scheduler signs every meaningful score change
+  deterministic simulator as fallback), scores 50 tracked markets with a
+  transparent five-factor model, and serves the board over JSON.
+- **On-chain** — Solidity attestation contract on X Layer Mainnet (Chain ID
+  196). A heartbeat scheduler signs every meaningful score change
   (deviation threshold) as a transaction; `GET` endpoints are read-only and
   never spend gas.
 - **Agents** — the same data is exposed as MCP tools
@@ -58,7 +58,7 @@ AI engine ── five factors, weighted ──► 0–100 score + explanation
 Attestation store (SQLite) ── scheduler (30 min, deviation threshold)
         │
         ▼
-XIRA.sol on X Layer testnet ── evidence_hash, score, timestamp per asset
+XIRA.sol on X Layer Mainnet ── evidence_hash, score, timestamp per asset
         │
         ▼
 REST API (FastAPI)  ·  Next.js dashboard  ·  MCP tools for agents
@@ -118,19 +118,18 @@ npm run dev                   # http://localhost:3000
 
 ```bash
 cd contracts
-export PRIVATE_KEY=your_testnet_key
-forge script script/DeployAll.s.sol --rpc-url https://testrpc.xlayer.tech --broadcast --legacy
+export PRIVATE_KEY=your_key
+forge script script/DeployAll.s.sol --rpc-url https://rpc.xlayer.tech --broadcast --legacy
 ```
 
 Oracle wallet: `0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0`
 
 ## Tracked assets
 
-| Symbol | Underlying | Sector |
-|---|---|---|
-| NVDAx / TSLAx / AAPLx / MSFTx / GOOGLx / AMZNx / METAx | NVDA, TSLA, AAPL, MSFT, GOOGL, AMZN, META | Tech, Consumer, Communication |
-| AMDx / INTCx / NFLXx / BAx / JPMx / XOMx | AMD, INTC, NFLX, BA, JPM, XOM | Tech, Communication, Industrials, Financial, Energy |
-| SPYx / QQQx | SPY, QQQ | ETFs (S&P 500, Nasdaq-100) |
+The tracked universe is catalog-driven — `catalogs/asset_catalog.json` lists
+65 xStocks (50 enabled by default), each with its OKX spot pair, underlying,
+token address and live 24h volume. Enable/disable an asset by flipping
+`enabled` in the catalog and redeploying the backend.
 
 ## Scoring model
 

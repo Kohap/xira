@@ -6,9 +6,8 @@ from web3 import Web3
 
 logger = logging.getLogger(__name__)
 
-XLAYER_TESTNET_RPC = "https://testrpc.xlayer.tech"
 XLAYER_MAINNET_RPC = "https://rpc.xlayer.tech"
-DEFAULT_EXPLORER_BASE = "https://www.okx.com/web3/explorer/xlayer-test"
+DEFAULT_EXPLORER_BASE = "https://www.okx.com/web3/explorer/xlayer"
 
 MAX_NONCE_RETRIES = int(os.getenv("XIRA_MAX_NONCE_RETRIES", "3"))
 MIN_SIGNER_BALANCE_OKB = float(os.getenv("XIRA_MIN_SIGNER_BALANCE_OKB", "0.05"))
@@ -77,6 +76,13 @@ def _get_abi() -> list:
             "type": "function",
         },
         {
+            "inputs": [],
+            "name": "owner",
+            "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+            "stateMutability": "view",
+            "type": "function",
+        },
+        {
             "inputs": [{"internalType": "address", "name": "asset", "type": "address"}],
             "name": "getHistory",
             "outputs": [
@@ -108,15 +114,12 @@ class OnchainPublisher:
         contract_address: str = "",
         private_key: str = "",
     ):
-        self.rpc_url = rpc_url or os.getenv(
-            "XLAYER_RPC_URL", os.getenv("XIRA_RPC_FALLBACK", XLAYER_TESTNET_RPC)
-        )
+        self.rpc_url = rpc_url or os.getenv("XLAYER_RPC_URL", XLAYER_MAINNET_RPC)
         self.rpc_fallback = os.getenv("XIRA_RPC_FALLBACK", "")
         self.explorer_base = os.getenv(
-            "XIRA_EXPLORER_BASE",
-            "https://www.okx.com/web3/explorer/xlayer-test",
+            "XIRA_EXPLORER_BASE", DEFAULT_EXPLORER_BASE
         )
-        self.chain_label = os.getenv("XIRA_CHAIN_LABEL", "xlayer-test")
+        self.chain_label = os.getenv("XIRA_CHAIN_LABEL", "xlayer-mainnet")
         self.contract_address = contract_address or os.getenv("XIRA_CONTRACT_ADDRESS", "")
         self.private_key = private_key or os.getenv("PRIVATE_KEY", "")
         self.w3: Optional[Web3] = None
@@ -147,7 +150,6 @@ class OnchainPublisher:
         urls = [self.rpc_url]
         if self.rpc_fallback and self.rpc_fallback != self.rpc_url:
             urls.append(self.rpc_fallback)
-        urls.append(XLAYER_MAINNET_RPC if "xlayer-test" in self.chain_label else XLAYER_TESTNET_RPC)
 
         for url in urls:
             try:
@@ -230,14 +232,19 @@ class OnchainPublisher:
         """Publish several attestations in chunked batchUpdateAttestations
         txs (gas-efficient at 50+ assets). Falls back to per-asset txs if a
         chunk reverts (e.g. an asset tripped the per-asset min interval)."""
-        summary = {"sent": 0, "published": 0, "failed": 0, "txs": [], "fallbacks": 0, "succeeded": set()}
+        summary = {
+            "sent": 0, "published": 0, "failed": 0, "txs": [],
+            "fallbacks": 0, "succeeded": set(), "tx_by_token": {},
+        }
         if not self.enabled or not self.contract or not self.w3 or not self.account:
             summary["failed"] = len(entries)
             return summary
 
-        def _succeed(e):
+        def _succeed(e, txinfo: dict | None = None):
             summary["published"] += 1
             summary["succeeded"].add(e["token_address"])
+            if txinfo:
+                summary["tx_by_token"][e["token_address"]] = txinfo
 
         for start in range(0, len(entries), BATCH_CHUNK):
             chunk = entries[start : start + BATCH_CHUNK]
@@ -272,20 +279,21 @@ class OnchainPublisher:
                     if receipt.get("status") != 1:
                         raise RuntimeError(f"batch tx reverted: {tx_hash.hex()}")
                     summary["sent"] += len(chunk)
-                    for e in chunk:
-                        _succeed(e)
-                    summary["txs"].append({
+                    txinfo = {
                         "tx_hash": tx_hash.hex(),
                         "explorer_url": f"{self.explorer_base}/tx/{tx_hash.hex()}",
                         "block": receipt.get("blockNumber", 0),
                         "entries": len(chunk),
                         "gas_used": receipt.get("gasUsed", 0),
-                    })
+                    }
+                    for e in chunk:
+                        _succeed(e, txinfo)
+                    summary["txs"].append(txinfo)
                     self.publishes += 1
                     self.last_publish_at = time.time()
                     self.consecutive_failures = 0
                     for e in chunk:
-                        self.last_tx_by_token[e["token_address"]] = summary["txs"][-1]
+                        self.last_tx_by_token[e["token_address"]] = txinfo
                     break
                 except Exception as e:
                     err = f"{e}"
@@ -309,7 +317,7 @@ class OnchainPublisher:
                             anomaly_reason=e.get("anomaly_reason") or "",
                         )
                         if tx:
-                            _succeed(e)
+                            _succeed(e, {"tx_hash": tx["tx_hash"], "explorer_url": tx["explorer_url"]})
                         else:
                             summary["failed"] += 1
                     break
