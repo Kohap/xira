@@ -79,7 +79,7 @@ export function HistoryChart({
       >
         <polyline
           fill="none"
-          stroke="rgb(139, 124, 246)"
+          stroke="var(--accent-glow)"
           strokeWidth="2"
           points={points}
           vectorEffect="non-scaling-stroke"
@@ -123,7 +123,11 @@ export function AlertBanner({
 
   return (
     <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-4 flex items-start gap-3">
-      <span className="text-red-400 text-lg flex-shrink-0">&#9888;</span>
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 text-red-400" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M10.3 3.9L2.6 16.9a1.9 1.9 0 001.7 2.9h15.4a1.9 1.9 0 001.7-2.9L13.7 3.9a1.9 1.9 0 00-3.4 0z" />
+        <path d="M12 9.5v4.2" />
+        <path d="M12 17.2h.01" />
+      </svg>
       <div>
         <h4 className="text-red-400 font-medium text-sm">Anomaly Detected</h4>
         <p className="text-red-300/80 text-sm mt-0.5">{anomaly_reason}</p>

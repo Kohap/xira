@@ -115,7 +115,7 @@ const TYPES = [
   {
     name: "HealthResponse",
     fields:
-      "status · version · chain · contract · tracked_assets · live_data",
+      "status · version · chain · contract · tracked_assets · live_data · signer · scheduler (pass stats) · publisher (enabled, publishes, last publish/attempt, consecutive failures) · scheduler_stalled · publish_failing · publish_stale",
   },
 ];
 
@@ -244,7 +244,7 @@ export default function DocsPage() {
             </p>
             <p className="mt-3 text-sm text-neutral-500">
               The frontend is statically hosted; the API is a separate server
-              with a 5-minute in-memory price cache. A cold Render instance
+              with a 5-minute in-memory price cache. A cold Railway instance
               may take 30–60s to wake.
             </p>
           </header>
@@ -384,7 +384,7 @@ export default function DocsPage() {
             <p className="mt-6 text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
               The tools are served over HTTP at{" "}
               <code className="font-mono text-xs text-neutral-300">{API_BASE}/mcp</code>,
-              so any MCP client can point straight at the hosted endpoint —
+              so any MCP client can point straight at the hosted endpoint,
               no local server to run:
             </p>
             <pre className="mt-3 p-4 rounded-xl bg-black/40 border border-[var(--card-border)] text-xs font-mono overflow-x-auto leading-relaxed text-neutral-300">

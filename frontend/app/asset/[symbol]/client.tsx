@@ -49,11 +49,11 @@ export function AssetDetailClient() {
   const [rescoring, setRescoring] = useState(false);
   const [rescoreResult, setRescoreResult] = useState<RescoreResponse | null>(null);
   const [rescoreError, setRescoreError] = useState<string | null>(null);
-  const [adminToken, setAdminToken] = useState("");
-
-  useEffect(() => {
-    setAdminToken(window.localStorage.getItem("xira_admin_token") ?? "");
-  }, []);
+  const [adminToken, setAdminToken] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : window.localStorage.getItem("xira_admin_token") ?? ""
+  );
 
   const copySummary = async () => {
     if (!attestation) return;
@@ -68,7 +68,6 @@ export function AssetDetailClient() {
       attestation.chain_tx
         ? `On-chain: ${attestation.chain_explorer ?? attestation.chain_tx}`
         : "On-chain: not published for this read",
-      "Verified on X Layer Testnet (Chain ID 1952)",
     ].join("\n");
     try {
       await navigator.clipboard.writeText(text);
@@ -570,7 +569,7 @@ export function AssetDetailClient() {
           htmlFor="admin-token"
           className="block text-[11px] font-medium text-neutral-500 mb-1"
         >
-          Admin token (optional — enables on-chain publishing for force re-score)
+          Admin token (optional; enables on-chain publishing for force re-score)
         </label>
         <div className="flex gap-2">
           <input

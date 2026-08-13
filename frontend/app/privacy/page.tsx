@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">1. What we collect</h2>
           <p className="mt-3">
             Nothing that identifies you. The frontend runs as a static site on
-            GitHub Pages and does not set cookies, run analytics, or maintain
+            Vercel and does not set cookies, run analytics, or maintain
             sessions. Your browser fetches public risk data directly from the
             API; no account, login, or personal profile exists.
           </p>
@@ -35,11 +35,11 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">2. Requests and logs</h2>
           <p className="mt-3">
-            The API server (hosted on Render) receives HTTP requests
+            The API server (hosted on Railway) receives HTTP requests
             containing your IP address, as any web server does, for standard
             operational logging and abuse prevention. The backend application
-            itself does not log request bodies. Third-party platforms (GitHub
-            Pages for hosting, Render for the API) process traffic under
+            itself does not log request bodies. Third-party platforms (Vercel
+            for hosting, Railway for the API) process traffic under
             their own privacy policies.
           </p>
         </section>

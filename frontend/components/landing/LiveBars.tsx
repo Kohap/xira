@@ -222,7 +222,6 @@ export function LiveBars() {
         <span className="font-mono tabular-nums whitespace-nowrap">
           15 markets · 5 factors · 30 min cadence · 1:1 attestation
         </span>
-        <span className="font-mono">Verified on X Layer testnet</span>
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ export function LiveTicker() {
         aria-label="Live risk scores"
       >
         <div className="text-center text-[11px] font-mono text-neutral-600">
-          {offline ? "Risk board offline – scores unavailable" : "Loading risk scores…"}
+          {offline ? "Risk board offline: scores unavailable" : "Loading risk scores…"}
         </div>
       </div>
     );
