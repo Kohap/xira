@@ -271,7 +271,7 @@ def test_wrong_chain_id_fails_startup(monkeypatch):
         account = None
         contract_address = ""
         rpc_url = "https://rpc.xlayer.tech"
-        min_signer_balance_okb = 0.05
+        min_signer_balance_wei = 5 * 10**16
 
         def signer_balance_wei(self):
             return 10**18
@@ -292,7 +292,7 @@ def test_startup_passes_when_checks_align(monkeypatch):
         chain_id = None
         account = None
         contract_address = ""
-        min_signer_balance_okb = 0.05
+        min_signer_balance_wei = 5 * 10**16
         w3 = None
         contract = None
 
@@ -336,7 +336,7 @@ def test_owner_gate_catches_mismatch(monkeypatch):
         account = Account()
         contract = Contract()
         w3 = W3()
-        min_signer_balance_okb = 0.05
+        min_signer_balance_wei = 5 * 10**16
 
         def signer_balance_wei(self):
             return 10**18

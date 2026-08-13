@@ -84,12 +84,13 @@ def verify_signer_balance(publisher) -> str | None:
     bal = publisher.signer_balance_wei()
     if bal is None:
         return "Signer balance could not be read; publishing will likely fail."
-    min_wei = Web3.to_wei(publisher.min_signer_balance_okb, "ether")
+    min_wei = publisher.min_signer_balance_wei
     if bal < min_wei:
         okb = float(bal) / 1e18
+        min_okb = float(min_wei) / 1e18
         return (
             f"Signer {publisher.account.address[:10]}… is underfunded "
-            f"({okb:.4f} OKB < {publisher.min_signer_balance_okb} OKB). "
+            f"({okb:.4f} OKB < {min_okb:.4f} OKB). "
             "Publishing will fail until funded."
         )
     return None
