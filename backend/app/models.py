@@ -77,6 +77,10 @@ class HealthResponse(BaseModel):
     signer: Optional[str] = None
     scheduler: Optional[dict] = None
     last_publish_error: Optional[str] = None
+    publisher: Optional[dict] = None
+    scheduler_stalled: bool = False
+    publish_failing: bool = False
+    publish_stale: bool = False
 
 
 class AssetDetailResponse(BaseModel):

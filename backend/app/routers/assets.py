@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
 from app.services.publisher import publisher, XLAYER_EXPLORER
-from app.services.scheduler import scheduler_diag
+from app.services.scheduler import scheduler_diag, HEARTBEAT_MINUTES
 from app.services.history_db import history_db
 from app.services.rate_limit import enforce_rate_limit
 from app.models import (
@@ -207,6 +207,31 @@ async def health_check(request: Request):
     contract_addr = os.getenv("XIRA_CONTRACT_ADDRESS", "0x0000000000000000000000000000000000000000")
     live = os.getenv("USE_LIVE_DATA", "true").lower() == "true"
     signer = publisher.account.address if publisher.enabled and publisher.account else None
+
+    diag = scheduler_diag()
+    now = time.time()
+    heartbeat_s = HEARTBEAT_MINUTES * 60
+    last_pass = diag.get("last_pass_at")
+
+    # Scheduler stalled: it has run at least once, then gone quiet for more
+    # than two heartbeats. None (still warming up after restart) is not a stall.
+    scheduler_stalled = bool(
+        last_pass is not None and (now - last_pass) > 2 * heartbeat_s
+    )
+
+    pub = publisher.status()
+    # Actively failing: repeated tx errors with no success in between.
+    publish_failing = bool(
+        pub["enabled"] and pub["consecutive_failures"] >= 2
+    )
+    # Stale: enabled, has attempted at least one tx, and never succeeded.
+    publish_stale = bool(
+        pub["enabled"]
+        and pub["last_attempt_at"] is not None
+        and pub["last_publish_at"] is None
+        and pub["consecutive_failures"] > 0
+    )
+
     return HealthResponse(
         status="ok",
         version=os.getenv("MODEL_VERSION", "v1.0.0"),
@@ -215,8 +240,12 @@ async def health_check(request: Request):
         tracked_assets=len(get_tracked_assets()),
         live_data=live,
         signer=signer,
-        scheduler=scheduler_diag(),
+        scheduler=diag,
         last_publish_error=publisher.last_tx_error,
+        publisher=pub,
+        scheduler_stalled=scheduler_stalled,
+        publish_failing=publish_failing,
+        publish_stale=publish_stale,
     )
 
 

@@ -98,6 +98,10 @@ class OnchainPublisher:
         self.last_tx_error: Optional[str] = None
         self.last_tx_by_token: dict[str, dict] = {}
         self.publishes: int = 0
+        self.last_publish_at: Optional[float] = None
+        self.last_attempt_at: Optional[float] = None
+        self.consecutive_failures: int = 0
+        self.error_history: list[dict] = []
         self._init_web3()
 
     def _init_web3(self):
@@ -165,6 +169,8 @@ class OnchainPublisher:
         if not self.enabled or not self.contract or not self.w3 or not self.account:
             return None
 
+        self.last_attempt_at = time.time()
+
         evidence_bytes = bytes.fromhex(evidence_hash_hex.replace("0x", ""))
         if len(evidence_bytes) != 32:
             evidence_bytes = evidence_bytes.ljust(32, b"\x00")[:32]
@@ -196,6 +202,7 @@ class OnchainPublisher:
                         f"Attestation tx reverted (status {receipt.get('status') if receipt else None}) "
                         f"for {token_address}. Not counting as published."
                     )
+                    self._record_failure(f"tx reverted for {token_address}", token_address)
                     self.last_tx_error = f"tx reverted for {token_address}"
                     return None
 
@@ -203,6 +210,8 @@ class OnchainPublisher:
                 explorer = f"{XLAYER_EXPLORER}/tx/{h}"
                 logger.info(f"Attestation published: {h[:20]}... ({explorer})")
                 self.publishes += 1
+                self.last_publish_at = time.time()
+                self.consecutive_failures = 0
                 self.last_tx_by_token[token_address] = {
                     "tx_hash": h,
                     "explorer_url": explorer,
@@ -226,12 +235,37 @@ class OnchainPublisher:
                     )
                     time.sleep(1.0 * (attempt + 1))
                     continue
+                self._record_failure(f"{type(e).__name__}: {e}", token_address)
                 self.last_tx_error = f"{type(e).__name__}: {e}"
                 logger.error(f"Tx failed for {token_address}: {e}")
                 return None
 
+        self._record_failure(f"exceeded {MAX_NONCE_RETRIES} nonce retries", token_address)
         self.last_tx_error = f"tx: exceeded {MAX_NONCE_RETRIES} nonce retries"
         return None
+
+    def _record_failure(self, message: str, token_address: str) -> None:
+        self.consecutive_failures += 1
+        now = int(time.time())
+        self.error_history.append({"ts": now, "token": token_address, "error": message})
+        cutoff = now - 86400
+        self.error_history = [
+            e for e in self.error_history if e["ts"] >= cutoff
+        ][-20:]
+
+    def status(self) -> dict:
+        """Runtime health snapshot for /health and external monitors."""
+        return {
+            "enabled": self.enabled,
+            "chain_id": self.chain_id,
+            "signer": self.account.address if self.enabled and self.account else None,
+            "publishes": self.publishes,
+            "last_publish_at": self.last_publish_at,
+            "last_attempt_at": self.last_attempt_at,
+            "consecutive_failures": self.consecutive_failures,
+            "last_error": self.last_tx_error,
+            "errors_24h": self.error_history,
+        }
 
     def last_tx(self, token_address: str) -> Optional[dict]:
         return self.last_tx_by_token.get(token_address)

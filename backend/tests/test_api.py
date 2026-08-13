@@ -31,6 +31,20 @@ def test_health():
     assert body["status"] == "ok"
     assert body["tracked_assets"] == 15
 
+    # Publisher visibility block (P0.2): present even when off-chain.
+    pub = body["publisher"]
+    assert pub["enabled"] is False
+    assert pub["publishes"] == 0
+    assert pub["last_publish_at"] is None
+    assert pub["last_attempt_at"] is None
+    assert pub["consecutive_failures"] == 0
+    assert pub["last_error"] is None
+    assert "errors_24h" in pub
+
+    assert body["scheduler_stalled"] is False
+    assert body["publish_failing"] is False
+    assert body["publish_stale"] is False
+
 
 def test_assets_all():
     res = client.get("/api/assets/all")
