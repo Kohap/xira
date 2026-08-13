@@ -35,7 +35,7 @@ function Row({
   match?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-2 sm:gap-4 py-3 border-b border-[var(--card-border)] items-center">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 py-3 border-b border-[var(--card-border)] sm:items-center">
       <span className="text-xs text-neutral-500">{label}</span>
       <span className="text-sm text-neutral-200 font-mono">{apiValue}</span>
       <span className="flex items-center gap-2 text-sm text-neutral-200 font-mono">
@@ -161,7 +161,7 @@ export default function VerifyPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-[11px] sm:text-[11px] font-medium text-neutral-600 border-b border-[var(--card-border)] pb-2">
+          <div className="hidden sm:grid sm:grid-cols-3 gap-4 text-[11px] font-medium text-neutral-600 border-b border-[var(--card-border)] pb-2">
             <span>Field</span>
             <span>Published</span>
             <span>On-chain</span>
