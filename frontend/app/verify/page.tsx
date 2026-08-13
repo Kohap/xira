@@ -96,7 +96,7 @@ export default function VerifyPage() {
       </Link>
 
       <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-        Verify a score <span className="font-serif italic text-[var(--accent-glow)]">onchain</span>
+        Verify a score onchain
       </h1>
       <p className="mt-4 text-neutral-400 leading-relaxed max-w-2xl">
         Pick a market and compare what the oracle last signed against what

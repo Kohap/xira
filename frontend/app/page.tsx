@@ -143,86 +143,56 @@ export default function LandingPage() {
       <LiveTicker />
 
       <section className="relative">
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 lg:py-28">
-          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-16 items-center">
-            <div>
-              <Reveal delay={60}>
-                <h1 className="text-[2.6rem] leading-[1.05] sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
-                  One risk number for every{" "}
-                  <span className="font-serif italic text-[var(--accent-glow)] tracking-normal">
-                    xStock
-                  </span>
-                  .
-                </h1>
-              </Reveal>
-              <Reveal delay={90}>
-                <p className="mt-6 text-lg text-neutral-400 max-w-xl leading-relaxed">
-                  XIRA weighs volatility, momentum, news, volume, and beta into a
-                  single 0–100 score, then signs it onto X Layer so the number
-                  you see is the transaction anyone can verify.
-                </p>
-              </Reveal>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-24 lg:pt-28 pb-14 sm:pb-24 lg:pb-28">
+          <Reveal delay={60}>
+            <h1 className="max-w-3xl text-[2.6rem] leading-[1.05] sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
+              One risk number for every{" "}
+              <span className="font-serif italic text-[var(--accent-glow)] tracking-normal">
+                xStock
+              </span>
+              .
+            </h1>
+          </Reveal>
+          <Reveal delay={90}>
+            <p className="mt-6 text-lg text-neutral-400 max-w-xl leading-relaxed">
+              XIRA weighs volatility, momentum, news, volume, and beta into a
+              single 0–100 score, then signs it onto X Layer so the number
+              you see is the transaction anyone can verify.
+            </p>
+          </Reveal>
 
-              <Reveal delay={180}>
-                <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                  <a
-                    href="/dashboard"
-                    className="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-[var(--accent)] text-[var(--accent-ink)] hover:bg-[var(--accent-glow)] font-medium transition-colors"
-                  >
-                    Open live board
-                  </a>
-                  <a
-                    href="#verify"
-                    className="inline-flex items-center justify-center px-6 h-12 rounded-xl border border-[var(--card-border)] text-neutral-300 hover:text-white hover:border-neutral-600 transition-colors active:scale-[0.98]"
-                  >
-                    How to verify
-                  </a>
-                </div>
-              </Reveal>
-
-              <Reveal delay={260}>
-                <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
-                    <span className="text-[11px] text-neutral-500 mr-1">oracle</span>
-                    <code className="font-mono text-[11px] text-neutral-300">
-                      {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
-                    </code>
-                    <CopyButton value={CONTRACT} label="contract address" />
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-800/50 bg-emerald-950/30 px-3 py-2 text-[11px] text-emerald-400">
-                    <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M2.5 8.5l3.5 3.5 7.5-8" />
-                    </svg>
-                    Verified on X Layer Testnet
-                  </span>
-                </div>
-              </Reveal>
-
-              <Reveal delay={340}>
-                <dl className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-px overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-border)]">
-                  {[
-                    { value: "15", label: "Markets tracked" },
-                    { value: "5", label: "Risk factors" },
-                    { value: "30 min", label: "Update cadence" },
-                    { value: "1:1", label: "Score to attestation" },
-                  ].map((stat) => (
-                    <div key={stat.label} className="bg-[var(--card-bg)] px-4 py-3 flex flex-col">
-                      <dt className="order-2 text-[11px] text-neutral-500 mt-0.5">
-                        {stat.label}
-                      </dt>
-                      <dd className="order-1 font-mono text-lg font-semibold text-[var(--accent-glow)] tabular-nums">
-                        {stat.value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </Reveal>
+          <Reveal delay={180}>
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <a
+                href="/dashboard"
+                className="inline-flex items-center justify-center px-6 h-12 rounded-xl bg-[var(--accent)] text-[var(--accent-ink)] hover:bg-[var(--accent-glow)] font-medium transition-colors"
+              >
+                Open live board
+              </a>
+              <a
+                href="#verify"
+                className="text-sm text-neutral-400 hover:text-white transition-colors hover:underline underline-offset-4"
+              >
+                How to verify a score
+              </a>
             </div>
+          </Reveal>
 
-            <Reveal delay={150}>
+          <Reveal delay={260}>
+            <div className="mt-8 inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
+              <span className="text-[11px] text-neutral-500 mr-1">oracle</span>
+              <code className="font-mono text-[11px] text-neutral-300">
+                {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
+              </code>
+              <CopyButton value={CONTRACT} label="contract address" />
+            </div>
+          </Reveal>
+
+          <Reveal delay={150}>
+            <div className="mt-12 sm:mt-16">
               <LiveBars />
-            </Reveal>
-          </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

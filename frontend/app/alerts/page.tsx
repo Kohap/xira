@@ -116,7 +116,7 @@ export default function AlertsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Anomaly <span className="font-serif italic text-[var(--accent-glow)]">alerts</span>
+            Anomaly alerts
           </h1>
           <p className="text-sm text-neutral-400 mt-1">
             Assets where the factor model&apos;s expectations broke. These flags

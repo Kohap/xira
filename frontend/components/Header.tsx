@@ -42,11 +42,8 @@ export function Header() {
 
           <Link
             href="/dashboard"
-            className="hidden lg:inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-sm font-medium transition-colors"
+            className="hidden lg:inline-flex items-center px-4 h-9 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-sm font-medium transition-colors"
           >
-            <span className="relative flex w-1.5 h-1.5" aria-hidden="true">
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--accent-ink)]" />
-            </span>
             Live board
           </Link>
 

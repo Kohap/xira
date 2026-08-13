@@ -218,9 +218,11 @@ export function LiveBars() {
         </div>
       )}
 
-      <div className="mt-4 pt-3.5 border-t border-[var(--card-border)] flex items-center justify-between gap-3 text-[11px] text-neutral-400">
+      <div className="mt-4 pt-3.5 border-t border-[var(--card-border)] flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-neutral-400">
+        <span className="font-mono tabular-nums whitespace-nowrap">
+          15 markets · 5 factors · 30 min cadence · 1:1 attestation
+        </span>
         <span className="font-mono">Verified on X Layer testnet</span>
-        <span className="font-mono whitespace-nowrap tabular-nums">1 score = 1 attestation tx</span>
       </div>
     </div>
   );
