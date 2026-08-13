@@ -18,8 +18,8 @@ this site.
 |---|---|
 | **App** | [https://www.xira.surf](https://www.xira.surf) |
 | **Risk board** | [https://www.xira.surf/dashboard](https://www.xira.surf/dashboard) |
-| **API base** | [https://xira-gsb3.onrender.com](https://xira-gsb3.onrender.com) |
-| **Docs** | [https://xira-gsb3.onrender.com/docs](https://xira-gsb3.onrender.com/docs) |
+| **API base** | [https://xira-api-production.up.railway.app](https://xira-api-production.up.railway.app) |
+| **Docs** | [https://xira-api-production.up.railway.app/docs](https://xira-api-production.up.railway.app/docs) |
 | **Verify a score** | [https://www.xira.surf/verify](https://www.xira.surf/verify) |
 | **Oracle contract** | [`0xaa5f6215e947ffce2f46513a926af3239be545d0`](https://www.okx.com/web3/explorer/xlayer-test/address/0xaa5f6215e947ffce2f46513a926af3239be545d0) on OKX Explorer |
 | **Source** | [github.com/Kohap/xira](https://github.com/Kohap/xira) |
@@ -29,7 +29,7 @@ this site.
 - **Frontend** — Next.js, statically hosted on GitHub Pages. Landing page,
   live risk board, per-asset factor breakdowns, anomaly alerts, a published
   vs on-chain verify tool, and docs.
-- **Backend** — FastAPI on Render. Pulls live quotes from Finnhub (with a
+- **Backend** — FastAPI on Railway. Pulls live quotes from Finnhub (with a
   deterministic simulator as fallback), scores 15 markets with a transparent
   five-factor model, and serves the board over JSON.
 - **On-chain** — Solidity attestation contract on X Layer Testnet (Chain ID

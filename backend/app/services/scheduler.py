@@ -2,8 +2,10 @@ from __future__ import annotations
 import asyncio, logging, os, time
 
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
-from app.services.ai_engine import ai_engine
+from app.services.ai_engine import ai_engine, risk_level_from_score
+from app.services.history_db import history_db
 from app.services.publisher import publisher
+from app.models import AttestationResponse
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +93,12 @@ def _run_pass() -> None:
                 _diag["skipped_threshold"] += 1
                 logger.info(f"Scheduler: {symbol} already published (same evidence hash).")
                 _last_published[symbol] = result.risk_score
+                # The chain already carries this exact attestation — record it
+                # locally as published so the verify page has the API side.
+                # Use the chain block time as the signature time; the
+                # attestation is identical, not a fresh signing.
+                result.timestamp = chain_latest["timestamp"]
+                history_db.store_published_from_chain(symbol, result.model_dump())
                 continue
 
             prev = chain_score if chain_score is not None else _last_published.get(symbol)
@@ -125,11 +133,47 @@ def _run_pass() -> None:
             logger.error(f"Scheduler: pass failed for {symbol}: {e}")
 
 
+async def backfill_published_from_chain() -> None:
+    """Import existing on-chain attestations into the local DB as published
+    records, so the verify page works for every market whose chain state
+    already matches (e.g. after migrating to a fresh volume). Idempotent:
+    assets with a local published record are left untouched."""
+    if not publisher.enabled or not publisher.contract:
+        return
+    for asset in get_tracked_assets():
+        try:
+            # Heal-or-insert keyed by evidence hash: existing rows for the
+            # same attestation with a drifted timestamp are corrected.
+            onchain = publisher.read_latest(asset["token_address"])
+            if not onchain:
+                continue
+            result = AttestationResponse(
+                symbol=asset["symbol"],
+                risk_score=onchain["score"],
+                risk_level=risk_level_from_score(onchain["score"]),
+                confidence=onchain["confidence"],
+                factors=[],
+                explanation="Imported from the on-chain attestation on startup.",
+                anomaly=bool(onchain.get("anomaly", False)),
+                anomaly_reason=onchain.get("anomaly_reason", "") or "",
+                evidence_hash=onchain["evidence_hash"],
+                timestamp=onchain["timestamp"],
+                model_version=onchain.get("model_version", ""),
+                data_source="onchain",
+                data_freshness_ms=0,
+            )
+            history_db.store_published_from_chain(asset["symbol"], result.model_dump())
+            logger.info(f"Backfill: {asset['symbol']} imported from chain (published).")
+        except Exception as e:
+            logger.warning(f"Backfill failed for {asset['symbol']}: {e}")
+
+
 async def scheduler_loop() -> None:
     logger.info(
         f"Scheduler started | heartbeat {HEARTBEAT_MINUTES:.0f} min "
         f"| deviation threshold ±{DEVIATION_THRESHOLD} pts"
     )
+    await backfill_published_from_chain()
     await asyncio.sleep(FIRST_PASS_DELAY_S)
     while True:
         started = time.time()

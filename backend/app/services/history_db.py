@@ -21,6 +21,7 @@ class HistoryDB:
         self._init_db()
 
     def _init_db(self):
+        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS scores (
@@ -100,6 +101,66 @@ class HistoryDB:
             return True
         except Exception as e:
             logger.error(f"Failed to store score for {symbol}: {e}")
+            return False
+
+    def store_published_from_chain(self, symbol: str, entry: dict) -> bool:
+        """Store a published record keyed by its evidence hash.
+
+        Same-attestation rows signed earlier (e.g. imported before the chain
+        block time was known) are healed in place so the verify page sees one
+        consistent timestamp. Inserts the row when no published record with
+        this evidence hash exists yet.
+        """
+        evidence_hash = entry.get("evidence_hash", "")
+        ts = entry.get("timestamp", int(time.time()))
+        try:
+            with self._connect() as conn:
+                cur = conn.execute(
+                    """
+                    UPDATE scores SET timestamp = ?, risk_score = ?,
+                        confidence = ?, published = 1
+                    WHERE symbol = ? AND evidence_hash = ? AND published = 1
+                      AND timestamp != ?
+                    """,
+                    (
+                        ts,
+                        entry.get("risk_score", 0),
+                        entry.get("confidence", 0),
+                        symbol,
+                        evidence_hash,
+                        ts,
+                    ),
+                )
+                if cur.rowcount == 0 and not conn.execute(
+                    "SELECT 1 FROM scores WHERE symbol = ? AND evidence_hash = ? AND published = 1",
+                    (symbol, evidence_hash),
+                ).fetchone():
+                    conn.execute(
+                        """
+                        INSERT OR REPLACE INTO scores
+                        (symbol, timestamp, risk_score, risk_level, confidence,
+                         anomaly, anomaly_reason, explanation, evidence_hash,
+                         model_version, data_source, factors_json, published)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                        """,
+                        (
+                            symbol,
+                            ts,
+                            entry.get("risk_score", 0),
+                            entry.get("risk_level", "MODERATE"),
+                            entry.get("confidence", 0),
+                            1 if entry.get("anomaly") else 0,
+                            entry.get("anomaly_reason", ""),
+                            entry.get("explanation", ""),
+                            evidence_hash,
+                            entry.get("model_version", ""),
+                            entry.get("data_source", "onchain"),
+                            json.dumps(entry.get("factors", [])),
+                        ),
+                    )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to store published-from-chain for {symbol}: {e}")
             return False
 
     def get_history(self, symbol: str, limit: int = 50) -> List[dict]:

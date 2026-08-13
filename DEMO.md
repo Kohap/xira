@@ -67,7 +67,7 @@ Landing → **Give your agents a risk desk**: `xira_get_asset_risk`,
 ## Key links
 
 - Site: GitHub Pages (repo `Kohap/xira` → Actions → Deploy Frontend)
-- API: `https://xira-gsb3.onrender.com/docs` (OpenAPI)
+- API: `https://xira-api-production.up.railway.app/docs` (OpenAPI)
 - Contract: `0xaa5f6215e947ffce2f46513a926af3239be545d0` on
   [OKX X Layer testnet explorer](https://www.okx.com/web3/explorer/xlayer-test/address/0xaa5f6215e947ffce2f46513a926af3239be545d0)
 - MCP: `python3 mcp_server/server.py`
@@ -75,6 +75,6 @@ Landing → **Give your agents a risk desk**: `xira_get_asset_risk`,
 ## Troubleshooting
 
 - **Board shows "reconnecting"** → backend cold start (~30-60s); it retries
-  automatically. Warm it with `curl https://xira-gsb3.onrender.com/api/assets/health`
+  automatically. Warm it with `curl https://xira-api-production.up.railway.app/api/assets/health`
 - **Simulated tag on cards** → live data flag off in the backend env
   (`USE_LIVE_DATA=true`)
