@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
-import Image from "next/image";
 import { Header } from "@/components/Header";
 import XiraMark from "@/components/XiraMark";
-import xlayerLogo from "./xlayer-logo-light.png";
 import "./globals.css";
 
 const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
@@ -178,20 +176,9 @@ export default function RootLayout({
 
               <div className="flex items-center justify-center gap-2.5">
                 <span className="text-xs text-neutral-500">Built on</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <XiraMark className="w-5 h-5 rounded shadow-sm" />
-                  <span className="text-neutral-700" aria-hidden="true">·</span>
-                  <Image
-                    src={xlayerLogo}
-                    alt=""
-                    width={20}
-                    height={16}
-                    className="w-5 h-4 object-contain"
-                    loading="lazy"
-                  />
-                  <span className="text-sm font-semibold text-neutral-300">
-                    XLayer
-                  </span>
+                <XiraMark className="w-5 h-5" />
+                <span className="text-sm font-semibold text-neutral-300">
+                  XLayer
                 </span>
               </div>
             </div>
