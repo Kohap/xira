@@ -103,7 +103,6 @@ export default function RootLayout({
                     { label: "Live dashboard", href: "/dashboard" },
                     { label: "Alerts", href: "/alerts" },
                     { label: "Methodology", href: "/whitepaper" },
-                    { label: "Brand", href: "/#brand" },
                     { label: "Help / FAQ", href: "/#faq" },
                   ],
                 },
@@ -198,6 +197,13 @@ export default function RootLayout({
                   className="text-neutral-400 hover:text-white transition-colors py-1"
                 >
                   Live Dashboard
+                </a>
+                <span className="text-neutral-700" aria-hidden="true">·</span>
+                <a
+                  href="/brand"
+                  className="text-neutral-400 hover:text-white transition-colors py-1"
+                >
+                  Brand kit
                 </a>
                 <span className="text-neutral-700" aria-hidden="true">·</span>
                 <span className="text-neutral-500">
