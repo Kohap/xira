@@ -63,6 +63,10 @@ def test_middleware_enforced(monkeypatch):
         issued = api_keys.issue("enforced-test")
         res = client.get("/api/assets/all", headers={"X-API-Key": issued["key"]})
         assert res.status_code == 200
+
+        # Open surfaces stay reachable without a key.
+        assert client.get("/api/assets/health").status_code == 200
+        assert client.get("/mcp").status_code != 401
     finally:
         monkeypatch.delenv("XIRA_REQUIRE_API_KEY")
 

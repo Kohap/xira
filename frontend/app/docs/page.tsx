@@ -401,23 +401,37 @@ export default function DocsPage() {
           <section id="quickstart" className="mt-12 scroll-mt-24">
             <h2 className="text-xl font-semibold tracking-tight">Quickstart</h2>
             <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed">
-              You do not need an API key. Copy any of these into a terminal:
+              REST endpoints need an API key, sent as an{" "}
+              <code className="font-mono text-neutral-300">X-API-Key</code>{" "}
+              header. Health checks and the MCP endpoint stay open, so agents
+              connect without one. To request a key, open an issue on{" "}
+              <a
+                href="https://github.com/Kohap/xira"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[var(--accent-glow)] hover:underline"
+              >
+                GitHub
+              </a>
+              .
             </p>
             <pre className="mt-3 p-4 rounded-xl bg-black/40 border border-[var(--card-border)] text-xs font-mono overflow-x-auto leading-relaxed text-neutral-300">
-{`# one market
-curl ${API_BASE}/api/attestations/NVDAx
+{`export XIRA_KEY=xira_your_key_here
+
+# one market
+curl -H "X-API-Key: $XIRA_KEY" ${API_BASE}/api/attestations/NVDAx
 
 # the whole board
-curl ${API_BASE}/api/assets/all
+curl -H "X-API-Key: $XIRA_KEY" ${API_BASE}/api/assets/all
 
 # a score trail
-curl "${API_BASE}/api/attestations/BAx/history?limit=20"
+curl -H "X-API-Key: $XIRA_KEY" "${API_BASE}/api/attestations/BAx/history?limit=20"
 
 # market stats and alerts
-curl ${API_BASE}/api/assets/stats
-curl ${API_BASE}/api/alerts
+curl -H "X-API-Key: $XIRA_KEY" ${API_BASE}/api/assets/stats
+curl -H "X-API-Key: $XIRA_KEY" ${API_BASE}/api/alerts
 
-# health + contract
+# health + contract, no key needed
 curl ${API_BASE}/api/assets/health`}
             </pre>
           </section>

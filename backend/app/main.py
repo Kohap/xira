@@ -88,8 +88,9 @@ async def api_key_middleware(request: Request, call_next):
         return await call_next(request)
 
     # Admin routes carry their own XIRA_ADMIN_TOKEN auth; the API-key gate
-    # must not shadow them.
-    if path.startswith("/api/admin"):
+    # must not shadow them. The MCP surface stays open so agents can connect
+    # without onboarding through a key.
+    if path.startswith("/api/admin") or path.startswith("/mcp"):
         return await call_next(request)
 
     supplied = request.headers.get("x-api-key", "")

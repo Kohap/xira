@@ -116,6 +116,9 @@ persisted in the codebase or the DB.
 - Use: integrators send `X-API-Key: <key>` on every request. Keyless
   requests are accepted until `XIRA_REQUIRE_API_KEY=true`; even then the
   xira.surf frontend origins are exempt.
+- Always open, key or not: `/`, `/docs`, `/redoc`, `/openapi.json`,
+  `/api/assets/health`, `/api/alerts/ops/test`, the `/mcp` agent surface,
+  and `/api/admin/*` (which has its own admin-token auth).
 
 ## Database
 
