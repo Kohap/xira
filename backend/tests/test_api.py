@@ -87,3 +87,71 @@ def test_attestation_history_shape():
     body = res.json()
     assert body["symbol"] == "TSLAx"
     assert "history" in body
+
+
+def _fake_attestation():
+    from app.models import AttestationResponse
+    return AttestationResponse(
+        symbol="NVDAx",
+        risk_score=60,
+        risk_level="MODERATE",
+        confidence=80,
+        factors=[],
+        explanation="test",
+        anomaly=False,
+        anomaly_reason="",
+        evidence_hash="0x" + "ab" * 32,
+        timestamp=1_700_000_000,
+        model_version="v1.0.0",
+        data_source="finnhub",
+        data_freshness_ms=0,
+    )
+
+
+def test_rescore_publish_requires_admin_token(monkeypatch):
+    from app.routers.assets import publisher as pub
+    from app.routers.assets import ai_engine
+
+    calls = []
+
+    monkeypatch.setattr(ai_engine, "analyze", lambda **kw: _fake_attestation())
+    monkeypatch.setattr(pub, "enabled", True)
+    monkeypatch.setattr(pub, "read_latest", lambda token: {
+        "score": 50,
+        "confidence": 80,
+        "evidence_hash": "0x" + "cd" * 32,
+        "timestamp": 1_700_000_000,
+        "model_version": "v1.0.0",
+        "anomaly": False,
+        "anomaly_reason": "",
+    })
+    monkeypatch.setattr(pub, "update_attestation", lambda **kw: calls.append(kw) or {
+        "tx_hash": "0xtx",
+        "explorer_url": "https://explorer/tx/0xtx",
+        "block": 1,
+        "gas_used": 0,
+    })
+    monkeypatch.setattr(os, "getenv", lambda k, d=None: {
+        "XIRA_DEVIATION_THRESHOLD": "3",
+    }.get(k, d))
+
+    no_token = client.post("/api/assets/NVDAx/rescore")
+    assert no_token.status_code == 200
+    body = no_token.json()
+    assert body["published"] is False
+    assert "admin token" in body["reason"]
+    assert calls == []
+
+    monkeypatch.setattr(os, "getenv", lambda k, d=None: {
+        "XIRA_DEVIATION_THRESHOLD": "3",
+        "XIRA_ADMIN_TOKEN": "test-token",
+    }.get(k, d))
+
+    with_token = client.post(
+        "/api/assets/NVDAx/rescore",
+        headers={"x-admin-token": "test-token"},
+    )
+    assert with_token.status_code == 200
+    body = with_token.json()
+    assert body["published"] is True
+    assert len(calls) == 1
