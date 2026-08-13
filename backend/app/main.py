@@ -10,6 +10,8 @@ from fastapi.responses import JSONResponse
 
 from app.routers import assets, attestations, alerts, mcp, keys
 from app.services import scheduler as scheduler_service
+from app.services.auth import admin_authorized
+from app.services.startup_checks import run_startup_checks
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("xira")
@@ -67,33 +69,61 @@ app.include_router(mcp.router)
 app.include_router(keys.router)
 
 
-# Endpoints that stay open to everyone (docs, monitors, ops test).
-PUBLIC_PATHS = {
+# Endpoints that stay fully open (no API key, no admin token). Everything
+# else follows the rules below; GETs on the read prefixes are public by
+# design, every mutating route requires admin auth (X-Admin-Token /
+# Authorization: Bearer).
+PUBLIC_EXACT_PATHS = {
     "/",
     "/docs",
     "/redoc",
     "/openapi.json",
     "/api/assets/health",
-    "/api/alerts/ops/test",
 }
+
+# Read-only surfaces the dashboard consumes without credentials. The route
+# handlers themselves guarantee no writes; the middleware never allows a
+# mutating method on these prefixes.
+PUBLIC_GET_PREFIXES = (
+    "/api/assets",
+    "/api/alerts",
+    "/api/attestations",
+)
+
+MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+def _is_public_read(path: str, method: str) -> bool:
+    if path in PUBLIC_EXACT_PATHS:
+        return True
+    if method == "GET":
+        return any(path.startswith(p) for p in PUBLIC_GET_PREFIXES)
+    return False
 
 
 @app.middleware("http")
 async def api_key_middleware(request: Request, call_next):
-    """Optional API-key gate for external integrators.
+    """Auth gate. Never uses Origin/Referer — a forged header cannot bypass.
 
-    A valid X-API-Key header is always accepted. When XIRA_REQUIRE_API_KEY
-    is enabled, requests without a key are rejected unless they come from a
-    known frontend origin (the xira.surf site keeps working keyless).
+    - OPTIONS: CORS preflight, open.
+    - Public reads (allowlist above): open keyless.
+    - Mutating routes (POST/PUT/PATCH/DELETE): admin token required.
+    - Everything else (admin surfaces, MCP): valid X-API-Key required when
+      XIRA_REQUIRE_API_KEY=true; admin token also accepted.
     """
+    method = request.method
     path = request.url.path
-    if path in PUBLIC_PATHS or request.method == "OPTIONS":
+
+    if method == "OPTIONS" or _is_public_read(path, method):
         return await call_next(request)
 
-    # Admin routes carry their own XIRA_ADMIN_TOKEN auth; the API-key gate
-    # must not shadow them. The MCP surface stays open so agents can connect
-    # without onboarding through a key.
-    if path.startswith("/api/admin") or path.startswith("/mcp"):
+    # /mcp transports read-only tools over POST; it is key-gated below, not
+    # admin-gated (agents hold API keys, not admin tokens).
+    is_mcp = path == "/mcp"
+
+    if method in MUTATING_METHODS and not is_mcp:
+        if not admin_authorized(request):
+            return JSONResponse({"detail": "Admin token required."}, status_code=401)
         return await call_next(request)
 
     supplied = request.headers.get("x-api-key", "")
@@ -102,14 +132,14 @@ async def api_key_middleware(request: Request, call_next):
 
         if api_keys.validate(supplied):
             return await call_next(request)
-        return JSONResponse(status_code=401, content={"detail": "Invalid API key."})
+        return JSONResponse({"detail": "Invalid API key."}, status_code=401)
+
+    if admin_authorized(request):
+        return await call_next(request)
 
     enforce = os.getenv("XIRA_REQUIRE_API_KEY", "false").lower() == "true"
     if enforce:
-        origin = request.headers.get("origin", "") or request.headers.get("referer", "")
-        if origin not in ALLOWED_ORIGINS:
-            return JSONResponse(status_code=401, content={"detail": "Missing API key."})
-
+        return JSONResponse({"detail": "Missing API key."}, status_code=401)
     return await call_next(request)
 
 
@@ -119,6 +149,17 @@ async def startup():
     mode = "LIVE (Finnhub + news)" if live else "MOCK (simulated data)"
     logger.info(f"XIRA backend starting | Mode: {mode}")
     logger.info(f"Model: {os.getenv('MODEL_VERSION', 'v1.0.0')}")
+
+    # Mainnet gates: wrong chain, phantom contract, mismatched signer or
+    # owner are fatal. Balance warnings are surfaced but not fatal.
+    from app.services.publisher import publisher as pub
+    from app.services.startup_checks import StartupCheckError
+
+    try:
+        run_startup_checks(pub)
+    except StartupCheckError as e:
+        logger.critical(f"Startup gate failed: {e}")
+        raise RuntimeError(str(e)) from e
 
     from app.services.data_fetcher import get_tracked_assets
     assets = get_tracked_assets()

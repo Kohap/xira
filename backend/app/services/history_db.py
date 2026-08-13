@@ -59,6 +59,24 @@ class HistoryDB:
                     enabled INTEGER DEFAULT 1
                 )
             """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS publish_attempts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT NOT NULL,
+                    score INTEGER NOT NULL,
+                    confidence INTEGER NOT NULL,
+                    evidence_hash TEXT NOT NULL,
+                    model_version TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    tx_hash TEXT,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+            """)
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_publish_attempts
+                ON publish_attempts(symbol, evidence_hash, status)
+            """)
         logger.info(f"History DB initialized at {self.db_path}")
 
     @contextmanager
@@ -324,6 +342,171 @@ class HistoryDB:
         except Exception as e:
             logger.error(f"Failed to set threshold for {symbol}: {e}")
             return False
+
+    # ------------------------------------------------------------------
+    # Publish-attempt ledger (idempotent on-chain publishing)
+    # ------------------------------------------------------------------
+
+    PENDING_TTL_S = float(os.getenv("XIRA_PENDING_ATTEMPT_TTL", "1800"))
+
+    def record_publish_attempt(
+        self,
+        symbol: str,
+        score: int,
+        confidence: int,
+        evidence_hash: str,
+        model_version: str,
+    ) -> dict:
+        """Record an intent to publish; the ledger is the idempotency key.
+
+        Returns the current ledger row. Behavior:
+          - identical (symbol, evidence_hash, model_version) with status
+            pending|confirmed  -> returned as-is (no duplicate broadcast)
+          - identical row that failed -> re-armed to pending (retry)
+          - pending older than PENDING_TTL_S -> re-armed to pending (the
+            orphaned tx either confirmed on-chain (hash check will catch it)
+            or died, so re-publishing is safe)
+          - otherwise a fresh pending row is inserted
+        """
+        now = int(time.time())
+        try:
+            with self._connect() as conn:
+                rows = conn.execute(
+                    """
+                    SELECT id, status, created_at FROM publish_attempts
+                    WHERE symbol = ? AND evidence_hash = ? AND model_version = ?
+                    ORDER BY id DESC LIMIT 1
+                    """,
+                    (symbol, evidence_hash, model_version),
+                ).fetchall()
+
+                def _existing(row_id: int) -> Optional[dict]:
+                    row = conn.execute(
+                        """
+                        SELECT id, symbol, score, confidence, evidence_hash,
+                               model_version, status, tx_hash, created_at, updated_at
+                        FROM publish_attempts WHERE id = ?
+                        """,
+                        (row_id,),
+                    ).fetchone()
+                    return self._attempt_dict(row) if row else None
+
+                for row in rows:
+                    row_id, status, created = row
+                    if status in ("pending", "confirmed"):
+                        if status == "confirmed":
+                            return _existing(row_id) or {}
+                        age = now - created
+                        if age < self.PENDING_TTL_S:
+                            return _existing(row_id) or {}
+                        conn.execute(
+                            "UPDATE publish_attempts SET status='pending', updated_at=? WHERE id=?",
+                            (now, row_id),
+                        )
+                        return _existing(row_id) or {}
+                    if status == "failed":
+                        conn.execute(
+                            "UPDATE publish_attempts SET status='pending', updated_at=? WHERE id=?",
+                            (now, row_id),
+                        )
+                        return _existing(row_id) or {}
+                    # status == 'replaced': fall through and insert anew.
+                cur = conn.execute(
+                    """
+                    INSERT INTO publish_attempts
+                    (symbol, score, confidence, evidence_hash, model_version,
+                     status, tx_hash, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, 'pending', NULL, ?, ?)
+                    """,
+                    (symbol, score, confidence, evidence_hash, model_version, now, now),
+                )
+                return _existing(cur.lastrowid) or {}
+        except Exception as e:
+            logger.error(f"Failed to record publish attempt for {symbol}: {e}")
+            return {}
+
+    @staticmethod
+    def _attempt_dict(row) -> dict:
+        return {
+            "id": row[0],
+            "symbol": row[1],
+            "score": row[2],
+            "confidence": row[3],
+            "evidence_hash": row[4],
+            "model_version": row[5],
+            "status": row[6],
+            "tx_hash": row[7],
+            "created_at": row[8],
+            "updated_at": row[9],
+        }
+
+    def get_publish_attempt(self, attempt_id: int) -> Optional[dict]:
+        try:
+            with self._connect() as conn:
+                row = conn.execute(
+                    """
+                    SELECT id, symbol, score, confidence, evidence_hash,
+                           model_version, status, tx_hash, created_at, updated_at
+                    FROM publish_attempts WHERE id = ?
+                    """,
+                    (attempt_id,),
+                ).fetchone()
+                if not row:
+                    return None
+                return self._attempt_dict(row)
+        except Exception as e:
+            logger.error(f"Failed to read publish attempt {attempt_id}: {e}")
+            return None
+
+    def mark_publish_result(
+        self,
+        symbol: str,
+        evidence_hash: str,
+        model_version: str,
+        status: str,
+        tx_hash: Optional[str] = None,
+        replaced: bool = False,
+    ) -> None:
+        """Move the ledger row(s) for an attestation to a terminal state.
+
+        confirmed: the tx mined successfully (tx_hash recorded).
+        failed:    the broadcast errored or the tx reverted.
+        replaced:  a newer attestation superseded it; also flips any
+                   sibling pending rows for the same symbol so an old
+                   attempt can never re-broadcast later.
+        """
+        now = int(time.time())
+        try:
+            with self._connect() as conn:
+                conn.execute(
+                    """
+                    UPDATE publish_attempts
+                    SET status = ?, tx_hash = COALESCE(?, tx_hash), updated_at = ?
+                    WHERE symbol = ? AND evidence_hash = ? AND model_version = ?
+                    """,
+                    (status, tx_hash, now, symbol, evidence_hash, model_version),
+                )
+                if replaced:
+                    conn.execute(
+                        """
+                        UPDATE publish_attempts SET status = 'replaced', updated_at = ?
+                        WHERE symbol = ? AND status = 'pending'
+                        """,
+                        (now, symbol),
+                    )
+        except Exception as e:
+            logger.error(f"Failed to mark publish result for {symbol}: {e}")
+
+    def pending_publish_count(self) -> int:
+        try:
+            with self._connect() as conn:
+                row = conn.execute(
+                    "SELECT COUNT(*) FROM publish_attempts WHERE status = 'pending'"
+                ).fetchone()
+                return row[0] if row else 0
+        except Exception as e:
+            logger.error(f"Failed to count pending publishes: {e}")
+            return 0
 
 
 # Singleton instance

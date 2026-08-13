@@ -1,21 +1,29 @@
 from __future__ import annotations
-import time
+import ipaddress
+import logging
+import os
 import threading
+import time
 from typing import Optional
 
 from fastapi import HTTPException, Request
 
-# In-memory sliding-window rate limiter. Sufficient for a single-instance
-# deployment; swap for Redis-backed storage if the app ever runs multi-instance.
-#
-# Public endpoints burn upstream quota (Finnhub free tier: 60 req/min) on
-# every board analysis, so unauthenticated visitors must be throttled.
+logger = logging.getLogger(__name__)
+
+# Sliding-window rate limiter behind a pluggable backend. Single-instance
+# deployments use the in-memory backend; multi-instance deployments point
+# XIRA_REDIS_URL at a Redis instance and the app switches to the Redis
+# backend. Public endpoints burn upstream quota (Finnhub free tier: 60
+# req/min) on every board analysis, so unauthenticated visitors must be
+# throttled.
 
 _WINDOW_S = 60.0
 _MAX_KEYS = 10_000
 
 
-class RateLimiter:
+class InMemoryBackend:
+    """Thread-safe per-process sliding-window limiter."""
+
     def __init__(self) -> None:
         self._hits: dict[str, list[float]] = {}
         self._lock = threading.Lock()
@@ -35,24 +43,92 @@ class RateLimiter:
             return True
 
 
-rate_limiter = RateLimiter()
+class RedisBackend:
+    """Fixed-window counter limiter on Redis (INCR + EXPIRE).
+
+    Degrades fail-open when Redis is unreachable so a cache outage does not
+    take the API down; the failure is logged once.
+    """
+
+    def __init__(self, url: str) -> None:
+        import redis  # optional dependency
+
+        self._client = redis.Redis.from_url(url, socket_timeout=2)
+        self._degraded = False
+        # Startup ping: surface a dead Redis immediately.
+        try:
+            self._client.ping()
+        except Exception as e:
+            self._degraded = True
+            logger.error(f"Redis rate-limit backend unreachable ({e}); falling back to in-memory.")
+
+    def allow(self, key: str, limit: int, window_s: float = _WINDOW_S) -> bool:
+        if self._degraded:
+            return True
+        try:
+            pipe = self._client.pipeline()
+            pipe.incr(key)
+            pipe.expire(key, int(window_s), nx=True)
+            count, _ = pipe.execute()
+            return int(count) <= limit
+        except Exception as e:
+            if not self._degraded:
+                self._degraded = True
+                logger.error(f"Redis limiter error ({e}); rate limiting disabled temporarily.")
+            return True
+
+
+def _build_backend() -> InMemoryBackend | RedisBackend:
+    mode = os.getenv("XIRA_RATE_LIMIT_BACKEND", "memory").lower()
+    url = os.getenv("XIRA_REDIS_URL", "")
+    if mode == "redis" and url:
+        try:
+            return RedisBackend(url)
+        except Exception as e:
+            logger.error(f"Redis backend init failed ({e}); using in-memory limiter.")
+    return InMemoryBackend()
+
+
+rate_limiter = _build_backend()
+
+
+def _parse_cidrs(raw: str) -> list:
+    nets = []
+    for part in (raw or "").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            nets.append(ipaddress.ip_network(part, strict=False))
+        except ValueError:
+            logger.warning(f"Ignoring invalid trusted-proxy CIDR: {part}")
+    return nets
+
+
+TRUSTED_PROXIES = _parse_cidrs(os.getenv("XIRA_TRUSTED_PROXIES", ""))
 
 
 def client_ip(request: Request) -> str:
-    """Client IP honoring reverse-proxy forwarding (Railway/Cloudflare).
+    """Client IP for rate-limit keying behind Railway/proxy.
 
-    Trusts the LAST entry of x-forwarded-for: reverse proxies append the
-    caller's address at the end, so a client-supplied header cannot spoof a
-    fresh identity per request to bypass the limiter.
+    X-Forwarded-For is honored ONLY when the direct peer is a configured
+    trusted proxy (XIRA_TRUSTED_PROXIES, comma-separated CIDRs). The
+    rightmost entry is used because the nearest trusted proxy appends the
+    caller's address last. Client-supplied headers are otherwise ignored,
+    so an attacker cannot rotate identities to drain the limiter or pin a
+    victim's bucket.
     """
-    forwarded = request.headers.get("x-forwarded-for", "")
-    if forwarded:
-        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
-        if parts:
-            return parts[-1]
-    if request.client:
-        return request.client.host
-    return "unknown"
+    peer = request.client.host if request.client else "unknown"
+    header = request.headers.get("x-forwarded-for", "")
+    if header and TRUSTED_PROXIES:
+        try:
+            if any(ipaddress.ip_address(peer) in net for net in TRUSTED_PROXIES):
+                parts = [p.strip() for p in header.split(",") if p.strip()]
+                if parts:
+                    return parts[-1]
+        except ValueError:
+            pass
+    return peer
 
 
 def enforce_rate_limit(

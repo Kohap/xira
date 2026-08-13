@@ -84,7 +84,8 @@ def get_attestation(symbol: str, request: Request):
     except Exception:
         pass
 
-    _store_history(match["symbol"], result)
+    # Read-only: this GET never persists. Score history is written only by
+    # the scheduler and the admin rescore route.
     return result
 
 

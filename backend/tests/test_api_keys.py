@@ -53,20 +53,29 @@ def test_middleware_enforced(monkeypatch):
     _clean_keys()
     monkeypatch.setenv("XIRA_REQUIRE_API_KEY", "true")
     try:
-        assert client.get("/api/assets/all").status_code == 401
+        # Public reads stay open keyless by the route allowlist — a key is
+        # never required (or accepted as the sole credential) for them.
+        assert client.get("/api/assets/all").status_code == 200
         assert (
             client.get("/api/assets/all", headers={"Origin": "https://www.xira.surf"}).status_code
             == 200
         )
-        assert client.get("/api/assets/all", headers={"X-API-Key": "bogus"}).status_code == 401
+        assert client.get("/api/assets/all", headers={"X-API-Key": "bogus"}).status_code == 200
+
+        # Non-public surfaces require a key when enforcement is on.
+        assert client.get("/api/admin/keys").status_code == 401
 
         issued = api_keys.issue("enforced-test")
-        res = client.get("/api/assets/all", headers={"X-API-Key": issued["key"]})
-        assert res.status_code == 200
+        res = client.get("/api/admin/keys", headers={"X-API-Key": issued["key"]})
+        assert res.status_code == 401  # credentials alone are not admin
 
         # Open surfaces stay reachable without a key.
         assert client.get("/api/assets/health").status_code == 200
-        assert client.get("/mcp").status_code != 401
+        # GET /mcp is not a public read; under enforcement it needs a key
+        # before reaching the router's own 405.
+        assert client.get("/mcp").status_code == 401
+        res = client.get("/mcp", headers={"X-API-Key": issued["key"]})
+        assert res.status_code == 405
     finally:
         monkeypatch.delenv("XIRA_REQUIRE_API_KEY")
 

@@ -128,6 +128,10 @@ def _fake_attestation():
 def test_rescore_publish_requires_admin_token(monkeypatch):
     from app.routers.assets import publisher as pub
     from app.routers.assets import ai_engine
+    from app.services.history_db import history_db
+
+    with history_db._connect() as conn:
+        conn.execute("DELETE FROM publish_attempts")
 
     calls = []
 
@@ -150,19 +154,13 @@ def test_rescore_publish_requires_admin_token(monkeypatch):
     })
     monkeypatch.setattr(os, "getenv", lambda k, d=None: {
         "XIRA_DEVIATION_THRESHOLD": "3",
+        "XIRA_ADMIN_TOKEN": "test-token",
+        "MODEL_VERSION": "v1.0.0",
     }.get(k, d))
 
     no_token = client.post("/api/assets/NVDAx/rescore")
-    assert no_token.status_code == 200
-    body = no_token.json()
-    assert body["published"] is False
-    assert "admin token" in body["reason"]
+    assert no_token.status_code == 401
     assert calls == []
-
-    monkeypatch.setattr(os, "getenv", lambda k, d=None: {
-        "XIRA_DEVIATION_THRESHOLD": "3",
-        "XIRA_ADMIN_TOKEN": "test-token",
-    }.get(k, d))
 
     with_token = client.post(
         "/api/assets/NVDAx/rescore",

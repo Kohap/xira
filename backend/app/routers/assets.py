@@ -1,7 +1,8 @@
 from __future__ import annotations
-import hmac, os, threading, time
+import os, threading, time
 from fastapi import APIRouter, HTTPException, Query, Request
 
+from app.services.auth import admin_authorized
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
 from app.services.publisher import publisher
@@ -30,16 +31,12 @@ _board_lock = threading.Lock()
 
 
 def _admin_authorized(request: Request) -> bool:
-    """Constant-time admin check shared by the gas-spending endpoints."""
-    expected = os.getenv("XIRA_ADMIN_TOKEN", "")
-    supplied = (
-        request.headers.get("x-admin-token")
-        or request.headers.get("authorization", "").removeprefix("Bearer ").strip()
-    )
-    return bool(expected and supplied and hmac.compare_digest(expected, supplied))
+    return admin_authorized(request)
 
 
 def _store_asset_history(symbol: str, result: AttestationResponse):
+    """Persist a freshly computed score. WRITE PATH: only callable from
+    admin-authorized flows (rescore) — public GETs must never persist."""
     # Store in memory (for quick access)
     if symbol not in HISTORY_STORE:
         HISTORY_STORE[symbol] = []
@@ -81,7 +78,7 @@ def _analyze_all() -> AllAssetsResponse:
         )
 
         result.timestamp = now
-        if result.data_source == "finnhub":
+        if result.data_source == "live":
             live_count += 1
 
         # Previous stored score for delta arrows on the board.
@@ -94,7 +91,6 @@ def _analyze_all() -> AllAssetsResponse:
         if result.anomaly:
             anomaly_count += 1
         total_score += result.risk_score
-        _store_asset_history(asset["symbol"], result)
 
     avg_score = total_score / len(results) if results else 0
     source_label = "live" if live_count >= len(results) * 0.7 else ("partial" if live_count > 0 else "mock")
@@ -163,10 +159,9 @@ def get_all_assets(fresh: bool = False, request: Request = None):
                 status_code=403,
                 detail="Manual refresh requires an admin token.",
             )
-    board = _analyze_all() if fresh else _get_board()
-    for asset in board.assets:
-        _store_asset_history(asset.symbol, asset)
-    return board
+    # Read-only: the board computation never persists scores. Score history
+    # is written exclusively by the scheduler and admin rescore.
+    return _analyze_all() if fresh else _get_board()
 
 
 @router.get("/stats", response_model=MarketStatsResponse)
@@ -360,11 +355,14 @@ def onchain_history(symbol: str, request: Request):
 def rescore_asset(symbol: str, request: Request):
     """Force a fresh re-score for one asset, bypassing the price cache.
 
-    Mirrors the heartbeat scheduler for a single symbol: if the new score
-    deviates past the threshold (and differs from the on-chain evidence),
-    the attestation is published on-chain and the tx is returned.
+    Admin only: it writes score history and may spend the oracle signer's
+    gas. Mirrors the heartbeat scheduler for a single symbol: if the new
+    score deviates past the threshold (and differs from the on-chain
+    evidence), the attestation is published on-chain and the tx is returned.
     """
     enforce_rate_limit(request, "assets_rescore", limit=10)
+    if not _admin_authorized(request):
+        raise HTTPException(status_code=401, detail="Admin token required.")
     match = _find_asset(symbol)
     ticker = match["underlying"]
 
@@ -414,33 +412,58 @@ def rescore_asset(symbol: str, request: Request):
             delta = abs(result.risk_score - chain_score) if chain_score is not None else None
             if delta is not None and delta < int(os.getenv("XIRA_DEVIATION_THRESHOLD", "3")):
                 reason = (
-                    f"Score moved {delta} pts – below the ±3 publish threshold, "
-                    "no new attestation."
-                )
-            elif not _admin_authorized(request):
-                # Rescore stays open for the public demo (fresh analysis +
-                # delta), but spending the oracle signer's gas must not be.
-                reason = (
-                    "Score moved past the threshold, but publishing on-chain "
-                    "requires an admin token."
+                    f"Score moved {delta} pts – below the ±{os.getenv('XIRA_DEVIATION_THRESHOLD', '3')} "
+                    "publish threshold, no new attestation."
                 )
             else:
-                tx = publisher.update_attestation(
-                    token_address=match["token_address"],
-                    score=result.risk_score,
-                    confidence=result.confidence,
-                    evidence_hash_hex=result.evidence_hash,
-                    model_version=result.model_version,
-                    anomaly=result.anomaly,
-                    anomaly_reason=result.anomaly_reason,
+                # Idempotency: never re-broadcast an identical attestation
+                # that is already pending or confirmed in the ledger.
+                attempt = history_db.record_publish_attempt(
+                    match["symbol"],
+                    result.risk_score,
+                    result.confidence,
+                    result.evidence_hash,
+                    result.model_version,
                 )
-                if tx:
+                if attempt.get("status") in ("pending", "confirmed") and attempt.get("tx_hash"):
+                    reason = (
+                        "Attestation already published "
+                        f"(ledger status={attempt['status']})."
+                    )
+                    result.chain_tx = attempt["tx_hash"]
+                    result.chain_explorer = f"{publisher.explorer_base}/tx/{attempt['tx_hash']}"
                     published = True
-                    result.chain_tx = tx["tx_hash"]
-                    result.chain_explorer = f"{publisher.explorer_base}/tx/{tx['tx_hash']}"
-                    reason = "Attestation published on-chain."
                 else:
-                    reason = "Publish failed – check the API health diagnostics."
+                    tx = publisher.update_attestation(
+                        token_address=match["token_address"],
+                        score=result.risk_score,
+                        confidence=result.confidence,
+                        evidence_hash_hex=result.evidence_hash,
+                        model_version=result.model_version,
+                        anomaly=result.anomaly,
+                        anomaly_reason=result.anomaly_reason,
+                    )
+                    if tx:
+                        published = True
+                        result.chain_tx = tx["tx_hash"]
+                        result.chain_explorer = f"{publisher.explorer_base}/tx/{tx['tx_hash']}"
+                        reason = "Attestation published on-chain."
+                        history_db.mark_publish_result(
+                            match["symbol"],
+                            result.evidence_hash,
+                            result.model_version,
+                            status="confirmed",
+                            tx_hash=tx["tx_hash"],
+                            replaced=True,
+                        )
+                    else:
+                        history_db.mark_publish_result(
+                            match["symbol"],
+                            result.evidence_hash,
+                            result.model_version,
+                            status="failed",
+                        )
+                        reason = "Publish failed – check the API health diagnostics."
 
     if published:
         from app.routers.attestations import _store_history as store_published

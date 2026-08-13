@@ -181,6 +181,24 @@ def _run_pass() -> None:
                 )
                 continue
 
+            # Idempotency ledger: skip when this exact attestation is
+            # already pending/confirmed (crashed between broadcast and
+            # receipt) or was published moments ago by another path.
+            attempt = history_db.record_publish_attempt(
+                symbol,
+                result.risk_score,
+                result.confidence,
+                result.evidence_hash,
+                result.model_version,
+            )
+            if attempt and attempt.get("status") in ("pending", "confirmed") and attempt.get("tx_hash"):
+                _diag["skipped_threshold"] += 1
+                logger.info(
+                    f"Scheduler: {symbol} attestation already in ledger "
+                    f"({attempt['status']}) — no duplicate broadcast."
+                )
+                continue
+
             result.timestamp = int(time.time())
             pending.append({
                 "token_address": asset["token_address"],
@@ -209,6 +227,22 @@ def _run_pass() -> None:
                 _last_published[entry["symbol"]] = entry["score"]
                 _store_history(entry["symbol"], entry["result"])
                 _diag["publishes"] += 1
+                txinfo = summary["tx_by_token"].get(entry["token_address"])
+                history_db.mark_publish_result(
+                    entry["symbol"],
+                    entry["evidence_hash_hex"],
+                    entry["model_version"],
+                    status="confirmed",
+                    tx_hash=txinfo["tx_hash"] if txinfo else None,
+                    replaced=True,
+                )
+            else:
+                history_db.mark_publish_result(
+                    entry["symbol"],
+                    entry["evidence_hash_hex"],
+                    entry["model_version"],
+                    status="failed",
+                )
         if summary["fallbacks"]:
             logger.warning(f"Scheduler: {summary['fallbacks']} chunk(s) fell back to per-asset txs")
 

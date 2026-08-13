@@ -12,6 +12,25 @@ class RiskLevel(str, Enum):
     CRITICAL = "CRITICAL"
 
 
+# Canonical data_source vocabulary exposed by the API. Internally the
+# engines track concrete providers (yahoo, finnhub, mock, ...) and keep
+# them inside evidence hashes for on-chain stability; only the public
+# value is normalized to this enum.
+LIVE_SOURCES = frozenset({"finnhub", "yahoo", "onchain"})
+MOCK_SOURCES = frozenset({"mock", "gauss", "simulated", ""})
+
+
+def normalize_data_source(source: str | None) -> str:
+    """Map a provider source to the public enum: live | partial | mock."""
+    key = (source or "").strip().lower()
+    if key in LIVE_SOURCES:
+        return "live"
+    if key in MOCK_SOURCES:
+        return "mock"
+    # Unknown providers (e.g. a future feed) are still real data.
+    return "live" if key else "mock"
+
+
 class FactorScore(BaseModel):
     name: str
     label: str

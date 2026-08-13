@@ -283,9 +283,13 @@ class AIEngine:
             "score": risk_score,
             "confidence": confidence,
             "factors": [f.model_dump() for f in factors],
+            # The provider name stays inside the evidence payload: changing
+            # it would invalidate every hash already attested on-chain.
             "data_source": data_source,
         }
         evidence_hash = compute_evidence_hash(evidence_data)
+
+        from app.models import normalize_data_source
 
         return AttestationResponse(
             symbol=symbol,
@@ -299,7 +303,9 @@ class AIEngine:
             evidence_hash=evidence_hash,
             timestamp=0,
             model_version=model_version,
-            data_source=data_source,
+            # Public enum vocabulary (live/partial/mock); the raw provider
+            # is available only inside evidence_hash.
+            data_source=normalize_data_source(data_source),
             data_freshness_ms=freshness,
         )
 

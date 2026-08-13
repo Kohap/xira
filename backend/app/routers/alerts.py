@@ -2,6 +2,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from app.services.auth import admin_authorized
 from app.services.data_fetcher import get_tracked_assets
 from app.services.history_db import history_db
 from app.services.rate_limit import enforce_rate_limit
@@ -18,9 +19,12 @@ class ThresholdUpdate(BaseModel):
 
 @router.post("/ops/test")
 async def test_ops_alert(request: Request):
-    """Send a test message to the configured Telegram channel. Dormant until
-    TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set."""
+    """Send a test message to the configured Telegram channel. Admin only —
+    it is an external side effect. Dormant until TELEGRAM_BOT_TOKEN and
+    TELEGRAM_CHAT_ID are set."""
     enforce_rate_limit(request, "alerts_ops_test", limit=5)
+    if not admin_authorized(request):
+        raise HTTPException(status_code=401, detail="Admin token required.")
     from app.services.telegram_notifier import enabled as notifier_enabled, send_message
 
     if not notifier_enabled():
@@ -43,8 +47,11 @@ async def get_thresholds(request: Request):
 
 @router.put("/thresholds")
 async def set_threshold(update: ThresholdUpdate, request: Request):
-    """Set (or disable) a risk threshold for one asset."""
+    """Set (or disable) a risk threshold for one asset. Admin only — writes
+    user-scoped state shared with push alerting."""
     enforce_rate_limit(request, "alerts_thresholds_put", limit=10)
+    if not admin_authorized(request):
+        raise HTTPException(status_code=401, detail="Admin token required.")
     if update.threshold < 0 or update.threshold > 100:
         raise HTTPException(status_code=400, detail="Threshold must be 0-100.")
     symbol_upper = update.symbol.upper()
