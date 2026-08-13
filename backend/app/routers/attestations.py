@@ -1,10 +1,11 @@
 from __future__ import annotations
 import os, time
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
 from app.services.history_db import history_db
+from app.services.rate_limit import enforce_rate_limit
 from app.models import AttestationResponse, AttestationHistory
 
 router = APIRouter(prefix="/api/attestations", tags=["attestations"])
@@ -26,7 +27,8 @@ def _store_history(symbol: str, result: AttestationResponse, published: bool = F
 
 
 @router.get("/{symbol}", response_model=AttestationResponse)
-async def get_attestation(symbol: str):
+async def get_attestation(symbol: str, request: Request):
+    enforce_rate_limit(request, "attestation", limit=20)
     symbol_upper = symbol.upper()
     assets = get_tracked_assets()
     match = next((a for a in assets if a["symbol"].upper() == symbol_upper), None)
@@ -77,7 +79,8 @@ async def get_attestation(symbol: str):
 
 
 @router.get("/{symbol}/history", response_model=AttestationHistory)
-async def get_attestation_history(symbol: str, limit: int = Query(default=10, le=50)):
+async def get_attestation_history(symbol: str, request: Request, limit: int = Query(default=10, le=50)):
+    enforce_rate_limit(request, "attestation_history", limit=60)
     symbol_upper = symbol.upper()
     assets = get_tracked_assets()
     match = next((a for a in assets if a["symbol"].upper() == symbol_upper), None)

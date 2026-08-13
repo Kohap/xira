@@ -1,8 +1,10 @@
 from __future__ import annotations
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from app.services.data_fetcher import get_tracked_assets
 from app.services.history_db import history_db
+from app.services.rate_limit import enforce_rate_limit
 from app.models import AlertItem, AlertsResponse
 
 router = APIRouter(prefix="/api/alerts", tags=["alerts"])
@@ -15,25 +17,32 @@ class ThresholdUpdate(BaseModel):
 
 
 @router.get("/thresholds")
-async def get_thresholds():
+async def get_thresholds(request: Request):
     """Per-asset risk thresholds set by the user."""
+    enforce_rate_limit(request, "alerts_thresholds_get", limit=60)
     return {"thresholds": history_db.get_thresholds()}
 
 
 @router.put("/thresholds")
-async def set_threshold(update: ThresholdUpdate):
+async def set_threshold(update: ThresholdUpdate, request: Request):
     """Set (or disable) a risk threshold for one asset."""
+    enforce_rate_limit(request, "alerts_thresholds_put", limit=10)
     if update.threshold < 0 or update.threshold > 100:
         raise HTTPException(status_code=400, detail="Threshold must be 0-100.")
-    ok = history_db.set_threshold(update.symbol.upper(), update.threshold, update.enabled)
+    symbol_upper = update.symbol.upper()
+    tracked = {a["symbol"].upper() for a in get_tracked_assets()}
+    if symbol_upper not in tracked:
+        raise HTTPException(status_code=400, detail=f"Asset '{update.symbol}' not tracked.")
+    ok = history_db.set_threshold(symbol_upper, update.threshold, update.enabled)
     if not ok:
         raise HTTPException(status_code=500, detail="Could not save threshold.")
     return {"ok": True, **update.model_dump()}
 
 
 @router.get("", response_model=AlertsResponse)
-async def get_alerts():
+async def get_alerts(request: Request):
     """List of currently flagged anomalies across all tracked assets."""
+    enforce_rate_limit(request, "alerts", limit=120)
     from app.routers.assets import _get_board
 
     board = _get_board()

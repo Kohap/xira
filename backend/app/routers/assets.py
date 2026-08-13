@@ -1,12 +1,13 @@
 from __future__ import annotations
-import os, time
-from fastapi import APIRouter, HTTPException, Query
+import hmac, os, threading, time
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
 from app.services.publisher import publisher
 from app.services.scheduler import scheduler_diag
 from app.services.history_db import history_db
+from app.services.rate_limit import enforce_rate_limit
 from app.models import (
     AllAssetsResponse,
     AssetDetailResponse,
@@ -24,6 +25,7 @@ HISTORY_STORE: dict[str, list[dict]] = {}
 # Shared latest board, refreshed by /api/assets/all and read by /stats & /alerts
 _board_cache: dict = {"computed_at": 0, "board": None}
 BOARD_TTL_S = 900
+_board_lock = threading.Lock()
 
 
 def _store_asset_history(symbol: str, result: AttestationResponse):
@@ -109,7 +111,15 @@ def _analyze_all() -> AllAssetsResponse:
 def _get_board(force_fresh: bool = False) -> AllAssetsResponse:
     now = time.time()
     stale = now - _board_cache["computed_at"] > BOARD_TTL_S
-    if force_fresh or _board_cache["board"] is None or stale:
+    if not (force_fresh or _board_cache["board"] is None or stale):
+        return _board_cache["board"]
+    # Serialize expensive Finnhub passes so concurrent visitors share one
+    # computation instead of each burning the upstream quota.
+    with _board_lock:
+        now = time.time()
+        stale = now - _board_cache["computed_at"] > BOARD_TTL_S
+        if not (force_fresh or _board_cache["board"] is None or stale):
+            return _board_cache["board"]
         _board_cache["board"] = _analyze_all()
         _board_cache["computed_at"] = now
     return _board_cache["board"]
@@ -131,7 +141,22 @@ def _find_asset(symbol: str) -> dict:
 
 
 @router.get("/all", response_model=AllAssetsResponse)
-async def get_all_assets(fresh: bool = False):
+async def get_all_assets(fresh: bool = False, request: Request = None):
+    enforce_rate_limit(request, "assets_all", limit=30)
+    if fresh:
+        # Manual refresh burns the full upstream quota; gate it behind an
+        # admin token instead of exposing it to the public. The board cache
+        # already self-refreshes every 15 minutes.
+        expected = os.getenv("XIRA_ADMIN_TOKEN", "")
+        supplied = (
+            request.headers.get("x-admin-token")
+            or request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+        )
+        if not expected or not supplied or not hmac.compare_digest(expected, supplied):
+            raise HTTPException(
+                status_code=403,
+                detail="Manual refresh requires an admin token.",
+            )
     board = _analyze_all() if fresh else _get_board()
     for asset in board.assets:
         _store_asset_history(asset.symbol, asset)
@@ -139,8 +164,9 @@ async def get_all_assets(fresh: bool = False):
 
 
 @router.get("/stats", response_model=MarketStatsResponse)
-async def market_stats():
+async def market_stats(request: Request):
     """Market-level statistics: risk distribution, average, extremes."""
+    enforce_rate_limit(request, "assets_stats", limit=60)
     board = _get_board()
     distribution: dict[str, int] = {}
     total = 0
@@ -170,7 +196,8 @@ async def market_stats():
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check():
+async def health_check(request: Request):
+    enforce_rate_limit(request, "assets_health", limit=120)
     contract_addr = os.getenv("XIRA_CONTRACT_ADDRESS", "0x0000000000000000000000000000000000000000")
     live = os.getenv("USE_LIVE_DATA", "true").lower() == "true"
     signer = publisher.account.address if publisher.enabled and publisher.account else None
@@ -188,8 +215,9 @@ async def health_check():
 
 
 @router.get("/history/stats")
-async def history_stats():
+async def history_stats(request: Request):
     """Get database statistics."""
+    enforce_rate_limit(request, "assets_history_stats", limit=60)
     stats = history_db.get_stats()
     return {
         "status": "ok",
@@ -199,8 +227,9 @@ async def history_stats():
 
 
 @router.get("/history", response_model=MarketHistoryResponse)
-async def market_history(hours: int = Query(default=24, ge=1, le=168)):
+async def market_history(request: Request, hours: int = Query(default=24, ge=1, le=168)):
     """Average board risk score bucketed over time (1-hour buckets)."""
+    enforce_rate_limit(request, "assets_history", limit=60)
     cutoff = int(time.time()) - hours * 3600
     rows = history_db.get_market_history(cutoff)
     if not rows:
@@ -224,7 +253,7 @@ async def market_history(hours: int = Query(default=24, ge=1, le=168)):
 
 
 @router.get("/verify/{symbol}")
-async def verify_attestation(symbol: str):
+async def verify_attestation(symbol: str, request: Request):
     """Compare the last published attestation against what is stored on-chain.
 
     The API side is the record the oracle actually signed (stored in the
@@ -232,6 +261,7 @@ async def verify_attestation(symbol: str):
     A live recomputation would drift from the signed snapshot as market
     inputs change, making hash comparison meaningless.
     """
+    enforce_rate_limit(request, "assets_verify", limit=30)
     match = _find_asset(symbol)
 
     published = history_db.get_latest(match["symbol"])
@@ -277,8 +307,9 @@ async def verify_attestation(symbol: str):
 
 
 @router.get("/{symbol}/onchain-history")
-async def onchain_history(symbol: str):
+async def onchain_history(symbol: str, request: Request):
     """Last N attestations stored on-chain for an asset (V2 contract)."""
+    enforce_rate_limit(request, "assets_onchain_history", limit=30)
     match = _find_asset(symbol)
     entries = publisher.read_history(match["token_address"])
     return {
@@ -291,8 +322,9 @@ async def onchain_history(symbol: str):
 
 
 @router.get("/{symbol}", response_model=AssetDetailResponse)
-async def get_asset_detail(symbol: str):
+async def get_asset_detail(symbol: str, request: Request):
     """Single-asset detail: metadata, current score, 24h score delta."""
+    enforce_rate_limit(request, "assets_detail", limit=60)
     match = _find_asset(symbol)
     board = _get_board()
 

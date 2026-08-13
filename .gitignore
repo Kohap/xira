@@ -34,3 +34,8 @@ contracts/broadcast/
 # Logs
 *.log
 /tmp/
+
+# Runtime SQLite DBs (created by HistoryDB at app startup)
+backend/**/xira_history.db
+backend/**/xira_history.db-shm
+backend/**/xira_history.db-wal
