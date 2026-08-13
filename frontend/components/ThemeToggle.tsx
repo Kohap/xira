@@ -47,7 +47,7 @@ export function ThemeToggle() {
           role="radio"
           aria-checked={theme === t}
           onClick={() => apply(t)}
-          className={`px-3 h-7 rounded-md text-xs transition-colors ${
+          className={`px-3.5 h-9 rounded-md text-xs transition-colors ${
             theme === t
               ? "bg-[var(--card-border)]/70 text-white font-medium"
               : "text-neutral-500 hover:text-neutral-300"

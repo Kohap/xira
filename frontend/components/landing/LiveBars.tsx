@@ -119,7 +119,8 @@ export function LiveBars() {
         </span>
       </div>
 
-      <div className="flex items-end gap-1.5 sm:gap-2 h-32 sm:h-40">
+      <div className="overflow-x-auto">
+        <div className="flex items-end gap-1.5 sm:gap-2 h-32 sm:h-40 min-w-[340px]">
         {offline || !data ? (
           Array.from({ length: 8 }).map((_, i) => (
             <div
@@ -151,6 +152,7 @@ export function LiveBars() {
             </Link>
           ))
         )}
+        </div>
       </div>
 
       {data && top.length > 1 && (
