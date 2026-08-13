@@ -96,6 +96,7 @@ class OnchainPublisher:
         )
         self.chain_id: Optional[int] = None
         self.last_tx_error: Optional[str] = None
+        self.last_tx_by_token: dict[str, dict] = {}
         self.publishes: int = 0
         self._init_web3()
 
@@ -202,6 +203,12 @@ class OnchainPublisher:
                 explorer = f"{XLAYER_EXPLORER}/tx/{h}"
                 logger.info(f"Attestation published: {h[:20]}... ({explorer})")
                 self.publishes += 1
+                self.last_tx_by_token[token_address] = {
+                    "tx_hash": h,
+                    "explorer_url": explorer,
+                    "block": receipt.get("blockNumber", 0),
+                    "timestamp": int(time.time()),
+                }
 
                 return {
                     "tx_hash": h,
@@ -225,6 +232,9 @@ class OnchainPublisher:
 
         self.last_tx_error = f"tx: exceeded {MAX_NONCE_RETRIES} nonce retries"
         return None
+
+    def last_tx(self, token_address: str) -> Optional[dict]:
+        return self.last_tx_by_token.get(token_address)
 
     def read_latest(self, token_address: str) -> Optional[dict]:
         if not self.contract or not self.w3:

@@ -59,11 +59,16 @@ async def get_attestation(symbol: str):
         onchain = publisher.read_latest(match["token_address"])
         if onchain:
             result.chain_id = publisher.chain_id
-            result.chain_explorer = (
-                f"{XLAYER_EXPLORER}/address/{publisher.contract_address}"
-                if publisher.contract_address
-                else None
-            )
+            last = publisher.last_tx(match["token_address"])
+            if last:
+                result.chain_tx = last["tx_hash"]
+                result.chain_explorer = last["explorer_url"]
+            else:
+                result.chain_explorer = (
+                    f"{XLAYER_EXPLORER}/address/{publisher.contract_address}"
+                    if publisher.contract_address
+                    else None
+                )
     except Exception:
         pass
 
