@@ -563,45 +563,6 @@ export function AssetDetailClient() {
           {loading ? "Refreshing..." : "Refresh Data"}
         </button>
       </div>
-
-      <div className="mt-4 mx-auto max-w-md">
-        <label
-          htmlFor="admin-token"
-          className="block text-[11px] font-medium text-neutral-500 mb-1"
-        >
-          Admin token (optional; enables on-chain publishing for force re-score)
-        </label>
-        <div className="flex gap-2">
-          <input
-            id="admin-token"
-            type="password"
-            value={adminToken}
-            onChange={(e) => {
-              setAdminToken(e.target.value);
-              window.localStorage.setItem("xira_admin_token", e.target.value.trim());
-            }}
-            placeholder="xira-…"
-            autoComplete="off"
-            className="flex-1 h-9 rounded-lg border border-[var(--card-border)] bg-black/20 px-3 text-xs font-mono text-neutral-300 placeholder:text-neutral-600 focus:outline-none focus:border-[var(--accent)]"
-          />
-          {adminToken && (
-            <button
-              type="button"
-              onClick={() => {
-                setAdminToken("");
-                window.localStorage.removeItem("xira_admin_token");
-              }}
-              className="px-3 h-9 rounded-lg border border-[var(--card-border)] text-xs text-neutral-400 hover:text-white transition-colors"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-        <p className="mt-1 text-[11px] text-neutral-600 leading-relaxed">
-          Stored only in this browser. Without it, force re-score returns a
-          fresh analysis but never spends gas.
-        </p>
-      </div>
     </div>
   );
 }
