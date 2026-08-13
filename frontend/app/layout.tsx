@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { CopyButton } from "@/components/landing/CopyButton";
 import { LogoMark } from "@/components/LogoMark";
 import xlayerLogo from "./xlayer-logo-light.png";
+import XiraMark from "@/components/XiraMark";
 import "./globals.css";
 
 const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
@@ -259,6 +260,8 @@ export default function RootLayout({
             <div className="mt-6 pt-5 border-t border-[var(--card-border)] flex items-center justify-center gap-2.5">
               <span className="text-xs text-neutral-500">Built on</span>
               <span className="inline-flex items-center gap-1.5">
+                <XiraMark className="w-5 h-5 rounded shadow-sm" />
+                <span className="text-neutral-700" aria-hidden="true">·</span>
                 <Image
                   src={xlayerLogo}
                   alt=""
