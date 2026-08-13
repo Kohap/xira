@@ -6,8 +6,7 @@ from typing import Optional
 from fastapi import HTTPException, Request
 
 # In-memory sliding-window rate limiter. Sufficient for a single-instance
-# deployment (Render free tier); swap for Redis-backed storage if the app
-# ever runs multi-instance.
+# deployment; swap for Redis-backed storage if the app ever runs multi-instance.
 #
 # Public endpoints burn upstream quota (Finnhub free tier: 60 req/min) on
 # every board analysis, so unauthenticated visitors must be throttled.
@@ -40,10 +39,17 @@ rate_limiter = RateLimiter()
 
 
 def client_ip(request: Request) -> str:
-    """Client IP honoring reverse-proxy forwarding (Render/Cloudflare)."""
+    """Client IP honoring reverse-proxy forwarding (Railway/Cloudflare).
+
+    Trusts the LAST entry of x-forwarded-for: reverse proxies append the
+    caller's address at the end, so a client-supplied header cannot spoof a
+    fresh identity per request to bypass the limiter.
+    """
     forwarded = request.headers.get("x-forwarded-for", "")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+        if parts:
+            return parts[-1]
     if request.client:
         return request.client.host
     return "unknown"

@@ -29,6 +29,16 @@ BOARD_TTL_S = 900
 _board_lock = threading.Lock()
 
 
+def _admin_authorized(request: Request) -> bool:
+    """Constant-time admin check shared by the gas-spending endpoints."""
+    expected = os.getenv("XIRA_ADMIN_TOKEN", "")
+    supplied = (
+        request.headers.get("x-admin-token")
+        or request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+    )
+    return bool(expected and supplied and hmac.compare_digest(expected, supplied))
+
+
 def _store_asset_history(symbol: str, result: AttestationResponse):
     # Store in memory (for quick access)
     if symbol not in HISTORY_STORE:
@@ -148,12 +158,7 @@ async def get_all_assets(fresh: bool = False, request: Request = None):
         # Manual refresh burns the full upstream quota; gate it behind an
         # admin token instead of exposing it to the public. The board cache
         # already self-refreshes every 15 minutes.
-        expected = os.getenv("XIRA_ADMIN_TOKEN", "")
-        supplied = (
-            request.headers.get("x-admin-token")
-            or request.headers.get("authorization", "").removeprefix("Bearer ").strip()
-        )
-        if not expected or not supplied or not hmac.compare_digest(expected, supplied):
+        if not _admin_authorized(request):
             raise HTTPException(
                 status_code=403,
                 detail="Manual refresh requires an admin token.",
@@ -382,6 +387,13 @@ async def rescore_asset(symbol: str, request: Request):
                 reason = (
                     f"Score moved {delta} pts – below the ±3 publish threshold, "
                     "no new attestation."
+                )
+            elif not _admin_authorized(request):
+                # Rescore stays open for the public demo (fresh analysis +
+                # delta), but spending the oracle signer's gas must not be.
+                reason = (
+                    "Score moved past the threshold, but publishing on-chain "
+                    "requires an admin token."
                 )
             else:
                 tx = publisher.update_attestation(
