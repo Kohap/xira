@@ -181,12 +181,20 @@ export default function LandingPage() {
               </Reveal>
 
               <Reveal delay={260}>
-                <div className="mt-8 inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
-                  <span className="text-[11px] text-neutral-500 mr-1">oracle</span>
-                  <code className="font-mono text-[11px] text-neutral-300">
-                    {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
-                  </code>
-                  <CopyButton value={CONTRACT} label="contract address" />
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
+                    <span className="text-[11px] text-neutral-500 mr-1">oracle</span>
+                    <code className="font-mono text-[11px] text-neutral-300">
+                      {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
+                    </code>
+                    <CopyButton value={CONTRACT} label="contract address" />
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-800/50 bg-emerald-950/30 px-3 py-2 text-[11px] text-emerald-400">
+                    <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M2.5 8.5l3.5 3.5 7.5-8" />
+                    </svg>
+                    Verified on X Layer Testnet
+                  </span>
                 </div>
               </Reveal>
 

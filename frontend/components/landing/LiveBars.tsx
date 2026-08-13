@@ -17,9 +17,16 @@ function scoreStroke(score: number): string {
   return "#dc2626";
 }
 
+function formatAge(now: number, generatedAt: number): string {
+  const s = Math.max(0, Math.round((now - generatedAt) / 1000));
+  if (s < 90) return `${s}s ago`;
+  return `${Math.round(s / 60)}m ago`;
+}
+
 export function LiveBars() {
   const [data, setData] = useState<AllAssetsResponse | null>(null);
   const [tries, setTries] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const curveLineRef = useRef<SVGPolylineElement | null>(null);
   const curveDotRef = useRef<HTMLDivElement | null>(null);
@@ -73,6 +80,11 @@ export function LiveBars() {
     };
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const offline = tries > 0 && !data;
   const assets = data?.assets ?? [];
   const top = [...assets].sort((a, b) => b.risk_score - a.risk_score).slice(0, 8);
@@ -102,7 +114,7 @@ export function LiveBars() {
           {offline
             ? `reconnecting (retry ${tries})`
             : data
-            ? `${data.assets.length} markets`
+            ? `${data.assets.length} markets · updated ${formatAge(now, data.generated_at * 1000)}`
             : "syncing…"}
         </span>
       </div>

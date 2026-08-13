@@ -78,7 +78,7 @@ export function ScoreCard({
   risk_score: number;
   risk_level: RiskLevel;
   confidence: number;
-  factors: { name: string; score: number }[];
+  factors: { name: string; label?: string; score: number }[];
   anomaly: boolean;
   data_source?: string;
   score_delta?: number | null;
@@ -129,7 +129,7 @@ export function ScoreCard({
       <div className="space-y-1.5 mt-3">
         {factors.slice(0, 4).map((f) => (
           <div key={f.name} className="flex items-center justify-between text-xs gap-2">
-            <span className="text-neutral-400 truncate min-w-0">{f.name.toUpperCase()}</span>
+            <span className="text-neutral-400 truncate min-w-0">{f.label ?? f.name.toUpperCase()}</span>
             <div className="flex items-center gap-2 shrink-0">
               <div className="w-16 sm:w-20 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
                 <div

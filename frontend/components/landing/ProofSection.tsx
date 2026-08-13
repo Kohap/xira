@@ -7,39 +7,55 @@ import type { Attestation } from "@/lib/types";
 import { CopyButton } from "./CopyButton";
 
 const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
+const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
+const RETRY_MS = 8000;
 
 export function ProofSection() {
   const [latest, setLatest] = useState<Attestation | null>(null);
+  const [status, setStatus] = useState<"pending" | "live" | "offline">("pending");
 
   useEffect(() => {
     let cancelled = false;
-    fetchBoard()
-      .then((d) => {
-        if (cancelled) return;
-        const entry = d.assets[0];
-        if (entry) {
+    let localTries = 0;
+
+    const attempt = () => {
+      fetchBoard()
+        .then((d) => {
+          if (cancelled) return;
+          const entry = d.assets[0];
+          if (!entry) {
+            setStatus("offline");
+            return;
+          }
           fetchAttestation(entry.symbol)
             .then((a) => {
-              if (!cancelled) setLatest(a);
+              if (cancelled) return;
+              setLatest(a);
+              setStatus("live");
             })
-            .catch(() => {});
-        }
-      })
-      .catch(() => {});
+            .catch(() => {
+              if (cancelled) return;
+              setStatus("offline");
+            });
+        })
+        .catch(() => {
+          if (cancelled) return;
+          localTries += 1;
+          if (localTries >= 2) {
+            setStatus("offline");
+            return;
+          }
+          setTimeout(attempt, RETRY_MS);
+        });
+    };
+
+    attempt();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  let explorerBase = "https://xplorer.altlayer.io";
-  if (latest?.chain_explorer) {
-    try {
-      explorerBase = new URL(latest.chain_explorer).origin;
-    } catch {
-      explorerBase = "https://xplorer.altlayer.io";
-    }
-  }
-  const contractUrl = `${explorerBase}/address/${CONTRACT}`;
+  const contractUrl = `${EXPLORER}/address/${CONTRACT}`;
 
   return (
     <div className="space-y-6">
@@ -65,8 +81,11 @@ export function ProofSection() {
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-neutral-400">
           <span>chain 1952 · X Layer testnet</span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="live-dot w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-            {latest ? "attesting live" : "syncing"}
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${status === "live" ? "bg-emerald-400" : status === "offline" ? "bg-yellow-400" : "bg-neutral-500"} live-dot`}
+              aria-hidden="true"
+            />
+            {status === "live" ? "attesting live" : status === "offline" ? "oracle offline" : "syncing"}
           </span>
         </div>
       </div>
@@ -96,7 +115,7 @@ export function ProofSection() {
               {latest.chain_tx ? (
                 <>
                   <a
-                    href={latest.chain_explorer}
+                    href={latest.chain_explorer ?? contractUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="hover:text-white underline underline-offset-4 decoration-neutral-700 transition-colors"
@@ -124,11 +143,17 @@ export function ProofSection() {
             <dd className="text-xs text-neutral-300 flex flex-wrap items-center gap-x-3 gap-y-1">
               {latest.factors.map((f) => (
                 <span key={f.name} className="font-mono">
-                  {f.name} <span className="text-neutral-500">{f.score}</span>
+                  {f.label ?? f.name} <span className="text-neutral-500">{f.score}</span>
                 </span>
               ))}
             </dd>
           </dl>
+        ) : status === "offline" ? (
+          <div className="text-xs text-neutral-400 leading-relaxed">
+            Oracle board unreachable. Attestations resume automatically when the feed
+            reconnects, and already-published on-chain data stays verifiable via the
+            contract above.
+          </div>
         ) : (
           <>
             <div className="h-4 w-40 bg-[var(--card-border)]/60 rounded animate-pulse" />

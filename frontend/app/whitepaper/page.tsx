@@ -39,7 +39,7 @@ const FACTORS = [
   },
   {
     name: "liquidity_proxy",
-    label: "Liquidity",
+    label: "Liquidity Proxy",
     weight: 0.15,
     formula: "turnover = volume × price → banded score",
     note: "Turnover bands: <$100M→20, <$500M→40, <$2B→60, <$10B→80, else→95. Market cap < $2B adds +10 (cap 100).",

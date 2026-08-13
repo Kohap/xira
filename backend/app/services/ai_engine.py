@@ -246,7 +246,7 @@ class AIEngine:
             FactorScore(name="volatility", label="Volatility", score=v_score, weight=FACTOR_WEIGHTS["volatility"], description=v_desc),
             FactorScore(name="sentiment", label="Sentiment", score=s_score, weight=FACTOR_WEIGHTS["sentiment"], description=s_desc),
             FactorScore(name="volume_anomaly", label="Volume Anomaly", score=vol_score, weight=FACTOR_WEIGHTS["volume_anomaly"], description=vol_desc),
-            FactorScore(name="liquidity_proxy", label="Liquidity", score=l_score, weight=FACTOR_WEIGHTS["liquidity_proxy"], description=l_desc),
+            FactorScore(name="liquidity_proxy", label="Liquidity Proxy", score=l_score, weight=FACTOR_WEIGHTS["liquidity_proxy"], description=l_desc),
         ]
 
         weighted = sum(f.score * f.weight for f in factors)
