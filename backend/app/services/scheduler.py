@@ -5,6 +5,7 @@ from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine, risk_level_from_score
 from app.services.history_db import history_db
 from app.services.publisher import publisher
+from app.services.telegram_notifier import evaluate_alerts
 from app.models import AttestationResponse
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,39 @@ def scheduler_diag() -> dict:
         "deviation_threshold": DEVIATION_THRESHOLD,
         "last_published": dict(_last_published),
     }
+
+
+def _check_alert_flags() -> None:
+    """Evaluate health flags after each pass and fire Telegram alerts on
+    transitions. Mirrors the flag formulas in the /api/assets/health route."""
+    diag = scheduler_diag()
+    last_pass = diag.get("last_pass_at")
+    stalled = bool(
+        last_pass is not None and (time.time() - last_pass) > 2 * HEARTBEAT_MINUTES * 60
+    )
+    pub = publisher.status()
+    failing = bool(pub["enabled"] and pub["consecutive_failures"] >= 2)
+    stale = bool(
+        pub["enabled"]
+        and pub["last_attempt_at"] is not None
+        and pub["last_publish_at"] is None
+        and pub["consecutive_failures"] > 0
+    )
+    evaluate_alerts(
+        stalled,
+        failing,
+        stale,
+        {
+            "last_pass_hint": (
+                time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(last_pass))
+                if last_pass
+                else "never"
+            ),
+            "consecutive_failures": pub["consecutive_failures"],
+            "last_error": pub["last_error"],
+            "signer": pub["signer"],
+        },
+    )
 
 
 def _store_history(symbol: str, result):
@@ -181,5 +215,6 @@ async def scheduler_loop() -> None:
             await asyncio.to_thread(_run_pass)
         except Exception as e:
             logger.error(f"Scheduler: pass error: {e}")
+        await asyncio.to_thread(_check_alert_flags)
         elapsed = time.time() - started
         await asyncio.sleep(max(1.0, HEARTBEAT_MINUTES * 60 - elapsed))

@@ -16,6 +16,24 @@ class ThresholdUpdate(BaseModel):
     enabled: bool = True
 
 
+@router.post("/ops/test")
+async def test_ops_alert(request: Request):
+    """Send a test message to the configured Telegram channel. Dormant until
+    TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set."""
+    enforce_rate_limit(request, "alerts_ops_test", limit=5)
+    from app.services.telegram_notifier import enabled as notifier_enabled, send_message
+
+    if not notifier_enabled():
+        return {
+            "ok": False,
+            "detail": "Telegram not configured (set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID).",
+        }
+    ok = send_message(
+        "XIRA Ops Alert: test message\n- Notifier is live and chat is reachable."
+    )
+    return {"ok": ok, "detail": "sent" if ok else "send failed (see backend logs)"}
+
+
 @router.get("/thresholds")
 async def get_thresholds(request: Request):
     """Per-asset risk thresholds set by the user."""
