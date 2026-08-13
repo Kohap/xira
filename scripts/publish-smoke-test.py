@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live publish smoke test: signs one real attestation on X Layer mainnet
+"""Live publish smoke test: signs one real attestation on X Layer Mainnet
 using the same publisher code the backend uses. Prints tx hash + explorer
 link and verifies the attestation read-back.
 
@@ -50,5 +50,5 @@ latest = pub.read_latest(token_address)
 print(f"Read-back: score={latest['score']} confidence={latest['confidence']} "
       f"evidence={latest['evidence_hash'][:18]}... ts={latest['timestamp']}")
 ok = latest and latest["score"] == att["risk_score"] and latest["evidence_hash"].replace("0x", "") == att["evidence_hash"]
-print("VERIFIED on-chain" if ok else "MISMATCH on-chain read-back")
+print("VERIFIED onchain" if ok else "MISMATCH onchain read-back")
 sys.exit(0 if ok else 1)

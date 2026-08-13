@@ -26,7 +26,7 @@ this site.
 
 ## The build in 30 seconds
 
-- **Frontend** — Next.js, statically hosted on GitHub Pages. Landing page,
+- **Frontend** — Next.js, deployed on Vercel. Landing page,
   live risk board, per-asset factor breakdowns, anomaly alerts, a published
   vs on-chain verify tool, and docs.
 - **Backend** — FastAPI on Railway. Pulls live quotes from Finnhub (with a
@@ -100,7 +100,7 @@ cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env          # add RPC URL, contract address, key
-python -m app.main            # http://localhost:8000 · /docs
+uvicorn app.main:app --reload # http://localhost:8000 · /docs
 ```
 
 The backend runs without a wallet in off-chain mode — scores and history
@@ -118,6 +118,7 @@ npm run dev                   # http://localhost:3000
 
 ```bash
 cd contracts
+git submodule update --init --recursive
 export PRIVATE_KEY=your_key
 forge script script/DeployAll.s.sol --rpc-url https://rpc.xlayer.tech --broadcast --legacy
 ```
@@ -152,7 +153,13 @@ Risk levels: 0–20 LOW · 21–40 MODERATE · 41–60 ELEVATED · 61–80 HIGH 
 - `GET /api/assets/health` — version, chain, contract, live-data status
 - `GET /api/attestations/{symbol}` — latest published attestation (read-only)
 - `GET /api/attestations/{symbol}/history?limit=10` — score trail
-- `GET /api/alerts` · `PUT /api/alerts/thresholds` — anomalies + thresholds
+- `GET /api/alerts` — anomalies and threshold-triggered alerts
+- `PUT /api/alerts/thresholds` — admin-gated threshold updates
+
+## Product review packet
+
+Start with [`PRODUCT_REVIEW.md`](./PRODUCT_REVIEW.md) for the live links, demo
+script, verification steps, review checklist, and known trust assumptions.
 
 ## License
 

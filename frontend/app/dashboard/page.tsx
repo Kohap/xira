@@ -152,18 +152,16 @@ function SummaryBar({
 
 function AlertsStrip({ assets }: { assets: AllAssetsResponse["assets"] }) {
   const alerts = assets.filter((a) => a.anomaly);
-  const [limit, setLimit] = useState<number>(5);
-  const visible = alerts.slice(0, limit);
-  if (alerts.length === 0) return null;
-
-  useEffect(() => {
+  const [limit, setLimit] = useState<number>(() => {
+    if (typeof window === "undefined") return 5;
     try {
       const stored = Number(window.localStorage.getItem("xira-alert-limit"));
-      if (Number.isInteger(stored) && stored > 0) setLimit(stored);
+      return Number.isInteger(stored) && stored > 0 ? stored : 5;
     } catch {
-      // storage may be unavailable; default applies
+      return 5;
     }
-  }, []);
+  });
+  const visible = alerts.slice(0, limit);
 
   useEffect(() => {
     try {
@@ -172,6 +170,8 @@ function AlertsStrip({ assets }: { assets: AllAssetsResponse["assets"] }) {
       // storage may be unavailable (private mode); in-memory limit still applies
     }
   }, [limit]);
+
+  if (alerts.length === 0) return null;
 
   return (
     <div className="mb-6 rounded-xl border border-red-800/50 bg-red-950/20 p-4" role="status">
@@ -186,7 +186,7 @@ function AlertsStrip({ assets }: { assets: AllAssetsResponse["assets"] }) {
               value={limit}
               onChange={(e) => setLimit(Number(e.target.value))}
               aria-label="Number of alerts to show"
-              className="bg-[var(--card-bg)] border border-red-800/40 rounded px-1 py-0.5 text-[11px] text-red-300 focus:outline-none focus:border-red-600"
+              className="bg-[var(--card-bg)] border border-red-800/40 rounded px-1 py-0.5 text-[11px] text-red-300 focus:border-red-600"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>

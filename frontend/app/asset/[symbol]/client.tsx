@@ -115,6 +115,18 @@ export function AssetDetailClient() {
     return () => clearTimeout(id);
   }, [fetchData]);
 
+  useEffect(() => {
+    try {
+      if (adminToken.trim()) {
+        window.localStorage.setItem("xira_admin_token", adminToken.trim());
+      } else {
+        window.localStorage.removeItem("xira_admin_token");
+      }
+    } catch {
+      // storage may be unavailable; the token still works for this session
+    }
+  }, [adminToken]);
+
   const doRescore = async () => {
     setRescoring(true);
     setRescoreError(null);
@@ -543,6 +555,17 @@ export function AssetDetailClient() {
       )}
 
       <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <label className="flex w-full sm:w-auto flex-col gap-1 text-[11px] text-neutral-500">
+          Admin token
+          <input
+            type="password"
+            value={adminToken}
+            onChange={(e) => setAdminToken(e.target.value)}
+            placeholder="required to re-score"
+            autoComplete="off"
+            className="h-11 w-full sm:w-64 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 text-base sm:text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-600 transition-colors"
+          />
+        </label>
         <button
           type="button"
           onClick={doRescore}

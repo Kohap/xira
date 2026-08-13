@@ -1,48 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
 ROOT_DIR="$(cd "$(dirname "$0")/../contracts" && pwd)"
-
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-echo -e "${CYAN}"
-echo "  ╔══════════════════════════════════════════╗"
-echo "  ║   XIRA Contract Deployment               ║"
-echo "  ║   X Layer Mainnet                        ║"
-echo "  ╚══════════════════════════════════════════╝"
-echo -e "${NC}"
+RPC_URL="${XLAYER_RPC_URL:-https://rpc.xlayer.tech}"
+EXPLORER_BASE="${XIRA_EXPLORER_BASE:-https://www.okx.com/web3/explorer/xlayer}"
 
 if [ -z "${PRIVATE_KEY:-}" ]; then
-    echo -e "${RED}ERROR: PRIVATE_KEY not set.${NC}"
-    echo "  export PRIVATE_KEY=your_xlayer_mainnet_private_key"
-    echo ""
-    echo "  Fund the wallet with OKB on X Layer mainnet before deploying."
-    exit 1
+  echo "ERROR: PRIVATE_KEY is not set."
+  echo "Set it only in an ignored local env file or your hosting secret store."
+  exit 1
 fi
 
-echo "Building contracts..."
+if [ "${XIRA_CONFIRM_MAINNET_DEPLOY:-}" != "deploy-mainnet" ]; then
+  echo "Refusing to deploy to X Layer Mainnet without explicit confirmation."
+  echo "Run with: XIRA_CONFIRM_MAINNET_DEPLOY=deploy-mainnet scripts/deploy-contract.sh"
+  exit 1
+fi
+
+echo "XIRA contract deployment"
+echo "Network: X Layer Mainnet"
+echo "RPC:     $RPC_URL"
+echo "Explorer: $EXPLORER_BASE"
+echo ""
+
 cd "$ROOT_DIR"
+
+echo "Building contracts..."
 forge build --quiet
 
 echo "Running tests..."
-forge test --quiet && echo -e "${GREEN}All tests pass.${NC}"
+forge test --quiet
+
+echo "Deploying catalog-driven XIRA contract..."
+forge script script/DeployV2.s.sol \
+  --rpc-url "$RPC_URL" \
+  --broadcast \
+  --legacy \
+  --slow \
+  2>&1 | grep -E "(Address:|Registered:|Authorized:|XIRA V2 Contract:|Explorer:|===|Error)"
 
 echo ""
-echo "Deploying to X Layer mainnet..."
-echo "RPC: https://rpc.xlayer.tech"
-echo ""
-
-forge script script/DeployAll.s.sol \
-    --rpc-url https://rpc.xlayer.tech \
-    --broadcast \
-    --legacy \
-    --slow \
-    2>&1 | grep -E "(Address:|Registered:|Authorized:|XIRA Contract:|Explorer:|===|Error)"
-
-echo ""
-echo -e "${GREEN}Deployment complete!${NC}"
-echo ""
-echo "Copy the XIRA contract address above and add it to backend/.env:"
-echo "  XIRA_CONTRACT_ADDRESS=0x..."
+echo "Deployment complete."
+echo "Update Railway and Vercel with the new XIRA_CONTRACT_ADDRESS/NEXT_PUBLIC_CONTRACT_ADDRESS."

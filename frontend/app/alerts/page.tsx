@@ -35,7 +35,16 @@ export default function AlertsPage() {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const [thresholds, setThresholds] = useState<ThresholdsResponse["thresholds"]>({});
   const [thresholdDrafts, setThresholdDrafts] = useState<Record<string, string>>({});
-  const [thresholdMsg, setThresholdMsg] = useState<string | null>(null);
+  const [thresholdMsg, setThresholdMsg] = useState<{
+    tone: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [savingSymbol, setSavingSymbol] = useState<string | null>(null);
+  const [adminToken, setAdminToken] = useState(() =>
+    typeof window === "undefined"
+      ? ""
+      : window.localStorage.getItem("xira_admin_token") ?? ""
+  );
   const retriesRef = useRef(0);
   const dataRef = useRef<AlertsResponse | null>(null);
   const fetchDataRef = useRef<((showLoading?: boolean) => Promise<void>) | null>(null);
@@ -49,22 +58,56 @@ export default function AlertsPage() {
     return () => clearTimeout(id);
   }, []);
 
-  const applyThreshold = async (symbol: string) => {
-    const raw = thresholdDrafts[symbol]?.trim();
-    if (raw === "") {
-      await saveThreshold(symbol, 0, false);
-    } else {
-      const value = Number(raw);
-      if (Number.isNaN(value) || value < 0 || value > 100) {
-        setThresholdMsg(`Threshold for ${symbol} must be 0-100.`);
-        return;
+  useEffect(() => {
+    try {
+      if (adminToken.trim()) {
+        window.localStorage.setItem("xira_admin_token", adminToken.trim());
+      } else {
+        window.localStorage.removeItem("xira_admin_token");
       }
-      await saveThreshold(symbol, Math.round(value), true);
+    } catch {
+      // storage may be unavailable; the token still works for this session
     }
-    setThresholdMsg(`Threshold saved for ${symbol}.`);
-    const t = await fetchThresholds();
-    setThresholds(t.thresholds);
-    void fetchData(false);
+  }, [adminToken]);
+
+  const applyThreshold = async (symbol: string) => {
+    const token = adminToken.trim();
+    if (!token) {
+      setThresholdMsg({
+        tone: "error",
+        text: "Enter an admin token before saving threshold settings.",
+      });
+      return;
+    }
+
+    const raw = thresholdDrafts[symbol]?.trim();
+    setSavingSymbol(symbol);
+    try {
+      if (raw === "") {
+        await saveThreshold(symbol, 0, false, token);
+      } else {
+        const value = Number(raw);
+        if (Number.isNaN(value) || value < 0 || value > 100) {
+          setThresholdMsg({
+            tone: "error",
+            text: `Threshold for ${symbol} must be 0-100.`,
+          });
+          return;
+        }
+        await saveThreshold(symbol, Math.round(value), true, token);
+      }
+      setThresholdMsg({ tone: "success", text: `Threshold saved for ${symbol}.` });
+      const t = await fetchThresholds();
+      setThresholds(t.thresholds);
+      void fetchData(false);
+    } catch (e: unknown) {
+      setThresholdMsg({
+        tone: "error",
+        text: e instanceof Error ? e.message : "Unable to save threshold.",
+      });
+    } finally {
+      setSavingSymbol(null);
+    }
   };
 
   const fetchData = useCallback(async (showLoading = true) => {
@@ -164,17 +207,39 @@ export default function AlertsPage() {
           <div className="mb-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-4 sm:p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <h2 className="text-sm font-semibold">Risk thresholds</h2>
-              <p className="text-[11px] text-neutral-500">
-                Alert me when a market&apos;s score reaches or exceeds…
-              </p>
+              <label className="flex flex-col sm:flex-row sm:items-center gap-1.5 text-[11px] text-neutral-500">
+                Admin token
+                <input
+                  type="password"
+                  value={adminToken}
+                  onChange={(e) => setAdminToken(e.target.value)}
+                  placeholder="required to save"
+                  autoComplete="off"
+                  className="h-8 w-full sm:w-56 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 text-sm sm:text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-600 transition-colors"
+                />
+              </label>
             </div>
             {thresholdMsg && (
-              <p className="mb-3 text-xs text-emerald-400">{thresholdMsg}</p>
+              <p
+                className={`mb-3 text-xs ${
+                  thresholdMsg.tone === "success"
+                    ? "text-emerald-400"
+                    : "text-red-300"
+                }`}
+                role={thresholdMsg.tone === "error" ? "alert" : "status"}
+              >
+                {thresholdMsg.text}
+              </p>
             )}
+            <p className="mb-3 text-[11px] text-neutral-500">
+              Alert me when a market&apos;s score reaches or exceeds a saved threshold.
+              Saving is admin-gated because thresholds feed the live alerting service.
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {ALL_SYMBOLS.map((sym) => {
                 const current = thresholds[sym];
                 const active = current?.enabled && current.threshold !== 0;
+                const saving = savingSymbol === sym;
                 return (
                   <div
                     key={sym}
@@ -208,12 +273,20 @@ export default function AlertsPage() {
                     <button
                       type="button"
                       onClick={() => void applyThreshold(sym)}
+                      disabled={saving}
                       aria-label={`Save ${sym} threshold`}
-                      className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-white hover:bg-[var(--card-border)]/50 transition-colors"
+                      className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-md text-neutral-400 hover:text-white hover:bg-[var(--card-border)]/50 transition-colors disabled:opacity-50"
                     >
-                      <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M3.5 8.5l3 3 6-6" />
-                      </svg>
+                      {saving ? (
+                        <span
+                          className="h-3.5 w-3.5 animate-spin rounded-full border border-current border-t-transparent"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M3.5 8.5l3 3 6-6" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 );

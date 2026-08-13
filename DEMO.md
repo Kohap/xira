@@ -1,80 +1,58 @@
-# XIRA — Judge Demo Script
+# XIRA Product Demo
 
-A ~4 minute walkthrough of the live product. Everything below works on the
-deployed site (xira.surf) against the live backend (Railway) and the XIRA
-contract on X Layer mainnet (chain 196).
+Use this script for a 3-5 minute product review. It matches the live production
+state: Vercel frontend, Railway API, and X Layer Mainnet attestations.
 
----
+## Live surfaces
 
-## 1. Landing (30s)
+- App: https://www.xira.surf
+- Risk board: https://www.xira.surf/dashboard
+- Verify flow: https://www.xira.surf/verify
+- API docs: https://xira-api-production.up.railway.app/docs
+- API health: https://xira-api-production.up.railway.app/api/assets/health
+- Mainnet contract: https://www.okx.com/web3/explorer/xlayer/address/0x22851e160aef3e3aeb373fd351a07ff7c65c9b57
 
-Open the site. Front and center:
+## Demo flow
 
-- **Live pill** — LIVE badge with a live dot when data resolves on-chain
-- **Live risk board** — top 8 markets as animated bars, with the risk curve
-  flowing continuously and a scanning dot
-- **Stat strip** — 50 markets tracked · 5 risk factors · 30-min cadence ·
-  1 score = 1 attestation
-- Ticker scrolls the full board across the top
+1. Open the landing page and frame the product:
+   XIRA turns xStock market data into one explainable risk score and publishes
+   meaningful score changes as verifiable X Layer Mainnet attestations.
 
-Say: *"Every number on this page is a live attestation on X Layer."*
+2. Open the live dashboard:
+   show the market summary, risk distribution, risk heatmap, filters, table/grid
+   switch, watchlist pins, and per-asset cards.
 
-## 2. Live board / dashboard (60s)
+3. Open one asset detail page:
+   show the score, factor breakdown, evidence hash, latest transaction, and
+   stored onchain history.
 
-Click **Live board** (header CTA).
+4. Open the verify page:
+   choose a symbol that has a recent publish, run verification, and show that
+   API score, evidence hash, and timestamp match the contract.
 
-- **Market pulse** — average risk, colored distribution bar, best/worst
-- **Filters** — risk level chips, sector chips, alerts-only toggle
-- **Grid ↔ Table** — switch to table: symbol, sector, score, Δ arrow,
-  confidence bar, LIVE/SIMULATED source
-- **Pin a market** (star) → it appears in the Watchlist row
-- **Copy JSON** — one click exports the agent-ready payload
+5. Open API health:
+   point out `chain_id: 196`, `rpc_url: https://rpc.xlayer.tech`, the mainnet
+   contract address, scheduler status, signer balance, and publish status.
 
-Say: *"Filter, sort, or export the exact payload an agent would consume."*
+6. Open the repository:
+   show `README.md`, `PRODUCT_REVIEW.md`, `contracts/src/XIRA.sol`,
+   `backend/app/services/publisher.py`, and `frontend/app/dashboard/page.tsx`.
 
-## 3. Asset page + share (45s)
+## Reviewer talking points
 
-Click any market, e.g. **NVDAx**.
+- The core model is deterministic and transparent: five factor scores produce a
+  0-100 risk score.
+- Public `GET` endpoints are read-only. Mutating routes require an admin token.
+- The live frontend shows the contract and explorer links directly.
+- Every attested score carries an evidence hash so reviewers can compare API data
+  with the onchain record.
+- The backend has fail-closed startup gates for expected chain, bytecode,
+  signer, and owner when those environment variables are set.
 
-- Score gauge, factor breakdown with reasons, risk history chart,
-  on-chain verification (evidence hash + latest tx)
-- **Copy score summary** — copies a compact attestation card
+## Known trust assumptions
 
-## 4. Verify a score (45s)
-
-Header → **Verify** (or `/verify`).
-
-- Pick a market; see **API vs On-chain** side by side:
-  score, confidence, evidence hash, timestamp, anomaly flag
-- Green **VERIFIED** badge when the API record matches the contract
-
-Say: *"The score you see is the transaction anyone can check."*
-
-## 5. Alert bell + thresholds (45s)
-
-- Header **bell** shows anomaly count; open it for reasons + timestamps
-- **Alerts page** — set a risk threshold per market (e.g. NVDAx ≥ 60);
-  breached markets appear in the bell with "Above your threshold"
-
-## 6. Agent-ready (30s)
-
-Landing → **Give your agents a risk desk**: `xira_get_asset_risk`,
-`xira_get_all_assets`, `xira_get_attestation_history` via the MCP server
-(`mcp_server/server.py`).
-
----
-
-## Key links
-
-- Site: xira.surf (Vercel, auto-deploy from `main`)
-- API: `https://xira-api-production.up.railway.app/docs` (OpenAPI)
-- Contract: `0x22851e160aef3e3aeb373fd351a07ff7c65c9b57` on
-  [OKX X Layer explorer](https://www.okx.com/web3/explorer/xlayer/address/0x22851e160aef3e3aeb373fd351a07ff7c65c9b57)
-- MCP: `python3 mcp_server/server.py`
-
-## Troubleshooting
-
-- **Board shows "reconnecting"** → backend cold start (~30-60s); it retries
-  automatically. Warm it with `curl https://xira-api-production.up.railway.app/api/assets/health`
-- **Simulated tag on cards** → live data flag off in the backend env
-  (`USE_LIVE_DATA=true`)
+- The current owner/updater is a single EOA. Move ownership to a Safe/multisig
+  before holding significant production trust.
+- The score is informational risk analytics, not financial advice.
+- The API and scheduler are centralized services; the contract records what the
+  oracle signed but does not independently calculate market risk.

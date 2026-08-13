@@ -1,118 +1,72 @@
-# Railway Migration Runbook
+# Railway Production Runbook
 
-Gradual cutover of the XIRA backend from Render (`xira-gsb3.onrender.com`)
-to Railway. The frontend stays on Vercel throughout; the API URL is switched
-over only after the Railway service is verified healthy.
+XIRA's FastAPI backend runs on Railway. The frontend is deployed separately on
+Vercel at https://www.xira.surf.
 
-## Phase 0 — Prerequisites
+## Production environment
 
-1. Install the Railway CLI and log in:
-   ```bash
-   brew install railway   # or: curl -fsSL https://railway.app/install.sh | sh
-   railway login
-   ```
-2. Create the project + service and set secrets. You must paste the real
-   values (Render dashboard → your API service → Environment). Do **not**
-   commit any of these:
-   ```bash
-   railway init            # run at repo root, pick a project name
-   railway service create  # or let `railway up` create it
-   railway variables set PRIVATE_KEY="<render-secret-or-current-deployer-key>"
-   railway variables set FINNHUB_API_KEY="<render-secret>"
-   railway variables set XLAYER_RPC_URL="https://rpc.xlayer.tech"
-   railway variables set XIRA_CONTRACT_ADDRESS="0x22851e160aef3e3aeb373fd351a07ff7c65c9b57"
-   railway variables set USE_LIVE_DATA="true"
-   railway variables set AI_MODE="heuristic"
-   railway variables set MODEL_VERSION="v1.0.0"
-   railway variables set XIRA_DB_PATH="/data/xira_history.db"
-   railway variables set XIRA_API_URL="https://<railway-domain>"
-   ```
-   `XIRA_API_URL` lets the hosted MCP endpoint (`/mcp`) resolve its own
-   public URL when making self-service calls; if unset it derives the base
-   from the incoming request.
-   `railway.json` (repo root) wires the Docker build, the start command, the
-   `/api/assets/health` healthcheck, and the `xira-data` volume mounted at
-   `/data`. The volume is what makes `xira_history.db` survive redeploys —
-   the thing Render's ephemeral disk can't do.
+Set these variables on the Railway production service:
 
-3. Deploy:
-   ```bash
-   railway up --detach
-   ```
-   Or push to a branch and let Railway deploy the commit automatically.
+```bash
+railway variables --set "USE_LIVE_DATA=true"
+railway variables --set "AI_MODE=heuristic"
+railway variables --set "MODEL_VERSION=v1.0.0"
+railway variables --set "XLAYER_RPC_URL=https://rpc.xlayer.tech"
+railway variables --set "XIRA_EXPLORER_BASE=https://www.okx.com/web3/explorer/xlayer"
+railway variables --set "XIRA_CHAIN_LABEL=xlayer-mainnet"
+railway variables --set "XIRA_CONTRACT_ADDRESS=0x22851e160aef3e3aeb373fd351a07ff7c65c9b57"
+railway variables --set "XIRA_EXPECTED_CHAIN_ID=196"
+railway variables --set "XIRA_EXPECTED_SIGNER=0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0"
+railway variables --set "XIRA_EXPECTED_OWNER=0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0"
+railway variables --set "XIRA_DB_PATH=/data/xira_history.db"
+railway variables --set "XIRA_API_URL=https://xira-api-production.up.railway.app"
+railway variables --set "XIRA_ADMIN_TOKEN=<strong-random-token>"
+railway variables --set "PRIVATE_KEY=<oracle-updater-private-key>"
+```
 
-## Phase 1 — Shadow verify (Render still serves traffic)
+Optional variables:
 
-1. Check the service is healthy on Railway:
-   ```bash
-   railway variables set   # copy the generated RAILWAY_PUBLIC_DOMAIN
-   curl -s https://<railway-domain>/api/assets/health
-   curl -s "https://<railway-domain>/api/assets/all" | head -c 300
-   ```
-   Confirm `"status":"ok"`, `"live_data":true`, `"tracked_assets":50`.
-2. Verify the volume persisted: restart the service once
-   (`railway up --detach` again or Deploy button) and confirm the DB file
-   exists: `railway ssh` → `ls -la /data/`.
-3. Compare board output with Render (same `generated_at`, scores within a
-   few points — timestamps may differ by a board refresh).
+```bash
+railway variables --set "FINNHUB_API_KEY=<key>"
+railway variables --set "TELEGRAM_BOT_TOKEN=<token>"
+railway variables --set "TELEGRAM_CHAT_ID=<chat-id>"
+railway variables --set "XIRA_MIN_SIGNER_BALANCE_OKB=0.01"
+```
 
-## Phase 2 — Cut over the frontend
+Never commit private keys, API keys, admin tokens, or RPC URLs containing
+provider secrets.
 
-The frontend already honors `NEXT_PUBLIC_API_URL` (`frontend/lib/api.ts:19`).
-Flip it on Vercel first so the change is reversible without a code deploy:
+## Deploy
 
-1. Vercel dashboard → xira.surf project → Settings → Environment Variables →
-   `NEXT_PUBLIC_API_URL=https://<railway-domain>` for all environments.
-2. Redeploy the frontend, load the site, verify the board/alerts/verify page.
-3. Keep Render running for one board TTL (~15 min) as a rollback target.
+From the repository root:
 
-## Phase 3 — Make Railway the default (code-level)
+```bash
+railway up --service xira-api --environment production
+```
 
-1. Update the fallback in `frontend/lib/api.ts`:
-   ```ts
-   process.env.NEXT_PUBLIC_API_URL || "https://<railway-domain>"
-   ```
-2. Update the same URL in `frontend/app/docs/page.tsx` and
-   `mcp_server/claude_desktop_config.json`.
-3. Add `xira-gsb3.onrender.com` to `ALLOWED_ORIGINS` removal is **not**
-   needed (it stays for the old origin) — but keep `https://xira.surf`,
-   `https://www.xira.surf`, `https://xira-tan.vercel.app` in the list.
-   Drop the Render origin only after Render is decommissioned.
+The service uses `railway.json`, builds from `backend/Dockerfile`, starts
+Uvicorn, mounts the persistent `/data` volume, and healthchecks
+`/api/assets/health`.
 
-## Phase 4 — Decommission Render
+## Verify after deploy
 
-1. Confirm Railway is healthy for 48h with a couple of redeploys
-   (zero-downtime on Railway makes this safe).
-2. Render dashboard → xira-api → Delete service. Remove the
-   `xira-gsb3.onrender.com` entry from `ALLOWED_ORIGINS` (backend
-   `main.py`) and any remaining docs references.
+```bash
+curl -s https://xira-api-production.up.railway.app/api/assets/health | jq .
+curl -s https://xira-api-production.up.railway.app/api/assets/verify/CRCLx | jq .
+```
 
-## Rollback (any phase)
+Expected health signals:
 
-1. Vercel: set `NEXT_PUBLIC_API_URL` back to `https://xira-gsb3.onrender.com`
-   and redeploy.
-2. Railway: `railway down` (or delete the service) — Render never stopped
-   serving, so nothing else is needed.
+- `status` is `ok`
+- `publisher.enabled` is `true`
+- `publisher.chain_id` is `196`
+- `publisher.rpc_url` is `https://rpc.xlayer.tech`
+- `contract` is `0x22851e160aef3e3aeb373fd351a07ff7c65c9b57`
+- `publish_failing`, `publish_stale`, and `scheduler_stalled` are `false`
 
-## Notes
+## Rollback
 
-- The in-memory rate limiter (`rate_limit.py`) is per-instance; Railway's
-  default single replica is equivalent to today's setup. If you later scale
-  to multiple replicas, switch it to Railway's Redis plugin.
-- The scheduler heartbeat still runs inside the API process (same as Render).
-  A separate cron service is a later option.
-- `XIRA_ADMIN_TOKEN` remains optional; without it `?fresh=true` is disabled
-  (the safe default).
-
-## Frontend API key
-
-The xira.surf frontend authenticates with `X-API-Key`. Vercel must define
-`NEXT_PUBLIC_XIRA_API_KEY` (Production + Preview) — it is inlined at build
-time, so an env change requires a redeploy. `frontend/lib/api.ts` no longer
-ships a fallback key: builds without the env var send an empty key and 401 on
-all protected endpoints.
-
-Local dev: copy the current key into `frontend/.env.local` (gitignored).
-Backend operators can rotate keys at `POST/GET/DELETE /api/admin/keys`
-(requires `X-Admin-Token` plus a key) — issue the replacement first, update
-Vercel, redeploy, verify, then revoke the old key.
+Redeploy the previous Railway deployment from the Railway dashboard or revert
+the last commit and run `railway up` again. Do not point production back to an
+old contract unless the matching frontend and docs are reverted in the same
+release.

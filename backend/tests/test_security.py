@@ -267,7 +267,7 @@ def test_wrong_chain_id_fails_startup(monkeypatch):
 
     class FailingPub:
         enabled = True
-        chain_id = 1  # testnet, but we expect mainnet
+        chain_id = 1  # wrong chain; production expects X Layer Mainnet
         account = None
         contract_address = ""
         rpc_url = "https://rpc.xlayer.tech"

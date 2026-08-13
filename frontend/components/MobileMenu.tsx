@@ -155,7 +155,7 @@ export function MobileMenu() {
         </div>
 
         <p className="shrink-0 px-5 py-4 border-t border-[var(--card-border)] text-center text-[11px] text-neutral-600">
-          Mainnet: soon
+          Live on X Layer Mainnet
         </p>
       </div>
     </>

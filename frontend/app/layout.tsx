@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { Header } from "@/components/Header";
 import { BuiltOnXLayerBadge } from "@/components/BuiltOnXLayerBadge";
 import { CONTRACT_URL } from "@/lib/chain";
@@ -7,23 +6,6 @@ import { API_BASE } from "@/lib/api";
 import "./globals.css";
 
 const ASSET_BASE = process.env.VERCEL === "1" ? "" : "/xira";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  weight: "400",
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.xira.surf"),
@@ -39,7 +21,7 @@ export const metadata: Metadata = {
     url: "https://www.xira.surf",
     images: [
       {
-        url: "/og.png",
+        url: "https://www.xira.surf/og.png",
         width: 1200,
         height: 630,
         alt: "XIRA: Risk Intelligence on X Layer",
@@ -51,7 +33,7 @@ export const metadata: Metadata = {
     title: "XIRA: One Verifiable Risk Number for Every xStock",
     description:
       "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
-    images: ["/og.png"],
+    images: ["https://www.xira.surf/og.png"],
   },
 };
 
@@ -63,7 +45,7 @@ export default function RootLayout({
   return (
       <html
         lang="en"
-        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+        className="h-full antialiased"
       >
         <head>
           <link rel="preconnect" href={API_BASE} crossOrigin="anonymous" />

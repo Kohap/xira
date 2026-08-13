@@ -1,121 +1,106 @@
-# XIRA Smart Contract Deployment Guide
+# XIRA Mainnet Deployment Guide
 
-## ⚠️ Secret hygiene & key rotation
+This guide is for X Layer Mainnet only.
 
-The original oracle private key was committed to git history (`render.yaml`,
-`contracts/.env.deploy`, `DEPLOYMENT.md`). It has been **fully rotated**:
+## Production constants
 
-| Role | Old address | New address |
-|---|---|---|
-| Contract owner + oracle signer | `0x5368FB…f8AC` (leaked) | `0x0CE306…D3c0` |
+| Item | Value |
+| --- | --- |
+| Chain | X Layer Mainnet |
+| Chain ID | `196` |
+| RPC | `https://rpc.xlayer.tech` |
+| Explorer | `https://www.okx.com/web3/explorer/xlayer` |
+| Current contract | `0x22851e160aef3e3aeb373fd351a07ff7c65c9b57` |
+| Current signer/updater | `0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0` |
 
-The new key must be set **only** in the backend deployment secret (Railway
-today) and in your local `backend/.env` — never in any committed file. If the
-key is missing, the backend runs in off-chain mode (scores served, no
-on-chain txs).
+## Secret hygiene
 
-To run the on-chain rotation:
-```bash
-scripts/rotate-key.sh
-```
+- Keep `PRIVATE_KEY`, `XIRA_ADMIN_TOKEN`, API keys, and provider-key RPC URLs out
+  of git.
+- Store production secrets only in Railway, Vercel, or a local ignored `.env`.
+- If a key is ever committed, assume it is compromised, rotate immediately, and
+  move funds/authority to a new key or Safe.
 
-## Prerequisites
+## Deploy contracts
 
-1. **Foundry installed**: `curl -L https://foundry.paradigm.xyz | bash`
-2. **Wallet with X Layer mainnet OKB**:
-   - Oracle address: `0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0`
-   - Fund via any OKX wallet/exchange withdrawal to X Layer (chain 196)
-   - You need approximately 0.01 OKB plus gas
-
-## Deployment Steps
-
-### V2 (upgraded contract — history ring buffer, batch updates)
-
-The deployed contract predates the V2 features (`getHistory`, `batchUpdateAttestations`,
-`getAllTrackedAssetsWithScores`, `symbolAddresses`). Deploy the new version and point
-the backend at it:
+Use Foundry from `contracts/`.
 
 ```bash
 cd contracts
-
-# PRIVATE_KEY + ADDRESS live in contracts/.env.deploy (gitignored).
-# The deployer wallet needs X Layer mainnet OKB for gas.
+git submodule update --init --recursive
 set -a && source .env.deploy && set +a
-
+forge build
+forge test
 forge script script/DeployV2.s.sol \
   --rpc-url https://rpc.xlayer.tech \
   --broadcast \
   --legacy
 ```
 
-`DeployV2.s.sol` deploys XIRA, registers all 15 xStocks with their **real** EVM
-addresses, and authorizes the deployer as updater.
+`DeployV2.s.sol` reads `catalogs/asset_catalog.deploy.json`, registers the
+catalog symbols, authorizes the deployer as updater, and sets a 60 second
+per-asset write cooldown.
 
 After deploy:
-1. Copy the new contract address from the output.
-2. Update `XIRA_CONTRACT_ADDRESS` in the Render dashboard env vars.
-3. Update `backend/.env` locally.
-4. Restart the backend (or it picks up on redeploy).
-5. Confirm: `cast call <ADDRESS> "getAllTrackedSymbols()(string[])" --rpc-url https://rpc.xlayer.tech`
 
-> If the deployer key is not in `.env.deploy`, paste it locally (never commit),
-> or run with `PRIVATE_KEY=0x… forge script …`.
-
-### V1 (original, superseded)
-
-```bash
-cd contracts
-export PRIVATE_KEY=<deployer key with mainnet OKB>
-forge script script/DeployAll.s.sol \
-  --rpc-url https://rpc.xlayer.tech \
-  --broadcast \
-  --legacy
-```
-
-> **Token keys:** attestations are keyed by the real X Layer xStock ERC-20 addresses
-> (e.g. NVDAx `0xc845...0849d` — same address on every EVM chain). The backend
-> `TRACKED_ASSETS` list holds the canonical keys; BAx has no published EVM address
-> yet and keeps a placeholder key. `registerAsset` is legacy metadata only —
-> `updateAttestation` accepts any address.
-
-## Post-Deployment
-
-1. **Copy the contract address** from the deployment output
-2. **Update backend configuration**:
+1. Copy the new contract address from the script output.
+2. Verify bytecode and ownership:
    ```bash
-   cd ../backend
-   # Update .env — or set the secret in the Render dashboard (recommended):
-   XIRA_CONTRACT_ADDRESS=0x22851e160aef3e3aeb373fd351a07ff7c65c9b57
-   PRIVATE_KEY=<set-from-secret>
+   cast code <CONTRACT_ADDRESS> --rpc-url https://rpc.xlayer.tech
+   cast call <CONTRACT_ADDRESS> "owner()(address)" --rpc-url https://rpc.xlayer.tech
+   cast call <CONTRACT_ADDRESS> "getAllTrackedSymbols()(string[])" --rpc-url https://rpc.xlayer.tech
    ```
-3. **Restart the backend** to enable on-chain attestations
-4. **Verify on explorer**: https://www.okx.com/web3/explorer/xlayer/address/0x22851e160aef3e3aeb373fd351a07ff7c65c9b57
+3. Set Railway `XIRA_CONTRACT_ADDRESS` to the new address.
+4. Set frontend `NEXT_PUBLIC_CONTRACT_ADDRESS` to the same address.
+5. Redeploy Railway and Vercel.
+6. Open the contract in the explorer:
+   `https://www.okx.com/web3/explorer/xlayer/address/<CONTRACT_ADDRESS>`.
 
-## What Gets Deployed
+## Deploy backend
 
-- XIRA smart contract with attestation storage
-- 15 xStocks registered (NVDAx, TSLAx, AAPLx, MSFTx, GOOGLx, AMZNx, METAx, SPYx, QQQx, AMDx, INTCx, NFLXx, BAx, JPMx, XOMx)
-- Deployer authorized as updater
-- All assets ready for on-chain attestation updates
+See [`RAILWAY.md`](./RAILWAY.md). The required production gates are:
 
-## Troubleshooting
+- `XIRA_EXPECTED_CHAIN_ID=196`
+- `XIRA_EXPECTED_SIGNER=<expected updater>`
+- `XIRA_EXPECTED_OWNER=<expected owner>`
 
-### "insufficient funds"
-- Ensure the wallet has X Layer mainnet OKB for gas
+These gates refuse startup if the service is pointed at the wrong chain,
+phantom contract, wrong signer, or unexpected owner.
 
-### "nonce too low"
-- Clear Foundry cache: `forge clean`
+## Deploy frontend
 
-### "RPC connection failed"
-- Try alternative RPC: `https://xlayerrpc.okx.com`
+The frontend is a Next.js app in `frontend/` and is deployed on Vercel.
 
-## Verification
+Required production variables:
 
-After deployment, verify the contract:
 ```bash
-# Check owner
-cast call <CONTRACT_ADDRESS> "owner()" --rpc-url https://rpc.xlayer.tech
-
-# Check registered assets
-cast call <CONTRACT_ADDRESS> "getAllTrackedSymbols()" --rpc-url https://rpc.xlayer.tech
+NEXT_PUBLIC_API_URL=https://xira-api-production.up.railway.app
+NEXT_PUBLIC_CHAIN_ID=196
+NEXT_PUBLIC_CHAIN_NAME=X Layer
+NEXT_PUBLIC_CHAIN_LABEL=X Layer Mainnet
+NEXT_PUBLIC_EXPLORER_URL=https://www.okx.com/web3/explorer/xlayer
+NEXT_PUBLIC_CONTRACT_ADDRESS=0x22851e160aef3e3aeb373fd351a07ff7c65c9b57
 ```
+
+Validate before release:
+
+```bash
+cd frontend
+npm ci
+npm run lint
+npm run build
+```
+
+## Post-release smoke checks
+
+```bash
+curl -s https://xira-api-production.up.railway.app/api/assets/health | jq .
+curl -s https://xira-api-production.up.railway.app/api/assets/verify/CRCLx | jq .
+```
+
+Then open:
+
+- https://www.xira.surf
+- https://www.xira.surf/dashboard
+- https://www.xira.surf/verify
+- https://xira-api-production.up.railway.app/docs

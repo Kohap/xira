@@ -102,13 +102,21 @@ export async function fetchThresholds(): Promise<ThresholdsResponse> {
 export async function saveThreshold(
   symbol: string,
   threshold: number,
-  enabled: boolean
+  enabled: boolean,
+  adminToken = ""
 ): Promise<{ ok: boolean }> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = adminToken.trim();
+  if (token) headers["X-Admin-Token"] = token;
+
   const res = await fetch(`${API_BASE}/api/alerts/thresholds`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", "X-API-Key": API_KEY },
+    headers,
     body: JSON.stringify({ symbol, threshold, enabled }),
   });
-  if (!res.ok) throw new Error(`Threshold API error: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Threshold save failed (${res.status})${body ? " - " + body : ""}`);
+  }
   return res.json();
 }
