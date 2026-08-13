@@ -12,7 +12,7 @@ export const CHAIN_LABEL =
 
 export const CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ??
-  "0xaa5f6215e947ffce2f46513a926af3239be545d0";
+  "0x1ce70c394ca51be2c2dcf195cbac91fd5ba99bdc";
 
 export const EXPLORER_BASE =
   process.env.NEXT_PUBLIC_EXPLORER_URL ??
