@@ -1,0 +1,12 @@
+fastapi==0.128.8
+uvicorn[standard]==0.39.0
+web3==7.16.0
+python-dotenv==1.2.1
+httpx==0.28.1
+pydantic==2.13.4
+aiofiles==25.1.0
+requests==2.32.5
+python-multipart==0.0.20
+eth-account==0.13.7
+cryptography==50.0.0
+redis==7.0.1

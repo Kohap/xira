@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+backend/venv/
+backend/.venv/
+.venv/
+.pytest_cache/
+backend/.pytest_cache/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.deploy
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/lib/
+contracts/broadcast/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+/tmp/
+
+# Runtime SQLite DBs (created by HistoryDB at app startup)
+backend/**/xira_history.db
+backend/**/xira_history.db-shm
+backend/**/xira_history.db-wal

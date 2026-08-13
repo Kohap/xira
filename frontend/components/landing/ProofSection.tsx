@@ -1,0 +1,171 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { fetchAttestation } from "@/lib/api";
+import { fetchBoard } from "@/lib/board-cache";
+import type { Attestation } from "@/lib/types";
+import { CopyButton } from "./CopyButton";
+import {
+  CHAIN_ID,
+  CHAIN_NAME,
+  CONTRACT_ADDRESS,
+  CONTRACT_URL,
+} from "@/lib/chain";
+
+const RETRY_MS = 8000;
+
+export function ProofSection() {
+  const [latest, setLatest] = useState<Attestation | null>(null);
+  const [status, setStatus] = useState<"pending" | "live" | "offline">("pending");
+
+  useEffect(() => {
+    let cancelled = false;
+    let localTries = 0;
+
+    const attempt = () => {
+      fetchBoard()
+        .then((d) => {
+          if (cancelled) return;
+          const entry = d.assets[0];
+          if (!entry) {
+            setStatus("offline");
+            return;
+          }
+          fetchAttestation(entry.symbol)
+            .then((a) => {
+              if (cancelled) return;
+              setLatest(a);
+              setStatus("live");
+            })
+            .catch(() => {
+              if (cancelled) return;
+              setStatus("offline");
+            });
+        })
+        .catch(() => {
+          if (cancelled) return;
+          localTries += 1;
+          if (localTries >= 2) {
+            setStatus("offline");
+            return;
+          }
+          setTimeout(attempt, RETRY_MS);
+        });
+    };
+
+    attempt();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const contractUrl = CONTRACT_URL;
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-5 sm:p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[var(--foreground)]">XIRA Risk Oracle</h3>
+          <a
+            href={contractUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-[11px] text-neutral-400 hover:text-white transition-colors"
+          >
+            view on explorer
+            <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M6 3h7v7M13 3L4 12" />
+            </svg>
+          </a>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <code className="font-mono text-xs text-neutral-300 truncate">{CONTRACT_ADDRESS}</code>
+          <CopyButton value={CONTRACT_ADDRESS} label="contract address" />
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-neutral-400">
+          <span>chain {CHAIN_ID} · {CHAIN_NAME}</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${status === "live" ? "bg-emerald-400" : status === "offline" ? "bg-yellow-400" : "bg-neutral-500"} live-dot`}
+              aria-hidden="true"
+            />
+            {status === "live" ? "attesting live" : status === "offline" ? "oracle offline" : "syncing"}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-600" aria-hidden="true">
+        <span className="h-px flex-1 bg-[var(--card-border)]" />
+        <span>LATEST ATTESTATION</span>
+        <span className="h-px flex-1 bg-[var(--card-border)]" />
+      </div>
+
+      <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-5 sm:p-6">
+        {latest ? (
+          <dl className="grid sm:grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+            <div className="flex items-center gap-3 sm:col-span-2 border-b border-[var(--card-border)] pb-3">
+              <dt className="sr-only">Symbol</dt>
+              <dd className="font-mono text-base font-semibold text-[var(--foreground)]">{latest.symbol}</dd>
+              <dd className="text-[11px] text-neutral-400 font-mono">score {latest.risk_score}/100</dd>
+              <dd className="text-[11px] text-neutral-400 font-mono">conf {latest.confidence}%</dd>
+            </div>
+            <dt className="text-neutral-400 text-xs pt-0.5">evidence hash</dt>
+            <dd className="font-mono text-xs text-neutral-300 break-all">
+              <span aria-hidden="true">{latest.evidence_hash.slice(0, 18)}…{latest.evidence_hash.slice(-6)}</span>
+              <CopyButton value={latest.evidence_hash} label="evidence hash" />
+            </dd>
+            <dt className="text-neutral-400 text-xs pt-0.5">chain tx</dt>
+            <dd className="font-mono text-xs text-neutral-300 break-all">
+              {latest.chain_tx ? (
+                <>
+                  <a
+                    href={latest.chain_explorer ?? contractUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-white underline underline-offset-4 decoration-neutral-700 transition-colors"
+                  >
+                    {latest.chain_tx.slice(0, 18)}…{latest.chain_tx.slice(-4)}
+                  </a>
+                  <CopyButton value={latest.chain_tx} label="chain transaction" />
+                </>
+              ) : (
+                <a
+                  href={contractUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-white underline underline-offset-4 decoration-neutral-700 transition-colors"
+                >
+                  view contract on explorer
+                </a>
+              )}
+            </dd>
+            <dt className="text-neutral-400 text-xs pt-0.5">timestamp</dt>
+            <dd className="font-mono text-xs text-neutral-300">
+              {new Date(latest.timestamp * 1000).toLocaleString()}
+            </dd>
+            <dt className="text-neutral-400 text-xs pt-0.5">factors</dt>
+            <dd className="text-xs text-neutral-300 flex flex-wrap items-center gap-x-3 gap-y-1">
+              {latest.factors.map((f) => (
+                <span key={f.name} className="font-mono">
+                  {f.label ?? f.name} <span className="text-neutral-500">{f.score}</span>
+                </span>
+              ))}
+            </dd>
+          </dl>
+        ) : status === "offline" ? (
+          <div className="text-xs text-neutral-400 leading-relaxed">
+            Oracle board unreachable. Attestations resume automatically when the feed
+            reconnects, and already-published on-chain data stays verifiable via the
+            contract above.
+          </div>
+        ) : (
+          <>
+            <div className="h-4 w-40 bg-[var(--card-border)]/60 rounded animate-pulse" />
+            <div className="mt-3 h-3 w-full bg-[var(--card-border)]/60 rounded animate-pulse" />
+            <div className="mt-2 h-3 w-3/4 bg-[var(--card-border)]/60 rounded animate-pulse" />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
