@@ -1,0 +1,113 @@
+# XIRA Operator Runbook
+
+Operational guide for running the XIRA backend (FastAPI on Railway) and its
+on-chain publisher on X Layer testnet.
+
+## Architecture at a glance
+
+- `backend/` FastAPI app deployed on Railway (`xira-api` project, `xira-api`
+  service) with a persistent volume `xira-data` mounted at `/data`.
+- Scheduler loop (`app/services/scheduler.py`) runs every
+  `XIRA_HEARTBEAT_MINUTES` (default 30) and publishes attestations on-chain
+  when the risk score deviates by `XIRA_DEVIATION_THRESHOLD` (default 3) or
+  the evidence hash is new.
+- Publisher (`app/services/publisher.py`) signs txs with `PRIVATE_KEY` to
+  `XIRA_CONTRACT_ADDRESS` on X Layer testnet. Without both, it runs off-chain
+  (health reports `enabled: false`).
+- Telegram ops alerts (`app/services/telegram_notifier.py`) fire on health
+  flag transitions; deduped by flag per `XIRA_ALERT_COOLDOWN_S` (default
+  1800s).
+
+## Health endpoint
+
+`GET https://xira-api-production.up.railway.app/api/assets/health`
+
+Key fields:
+
+| Field | Meaning |
+| --- | --- |
+| `publisher.enabled` | Contract + key configured, RPC reachable |
+| `publisher.chain_id` | 1952 = X Layer testnet |
+| `publisher.publishes` | Successful tx count this process lifetime |
+| `publisher.last_publish_at` / `last_attempt_at` | Epoch seconds |
+| `publisher.consecutive_failures` | Tx failures since last success |
+| `publisher.errors_24h` | Last 20 failures within 24h |
+| `scheduler.last_pass_at` | Epoch of last scheduler pass |
+| `scheduler_stalled` | No pass for > 2 heartbeats after the first pass |
+| `publish_failing` | Enabled + `consecutive_failures >= 2` |
+| `publish_stale` | Enabled, attempted, never succeeded |
+
+## Alerts
+
+Alerts fire on transitions (healthy -> unhealthy), not continuously:
+
+- **Scheduler stalled** — no pass for 2+ heartbeats. The loop only exits on
+  a process restart or an unhandled crash; check `railway logs` for a trace.
+- **On-chain publishing failing** — repeated tx failures. See rescue below.
+- **Publisher never succeeded** — enabled but zero successful publishes.
+
+Manual test: `curl -X POST .../api/alerts/ops/test` (rate-limited, dormant
+unless `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set).
+
+## Rescue: publishing failures
+
+1. Read the last error: `publisher.last_error` and `publisher.errors_24h` on
+   the health endpoint.
+2. **Insufficient funds** — top up the signer (address in `publisher.signer`)
+   with X Layer testnet XPL. Re-publish happens automatically on the next
+   scheduler pass.
+3. **RPC issues** — swap `XLAYER_RPC_URL` to another X Layer testnet RPC;
+   verify with `curl -X POST -H "Content-Type: application/json" -d
+   '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' <rpc>`.
+4. **Nonce races** — the publisher retries automatically
+   (`XIRA_MAX_NONCE_RETRIES`, default 3). Persistent "nonce too low" with
+   multiple instances means two publishers share the same key; keep a single
+   replica.
+5. **Stuck stale flag** — after a successful publish the flags clear on the
+   next pass. If they persist, restart the service.
+
+## Deploying
+
+Railway does NOT auto-deploy from GitHub. Push the code, then from the
+**repo root** (the Dockerfile context is the repo root, not `backend/`):
+
+```bash
+railway up --service xira-api --environment production
+```
+
+Watch it come up (healthcheck `/api/assets/health`, up to 300s timeout):
+`railway logs`.
+
+Env changes also trigger a redeploy:
+
+```bash
+railway variables --set "KEY=value"
+```
+
+## Environment variables
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `USE_LIVE_DATA` | `true` (prod) | Finnhub + news vs simulated data |
+| `MODEL_VERSION` | `v1.0.0` | Attested model version |
+| `XIRA_CONTRACT_ADDRESS` | — | Attestation contract |
+| `PRIVATE_KEY` | — | Deployer key; never commit it |
+| `XLAYER_RPC_URL` | `https://testrpc.xlayer.tech` | |
+| `XIRA_HEARTBEAT_MINUTES` | `30` | Scheduler cadence |
+| `XIRA_DEVIATION_THRESHOLD` | `3` | Score delta that triggers a publish |
+| `XIRA_FIRST_PASS_DELAY_S` | `60` | Warmup before first pass |
+| `XIRA_MAX_NONCE_RETRIES` | `3` | Nonce-race retries per tx |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | — | Ops alerts |
+| `XIRA_ALERT_COOLDOWN_S` | `1800` | Per-flag alert cooldown |
+| `XIRA_ENABLE_DEBUG` | `false` | Enables `/debug/data-sources` |
+
+## Database
+
+SQLite lives on the `xira-data` volume at `/data/xira_history.db`. A fresh
+volume is healed on startup: `backfill_published_from_chain()` imports
+existing on-chain attestations as published records.
+
+## Frontend
+
+Vercel auto-deploys from `main` (xira.surf). No manual steps; a push is a
+deploy.
