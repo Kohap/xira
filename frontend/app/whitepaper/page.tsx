@@ -56,7 +56,7 @@ const PIPELINE = [
   },
   {
     step: "Attest",
-    detail: "The result is hashed into an evidence fingerprint (SHA-256 over the canonical JSON payload) and, when a funded oracle key is configured, submitted to the XIRA contract on X Layer testnet via updateAttestation. One transaction is used per attestation.",
+    detail: "The result is hashed into an evidence fingerprint (SHA-256 over the canonical JSON payload) and, when a funded oracle key is configured, submitted to the XIRA contract on X Layer via updateAttestation. One transaction is used per attestation.",
   },
   {
     step: "Verify",
@@ -112,7 +112,7 @@ const KNOWN_LIMITS = [
   "The evidence hash does not include timestamp, model version, or the anomaly flag. In v1 the on-chain block timestamp is the source of truth for time; hashing the full payload (modelVersion included) is planned so a later model revision is provable.",
   "Sentiment is an English keyword classifier and a price-proxy fallback. It measures headline tone, not reported fundamentals or news quality.",
   "The contract stores one latest attestation per asset. There is no per-asset on-chain history and no batch root, so cross-asset proofs use getScoreBatch (reads) rather than a merkle commitment.",
-  "Attestations on X Layer testnet are non-final by design; a mainnet deployment would require re-scoping the oracle key custody and gas model.",
+  "Attestations are timestamped by the block they land in; on a live network, the oracle key custody and gas model must stay funded.",
 ];
 
 const RWA_GAPS: { gap: string; answer: string }[] = [
@@ -134,7 +134,7 @@ const RWA_GAPS: { gap: string; answer: string }[] = [
   },
   {
     gap: "No transparency behind the number",
-    answer: "Every meaningful score change is signed to X Layer testnet with a replayable evidence hash; the number and its proof travel together.",
+    answer: "Every meaningful score change is signed to X Layer with a replayable evidence hash; the number and its proof travel together.",
   },
 ];
 
@@ -142,7 +142,7 @@ const ROADMAP = [
   "Include modelVersion and anomaly in the hashed evidence payload, and add a public verify() that recomputes and compares the fingerprint on-chain.",
   "Per-asset on-chain ring history (a bounded rolling window of attestations per token) and a merkle root for the full market snapshot.",
   "Backtest harness: replay the factor model over historical data and publish its calibration statistics as part of each attestation.",
-  "Staked oracle + challenge window: a watcher can submit a corrected evidence hash; slashing mechanics only on mainnet.",
+  "Staked oracle + challenge window: a watcher can submit a corrected evidence hash; slashing mechanics are a future addition.",
   "Holder-concentration factor: an on-chain HHI over holder balances per xStock to catch crowded, fragile positions that price data alone misses.",
 ];
 
@@ -156,7 +156,7 @@ export default function WhitepaperPage() {
         <p className="mt-4 text-neutral-400 leading-relaxed">
           X-Layer Intelligence &amp; Risk Analytics produces a single, auditable
           0–100 risk score for each tracked tokenized equity (xStock) and
-          commits it to X Layer testnet as an attestation. This document
+          commits it to X Layer as an attestation. This document
           describes the model exactly as implemented, so every claim below can
           be checked against the public code, the API, and the contract.
         </p>
@@ -524,7 +524,7 @@ export default function WhitepaperPage() {
       <section className="mt-14 border-t border-[var(--card-border)] pt-8">
         <h2 className="text-sm font-semibold">Disclaimer</h2>
         <p className="mt-3 text-xs text-neutral-500 leading-relaxed">
-          XIRA provides informational risk analytics on X Layer testnet. Scores
+          XIRA provides informational risk analytics on X Layer. Scores
           are model outputs, not investment advice, not a recommendation to buy
           or sell, and not a guarantee of future performance. Tracking is
           limited to the 15 configured assets. Nothing in this document is an

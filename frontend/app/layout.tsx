@@ -206,7 +206,7 @@ export default function RootLayout({
                 </a>
                 <span className="text-neutral-700" aria-hidden="true">·</span>
                 <span className="text-neutral-500">
-                  Mainnet: soon
+                  Live on X Layer Mainnet
                 </span>
               </nav>
 

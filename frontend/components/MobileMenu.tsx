@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoMark } from "@/components/LogoMark";
 import { CopyButton } from "@/components/landing/CopyButton";
-import { CHAIN_ID, CHAIN_LABEL, CONTRACT_ADDRESS } from "@/lib/chain";
+import { CHAIN_LABEL, CONTRACT_ADDRESS } from "@/lib/chain";
 
 const MENU_GROUPS = [
   {
@@ -149,7 +149,7 @@ export function MobileMenu() {
               </span>
             </div>
             <p className="mt-2 text-[11px] text-neutral-500">
-              Chain ID: <span className="font-mono text-neutral-400">{CHAIN_ID}</span> · {CHAIN_LABEL}
+              {CHAIN_LABEL}
             </p>
           </div>
         </div>

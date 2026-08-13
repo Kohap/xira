@@ -147,7 +147,7 @@ const CONTRACT_FUNCTIONS = [
   {
     sig: "getScoreBatch(assets[])",
     access: "anyone · view",
-    note: "Many scores in one call; O(n) read, no per-call fee on testnet.",
+    note: "Many scores in one call; O(n) read, no per-call fee.",
   },
   {
     sig: "getAllTrackedAssetsWithScores()",

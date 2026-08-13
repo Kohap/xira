@@ -24,8 +24,8 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-tight">1. The service</h2>
           <p className="mt-3">
-            XIRA provides informational risk analytics for the 15 tracked
-            tokenized equities (xStocks) on X Layer testnet. The service
+            XIRA provides informational risk analytics for the tracked
+            tokenized equities (xStocks) on X Layer. The service
             computes a 0–100 risk score per asset and, when an oracle key is
             configured, commits each score to the XIRA contract on-chain. The
             service is provided for research and informational use.
@@ -52,8 +52,9 @@ export default function TermsPage() {
             may be delayed, stale, incomplete, or wrong. In live mode the
             data sources (Finnhub and news feeds) are third-party
             services outside XIRA&apos;s control; in mock mode the data is
-            simulated and must not be treated as market data. Testnet tokens
-            and attestations have no value and can be reset by the network.
+            simulated and must not be treated as market data. Scores and
+            attestations are informational outputs and carry no monetary
+            value.
           </p>
         </section>
 
@@ -86,7 +87,7 @@ export default function TermsPage() {
             (Gift) shall not be liable for any loss or damage arising from use
             of the service, including lost trading profits, reliance on
             scores, or service unavailability. Because this is a free,
-            experimental research service on a testnet, you accept all risk of
+            experimental research service, you accept all risk of
             using it.
           </p>
         </section>

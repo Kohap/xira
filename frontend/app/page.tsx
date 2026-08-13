@@ -6,7 +6,6 @@ import { ProofSection } from "@/components/landing/ProofSection";
 import { LiveHeatmap } from "@/components/landing/LiveHeatmap";
 import { CopyButton } from "@/components/landing/CopyButton";
 import {
-  CHAIN_ID,
   CHAIN_LABEL,
   CHAIN_NAME,
   CONTRACT_ADDRESS,
@@ -22,7 +21,7 @@ export const metadata: Metadata = {
 const PIPELINE = [
   {
     verb: "Collect",
-    copy: "Live quotes, volume, momentum, beta, and news sentiment for all 15 markets.",
+    copy: "Live quotes, volume, momentum, beta, and news sentiment for every tracked xStock.",
   },
   {
     verb: "Score",
@@ -151,7 +150,7 @@ const FAQ = [
   },
   {
     q: "Is this live on mainnet?",
-    a: "Currently live on X Layer Testnet. Mainnet deployment is coming soon.",
+    a: "Yes. Scores are attested onchain to the XIRA contract on X Layer Mainnet.",
   },
 ];
 
@@ -342,8 +341,8 @@ export default function LandingPage() {
             Open the oracle.
           </h2>
           <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
-            The contract is live on {CHAIN_NAME}. The oracle re-scores all
-            15 markets every 30 minutes and signs each meaningful change to
+            The contract is live on {CHAIN_NAME}. The oracle re-scores every
+            tracked market every 30 minutes and signs each meaningful change to
             the chain, open a transaction, and check it against the model.
           </p>
         </Reveal>
@@ -422,7 +421,7 @@ export default function LandingPage() {
           </h2>
           <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
             Every risk number you see can be independently verified on
-            {CHAIN_LABEL} (Chain ID {CHAIN_ID}) in a few steps.
+            {CHAIN_LABEL} in a few steps.
           </p>
         </Reveal>
 
