@@ -31,10 +31,18 @@ VAULT_CONFIG = {
 }
 
 
+def _request(url: str) -> urllib.request.Request:
+    headers = {"Accept": "application/json"}
+    api_key = os.environ.get("XIRA_API_KEY", "")
+    if api_key:
+        headers["X-API-Key"] = api_key
+    return urllib.request.Request(url, headers=headers)
+
+
 def fetch_all_assets(api_url: str) -> Optional[dict]:
     try:
         url = f"{api_url}/api/assets/all"
-        with urllib.request.urlopen(url, timeout=120) as resp:
+        with urllib.request.urlopen(_request(url), timeout=120) as resp:
             return json.loads(resp.read())
     except Exception as e:
         print(f"  [!] API fetch failed: {e}")
@@ -44,7 +52,7 @@ def fetch_all_assets(api_url: str) -> Optional[dict]:
 def fetch_attestation(api_url: str, symbol: str) -> Optional[dict]:
     try:
         url = f"{api_url}/api/attestations/{symbol}"
-        with urllib.request.urlopen(url, timeout=120) as resp:
+        with urllib.request.urlopen(_request(url), timeout=120) as resp:
             return json.loads(resp.read())
     except Exception as e:
         print(f"  [!] Failed to fetch {symbol}: {e}")

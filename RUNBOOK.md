@@ -45,6 +45,9 @@ Alerts fire on transitions (healthy -> unhealthy), not continuously:
   a process restart or an unhandled crash; check `railway logs` for a trace.
 - **On-chain publishing failing** — repeated tx failures. See rescue below.
 - **Publisher never succeeded** — enabled but zero successful publishes.
+- **Risk alerts** — per asset, when the factor model flags an anomaly or the
+  score crosses a user threshold (`/api/alerts/thresholds`). Latched per
+  symbol, so a sustained condition alerts once and re-arms when it clears.
 
 Manual test: `curl -X POST .../api/alerts/ops/test` (rate-limited, dormant
 unless `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set).

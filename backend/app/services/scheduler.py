@@ -5,7 +5,7 @@ from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine, risk_level_from_score
 from app.services.history_db import history_db
 from app.services.publisher import publisher
-from app.services.telegram_notifier import evaluate_alerts
+from app.services.telegram_notifier import evaluate_alerts, flag_alert
 from app.models import AttestationResponse
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,24 @@ def scheduler_diag() -> dict:
         "deviation_threshold": DEVIATION_THRESHOLD,
         "last_published": dict(_last_published),
     }
+
+
+def _check_risk_alert(symbol: str, result, thresholds: dict) -> None:
+    """Telegram alert when an asset trips an anomaly or a user threshold.
+    Latched per symbol, so a sustained condition alerts once, not every pass."""
+    reasons: list[str] = []
+    if result.anomaly:
+        reasons.append(result.anomaly_reason or "Anomaly flagged by factor model.")
+    t = thresholds.get(symbol)
+    if t and t.get("enabled") and t.get("threshold") is not None and result.risk_score >= t["threshold"]:
+        reasons.append(f"Score {result.risk_score} is at or above your threshold of {t['threshold']}.")
+
+    flag_alert(
+        f"risk:{symbol}",
+        bool(reasons),
+        f"{symbol} risk {result.risk_score}/100 ({result.risk_level.value})",
+        reasons + [f"Confidence {result.confidence}%."],
+    )
 
 
 def _check_alert_flags() -> None:
@@ -89,6 +107,8 @@ def _run_pass() -> None:
     _diag["last_pass_at"] = int(time.time())
     _diag["pass_count"] += 1
 
+    thresholds = history_db.get_thresholds()
+
     for asset in get_tracked_assets():
         symbol = asset["symbol"]
         try:
@@ -118,6 +138,10 @@ def _run_pass() -> None:
                 _diag["skipped_mock"] += 1
                 logger.info(f"Scheduler: {symbol} on simulated data — no on-chain publish.")
                 continue
+
+            # Risk alerting is independent of publishing: an asset can trip a
+            # threshold without its score deviating enough to warrant a tx.
+            _check_risk_alert(symbol, result, thresholds)
 
             # Use the on-chain value as the source of truth so two instances
             # evaluate the same state and don't both publish the same score.

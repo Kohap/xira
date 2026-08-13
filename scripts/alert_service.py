@@ -45,7 +45,11 @@ _alert_cache: Dict[str, float] = {}
 def api_get(path: str) -> Optional[dict]:
     try:
         url = f"{API_URL}{path}"
-        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+        headers = {"Accept": "application/json"}
+        api_key = os.environ.get("XIRA_API_KEY", "")
+        if api_key:
+            headers["X-API-Key"] = api_key
+        req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=120) as resp:
             return json.loads(resp.read())
     except Exception as e:

@@ -40,3 +40,41 @@ def test_notify_respects_cooldown():
         notifier.send_message = original
         notifier.TELEGRAM_BOT_TOKEN = ""
         notifier.TELEGRAM_CHAT_ID = ""
+
+def test_risk_alert_latches_per_symbol():
+    from types import SimpleNamespace
+
+    from app.services.scheduler import _check_risk_alert
+
+    notifier._active.clear()
+    notifier._last_sent_at.clear()
+    notifier.TELEGRAM_BOT_TOKEN = ""
+    notifier.TELEGRAM_CHAT_ID = ""
+
+    calm = SimpleNamespace(
+        anomaly=False,
+        anomaly_reason="",
+        risk_score=30,
+        confidence=80,
+        risk_level=SimpleNamespace(value="MODERATE"),
+    )
+    tripped = SimpleNamespace(
+        anomaly=True,
+        anomaly_reason="Volume spike.",
+        risk_score=88,
+        confidence=80,
+        risk_level=SimpleNamespace(value="CRITICAL"),
+    )
+
+    _check_risk_alert("NVDAx", calm, {})
+    assert "risk:NVDAx" not in notifier._active
+
+    _check_risk_alert("NVDAx", tripped, {})
+    assert "risk:NVDAx" in notifier._active
+
+    _check_risk_alert("NVDAx", calm, {})
+    assert "risk:NVDAx" not in notifier._active
+
+    # Threshold breach alone trips it, without an anomaly.
+    _check_risk_alert("NVDAx", calm, {"NVDAx": {"enabled": True, "threshold": 25}})
+    assert "risk:NVDAx" in notifier._active

@@ -60,7 +60,7 @@ def notify(alert_type: str, title: str, lines: list[str]) -> bool:
     return ok
 
 
-def _flagged(alert_type: str, flag: bool, title: str, lines: list[str]) -> None:
+def flag_alert(alert_type: str, flag: bool, title: str, lines: list[str]) -> None:
     """Fire on false->true transition; clear the latch when healthy again."""
     if flag:
         if alert_type not in _active:
@@ -74,7 +74,7 @@ def _flagged(alert_type: str, flag: bool, title: str, lines: list[str]) -> None:
 def evaluate_alerts(scheduler_stalled: bool, publish_failing: bool, publish_stale: bool, context: dict) -> None:
     """Evaluate health flags and fire Telegram alerts on transitions.
     Mirrors the flag logic in /api/assets/health so both stay in sync."""
-    _flagged(
+    flag_alert(
         "scheduler_stalled",
         scheduler_stalled,
         "Scheduler stalled",
@@ -83,7 +83,7 @@ def evaluate_alerts(scheduler_stalled: bool, publish_failing: bool, publish_stal
             f"Last pass: {context.get('last_pass_hint', 'unknown')}",
         ],
     )
-    _flagged(
+    flag_alert(
         "publish_failing",
         publish_failing,
         "On-chain publishing failing",
@@ -92,7 +92,7 @@ def evaluate_alerts(scheduler_stalled: bool, publish_failing: bool, publish_stal
             f"Last error: {context.get('last_error', 'none') or 'none'}",
         ],
     )
-    _flagged(
+    flag_alert(
         "publish_stale",
         publish_stale,
         "Publisher never succeeded",
