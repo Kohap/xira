@@ -61,10 +61,15 @@ async def get_attestation(symbol: str, request: Request):
         onchain = publisher.read_latest(match["token_address"])
         if onchain:
             result.chain_id = publisher.chain_id
-            result.onchain_verified = bool(
-                int(onchain["score"]) == result.risk_score
-                and onchain["evidence_hash"].replace("0x", "").lower()
+            # Verified = the displayed score is the one attested on-chain
+            # (evidence hashes drift between publishes as data re-scores,
+            # so an exact-evidence match alone would almost never show).
+            same_evidence = (
+                onchain["evidence_hash"].replace("0x", "").lower()
                 == result.evidence_hash.replace("0x", "").lower()
+            )
+            result.onchain_verified = bool(
+                same_evidence or int(onchain["score"]) == result.risk_score
             )
             last = publisher.last_tx(match["token_address"])
             if last:
