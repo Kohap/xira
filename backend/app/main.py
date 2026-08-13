@@ -21,7 +21,6 @@ _scheduler_task: asyncio.Task | None = None
 ALLOWED_ORIGINS = [
     "https://www.xira.surf",
     "https://xira.surf",
-    "https://kohap.github.io",
     "http://localhost:3000",
     "http://localhost:8000",
 ]
