@@ -166,7 +166,7 @@ export function AlertBell() {
                   onClick={markAllRead}
                   className="text-xs text-[var(--accent-glow)] hover:underline underline-offset-4"
                 >
-                  Mark all read
+                  Mark all as read
                 </button>
               )}
               <Link
