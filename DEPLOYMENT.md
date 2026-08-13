@@ -9,9 +9,10 @@ The original oracle private key was committed to git history (`render.yaml`,
 |---|---|---|
 | Contract owner + oracle signer | `0x5368FB…f8AC` (leaked) | `0x0CE306…D3c0` |
 
-The new key must be set **only** in the Render dashboard secret `PRIVATE_KEY`
-and in your local `backend/.env` — never in any committed file. If the key is
-missing, the backend runs in off-chain mode (scores served, no on-chain txs).
+The new key must be set **only** in the backend deployment secret (Railway
+today) and in your local `backend/.env` — never in any committed file. If the
+key is missing, the backend runs in off-chain mode (scores served, no
+on-chain txs).
 
 To run the on-chain rotation:
 ```bash
@@ -21,10 +22,10 @@ scripts/rotate-key.sh
 ## Prerequisites
 
 1. **Foundry installed**: `curl -L https://foundry.paradigm.xyz | bash`
-2. **Wallet with testnet OKB**:
+2. **Wallet with X Layer mainnet OKB**:
    - Oracle address: `0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0`
-   - Fund via: https://www.okx.com/xlayer/faucet
-   - You need approximately 0.01 OKB
+   - Fund via any OKX wallet/exchange withdrawal to X Layer (chain 196)
+   - You need approximately 0.01 OKB plus gas
 
 ## Deployment Steps
 
@@ -38,11 +39,11 @@ the backend at it:
 cd contracts
 
 # PRIVATE_KEY + ADDRESS live in contracts/.env.deploy (gitignored).
-# The deployer wallet needs testnet OKB from the faucet.
+# The deployer wallet needs X Layer mainnet OKB for gas.
 set -a && source .env.deploy && set +a
 
 forge script script/DeployV2.s.sol \
-  --rpc-url https://testrpc.xlayer.tech \
+  --rpc-url https://rpc.xlayer.tech \
   --broadcast \
   --legacy
 ```
@@ -55,7 +56,7 @@ After deploy:
 2. Update `XIRA_CONTRACT_ADDRESS` in the Render dashboard env vars.
 3. Update `backend/.env` locally.
 4. Restart the backend (or it picks up on redeploy).
-5. Confirm: `cast call <ADDRESS> "getAllTrackedSymbols()(string[])" --rpc-url https://testrpc.xlayer.tech`
+5. Confirm: `cast call <ADDRESS> "getAllTrackedSymbols()(string[])" --rpc-url https://rpc.xlayer.tech`
 
 > If the deployer key is not in `.env.deploy`, paste it locally (never commit),
 > or run with `PRIVATE_KEY=0x… forge script …`.
@@ -64,9 +65,9 @@ After deploy:
 
 ```bash
 cd contracts
-export PRIVATE_KEY=<deployer key with testnet OKB>
+export PRIVATE_KEY=<deployer key with mainnet OKB>
 forge script script/DeployAll.s.sol \
-  --rpc-url https://testrpc.xlayer.tech \
+  --rpc-url https://rpc.xlayer.tech \
   --broadcast \
   --legacy
 ```
@@ -84,11 +85,11 @@ forge script script/DeployAll.s.sol \
    ```bash
    cd ../backend
    # Update .env — or set the secret in the Render dashboard (recommended):
-   XIRA_CONTRACT_ADDRESS=0xaa5f6215e947ffce2f46513a926af3239be545d0
+   XIRA_CONTRACT_ADDRESS=0x22851e160aef3e3aeb373fd351a07ff7c65c9b57
    PRIVATE_KEY=<set-from-secret>
    ```
 3. **Restart the backend** to enable on-chain attestations
-4. **Verify on explorer**: https://www.okx.com/web3/explorer/xlayer-test/address/0xaa5f6215e947ffce2f46513a926af3239be545d0
+4. **Verify on explorer**: https://www.okx.com/web3/explorer/xlayer/address/0x22851e160aef3e3aeb373fd351a07ff7c65c9b57
 
 ## What Gets Deployed
 
@@ -100,21 +101,21 @@ forge script script/DeployAll.s.sol \
 ## Troubleshooting
 
 ### "insufficient funds"
-- Ensure the wallet has testnet OKB from the faucet
+- Ensure the wallet has X Layer mainnet OKB for gas
 
 ### "nonce too low"
 - Clear Foundry cache: `forge clean`
 
 ### "RPC connection failed"
-- Try alternative RPC: `https://rpc.xlayer-testnet.t.raas.gelato.cloud`
+- Try alternative RPC: `https://xlayerrpc.okx.com`
 
 ## Verification
 
 After deployment, verify the contract:
 ```bash
 # Check owner
-cast call <CONTRACT_ADDRESS> "owner()" --rpc-url https://testrpc.xlayer.tech
+cast call <CONTRACT_ADDRESS> "owner()" --rpc-url https://rpc.xlayer.tech
 
 # Check registered assets
-cast call <CONTRACT_ADDRESS> "getAllTrackedSymbols()" --rpc-url https://testrpc.xlayer.tech
+cast call <CONTRACT_ADDRESS> "getAllTrackedSymbols()" --rpc-url https://rpc.xlayer.tech
 ```

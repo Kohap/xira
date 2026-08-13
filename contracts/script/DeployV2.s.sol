@@ -48,7 +48,7 @@ contract DeployV2 is Script {
         console.log("========================================");
         console.log("XIRA V2 Contract:", address(xira));
         console.log("Catalog-driven registration + pause + write cooldown live.");
-        console.log("Explorer: https://www.okx.com/web3/explorer/xlayer-test/address/");
+        console.log("Explorer: https://www.okx.com/web3/explorer/xlayer/address/");
         console.log(address(xira));
         console.log("========================================");
     }

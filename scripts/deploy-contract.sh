@@ -10,16 +10,15 @@ NC='\033[0m'
 echo -e "${CYAN}"
 echo "  ╔══════════════════════════════════════════╗"
 echo "  ║   XIRA Contract Deployment               ║"
-echo "  ║   X Layer Testnet                         ║"
+echo "  ║   X Layer Mainnet                        ║"
 echo "  ╚══════════════════════════════════════════╝"
 echo -e "${NC}"
 
 if [ -z "${PRIVATE_KEY:-}" ]; then
     echo -e "${RED}ERROR: PRIVATE_KEY not set.${NC}"
-    echo "  export PRIVATE_KEY=your_xlayer_testnet_private_key"
+    echo "  export PRIVATE_KEY=your_xlayer_mainnet_private_key"
     echo ""
-    echo "  Get testnet OKB from the faucet:"
-    echo "  https://www.okx.com/xlayer/faucet"
+    echo "  Fund the wallet with OKB on X Layer mainnet before deploying."
     exit 1
 fi
 
@@ -31,12 +30,12 @@ echo "Running tests..."
 forge test --quiet && echo -e "${GREEN}All tests pass.${NC}"
 
 echo ""
-echo "Deploying to X Layer testnet..."
-echo "RPC: https://testrpc.xlayer.tech"
+echo "Deploying to X Layer mainnet..."
+echo "RPC: https://rpc.xlayer.tech"
 echo ""
 
 forge script script/DeployAll.s.sol \
-    --rpc-url https://testrpc.xlayer.tech \
+    --rpc-url https://rpc.xlayer.tech \
     --broadcast \
     --legacy \
     --slow \

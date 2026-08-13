@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────
 # XIRA Key Rotation — transfer contract ownership from the leaked
-# key to the new oracle wallet on X Layer testnet (chain 1952).
+# key to the new oracle wallet on X Layer mainnet (chain 196).
 #
 # Run this once from the repo root. The old key must still hold
-# testnet OKB (only for step 1). After rotation, the old key must
+# mainnet OKB (only for step 1). After rotation, the old key must
 # never be used again.
 # ──────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-CONTRACT="0x64288ccD936470f66D7035e824A9141C938C32AE"
-RPC="https://testrpc.xlayer.tech"
+CONTRACT="0x22851e160aef3e3aeb373fd351a07ff7c65c9b57"
+RPC="https://rpc.xlayer.tech"
 NEW_OWNER="0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0"
 
 if [ -z "${OLD_PRIVATE_KEY:-}" ]; then
@@ -57,4 +57,4 @@ echo ""
 echo "  ✓ owner   = $OWNER"
 echo "  ✓ updater = $UP"
 echo ""
-echo "Rotation complete. Set PRIVATE_KEY in the Render dashboard secret."
+echo "Rotation complete. Set PRIVATE_KEY in the Railway secret."

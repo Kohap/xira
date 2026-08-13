@@ -1,8 +1,8 @@
 # XIRA — Judge Demo Script
 
 A ~4 minute walkthrough of the live product. Everything below works on the
-deployed site (GitHub Pages) against the live backend (Render) and the XIRA
-contract on X Layer Testnet (chain 1952).
+deployed site (xira.surf) against the live backend (Railway) and the XIRA
+contract on X Layer mainnet (chain 196).
 
 ---
 
@@ -10,10 +10,10 @@ contract on X Layer Testnet (chain 1952).
 
 Open the site. Front and center:
 
-- **Live pill** — "LIVE ON X LAYER TESTNET · CHAIN 1952"
+- **Live pill** — LIVE badge with a live dot when data resolves on-chain
 - **Live risk board** — top 8 markets as animated bars, with the risk curve
   flowing continuously and a scanning dot
-- **Stat strip** — 15 markets tracked · 5 risk factors · 30-min cadence ·
+- **Stat strip** — 50 markets tracked · 5 risk factors · 30-min cadence ·
   1 score = 1 attestation
 - Ticker scrolls the full board across the top
 
@@ -66,10 +66,10 @@ Landing → **Give your agents a risk desk**: `xira_get_asset_risk`,
 
 ## Key links
 
-- Site: GitHub Pages (repo `Kohap/xira` → Actions → Deploy Frontend)
+- Site: xira.surf (Vercel, auto-deploy from `main`)
 - API: `https://xira-api-production.up.railway.app/docs` (OpenAPI)
-- Contract: `0xaa5f6215e947ffce2f46513a926af3239be545d0` on
-  [OKX X Layer testnet explorer](https://www.okx.com/web3/explorer/xlayer-test/address/0xaa5f6215e947ffce2f46513a926af3239be545d0)
+- Contract: `0x22851e160aef3e3aeb373fd351a07ff7c65c9b57` on
+  [OKX X Layer explorer](https://www.okx.com/web3/explorer/xlayer/address/0x22851e160aef3e3aeb373fd351a07ff7c65c9b57)
 - MCP: `python3 mcp_server/server.py`
 
 ## Troubleshooting

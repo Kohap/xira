@@ -62,7 +62,7 @@ contract DeployAll is Script {
         console.log("XIRA Contract:", address(xira));
         console.log("All 15 assets registered.");
         console.log("Ready for attestation updates.");
-        console.log("Explorer: https://www.okx.com/web3/explorer/xlayer-test/address/");
+        console.log("Explorer: https://www.okx.com/web3/explorer/xlayer/address/");
         console.log(address(xira));
         console.log("========================================");
     }

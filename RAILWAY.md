@@ -17,10 +17,10 @@ over only after the Railway service is verified healthy.
    ```bash
    railway init            # run at repo root, pick a project name
    railway service create  # or let `railway up` create it
-   railway variables set PRIVATE_KEY="<render-secret>"
+   railway variables set PRIVATE_KEY="<render-secret-or-current-deployer-key>"
    railway variables set FINNHUB_API_KEY="<render-secret>"
-   railway variables set XLAYER_RPC_URL="https://testrpc.xlayer.tech"
-   railway variables set XIRA_CONTRACT_ADDRESS="0xaa5f6215e947ffce2f46513a926af3239be545d0"
+   railway variables set XLAYER_RPC_URL="https://rpc.xlayer.tech"
+   railway variables set XIRA_CONTRACT_ADDRESS="0x22851e160aef3e3aeb373fd351a07ff7c65c9b57"
    railway variables set USE_LIVE_DATA="true"
    railway variables set AI_MODE="heuristic"
    railway variables set MODEL_VERSION="v1.0.0"
@@ -49,7 +49,7 @@ over only after the Railway service is verified healthy.
    curl -s https://<railway-domain>/api/assets/health
    curl -s "https://<railway-domain>/api/assets/all" | head -c 300
    ```
-   Confirm `"status":"ok"`, `"live_data":true`, `"tracked_assets":15`.
+   Confirm `"status":"ok"`, `"live_data":true`, `"tracked_assets":50`.
 2. Verify the volume persisted: restart the service once
    (`railway up --detach` again or Deploy button) and confirm the DB file
    exists: `railway ssh` → `ls -la /data/`.

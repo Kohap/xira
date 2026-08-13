@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live publish smoke test: signs one real attestation on X Layer testnet
+"""Live publish smoke test: signs one real attestation on X Layer mainnet
 using the same publisher code the backend uses. Prints tx hash + explorer
 link and verifies the attestation read-back.
 
