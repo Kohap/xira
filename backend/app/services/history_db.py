@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 import sqlite3
 import json
 import time
@@ -9,7 +10,9 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = Path(__file__).parent / "xira_history.db"
+DB_PATH = Path(
+    os.getenv("XIRA_DB_PATH", str(Path(__file__).parent / "xira_history.db"))
+)
 
 
 class HistoryDB:

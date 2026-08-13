@@ -1,0 +1,14 @@
+frontend
+contracts/broadcast
+contracts/cache
+contracts/out
+contracts/lib
+scripts
+mcp_server
+.git
+.github
+*.md
+.env*
+*__pycache__*
+*.pyc
+.gitignore
