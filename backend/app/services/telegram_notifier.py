@@ -110,3 +110,13 @@ def evaluate_alerts(scheduler_stalled: bool, publish_failing: bool, publish_stal
             f"Signer: {context.get('signer', 'unknown')}",
         ],
     )
+    flag_alert(
+        "signer_balance_low",
+        bool(context.get("signer_balance_low")),
+        "Signer balance low",
+        [
+            f"{context.get('signer_balance_okb', 'unknown')} OKB left.",
+            f"Signer: {context.get('signer', 'unknown')}",
+            f"Fund before it runs dry (min {context.get('signer_balance_min_okb', 0.05)} OKB).",
+        ],
+    )

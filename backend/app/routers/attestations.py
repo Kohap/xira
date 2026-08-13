@@ -57,7 +57,7 @@ def get_attestation(symbol: str, request: Request):
     # frontend can link the contract on the explorer. Publishing is left to
     # the heartbeat scheduler; a GET must never spend gas / sign a tx.
     try:
-        from app.services.publisher import publisher, XLAYER_EXPLORER
+        from app.services.publisher import publisher
         onchain = publisher.read_latest(match["token_address"])
         if onchain:
             result.chain_id = publisher.chain_id
@@ -77,7 +77,7 @@ def get_attestation(symbol: str, request: Request):
                 result.chain_explorer = last["explorer_url"]
             else:
                 result.chain_explorer = (
-                    f"{XLAYER_EXPLORER}/address/{publisher.contract_address}"
+                    f"{publisher.explorer_base}/address/{publisher.contract_address}"
                     if publisher.contract_address
                     else None
                 )

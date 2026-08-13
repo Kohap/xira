@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.20;
 
 contract XIRA {
     struct Attestation {
@@ -25,6 +25,9 @@ contract XIRA {
     uint256 private constant MAX_HISTORY = 20;
 
     address public owner;
+    bool public paused;
+    /// Minimum seconds between attestations per asset (0 = disabled).
+    uint256 public minAttestationInterval;
     mapping(address => bool) public authorizedUpdaters;
     mapping(address => Attestation) public latestAttestation;
     mapping(address => address) public assetAddresses;
@@ -45,6 +48,7 @@ contract XIRA {
     event UpdaterAuthorized(address indexed updater, bool authorized);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event AssetRegistered(address indexed tokenAddr, string symbol);
+    event Paused(address indexed account, bool state);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "XIRA: caller is not owner");
@@ -56,6 +60,11 @@ contract XIRA {
             msg.sender == owner || authorizedUpdaters[msg.sender],
             "XIRA: caller is not authorized"
         );
+        _;
+    }
+
+    modifier whenNotPaused() {
+        require(!paused, "XIRA: paused");
         _;
     }
 
@@ -74,8 +83,21 @@ contract XIRA {
         emit UpdaterAuthorized(updater, authorized);
     }
 
+    /// Emergency stop for all attestation writes. Readers stay open.
+    function setPaused(bool state) external onlyOwner {
+        paused = state;
+        emit Paused(msg.sender, state);
+    }
+
+    /// Per-asset cooldown between attestations, so a compromised hot key
+    /// cannot spam writes or burn the oracle's gas budget.
+    function setMinAttestationInterval(uint256 intervalSeconds) external onlyOwner {
+        minAttestationInterval = intervalSeconds;
+    }
+
     function registerAsset(address tokenAddr, string calldata symbol) external onlyOwner {
         require(tokenAddr != address(0), "XIRA: zero address");
+        require(assetAddresses[tokenAddr] == address(0), "XIRA: token already registered");
         require(!isSymbolTracked(symbol), "XIRA: symbol already registered");
         assetAddresses[tokenAddr] = tokenAddr;
         symbolAddresses[symbol] = tokenAddr;
@@ -91,7 +113,7 @@ contract XIRA {
         string calldata modelVersion,
         bool anomaly,
         string calldata anomalyReason
-    ) external onlyAuthorized {
+    ) external onlyAuthorized whenNotPaused {
         _writeAttestation(asset, score, confidence, evidenceHash, modelVersion, anomaly, anomalyReason);
     }
 
@@ -105,14 +127,23 @@ contract XIRA {
         string memory anomalyReason
     ) internal {
         require(asset != address(0), "XIRA: zero address");
+        require(assetAddresses[asset] == asset, "XIRA: asset not registered");
         require(score <= 100, "XIRA: score > 100");
         require(confidence <= 100, "XIRA: confidence > 100");
+
+        uint64 ts = uint64(block.timestamp);
+        if (minAttestationInterval > 0 && latestAttestation[asset].timestamp != 0) {
+            require(
+                ts - latestAttestation[asset].timestamp >= minAttestationInterval,
+                "XIRA: attestation too soon"
+            );
+        }
 
         Attestation memory a = Attestation({
             score: score,
             confidence: confidence,
             evidenceHash: evidenceHash,
-            timestamp: uint64(block.timestamp),
+            timestamp: ts,
             modelVersion: modelVersion,
             anomaly: anomaly,
             anomalyReason: anomalyReason
@@ -124,7 +155,11 @@ contract XIRA {
         emit AttestationUpdated(asset, score, confidence, evidenceHash, a.timestamp, anomaly, modelVersion);
     }
 
-    function batchUpdateAttestations(AttestationInput[] calldata inputs) external onlyAuthorized {
+    function batchUpdateAttestations(AttestationInput[] calldata inputs)
+        external
+        onlyAuthorized
+        whenNotPaused
+    {
         uint256 n = inputs.length;
         for (uint256 i = 0; i < n; i++) {
             _writeAttestation(

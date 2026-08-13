@@ -50,6 +50,11 @@ contract DeployAll is Script {
         xira.setAuthorizedUpdater(vm.addr(deployerPrivateKey), true);
         console.log("  Authorized:", vm.addr(deployerPrivateKey));
 
+        console.log("");
+        console.log("--- Write cooldown: 60s per asset ---");
+        xira.setMinAttestationInterval(60);
+        console.log("  minAttestationInterval =", xira.minAttestationInterval());
+
         vm.stopBroadcast();
 
         console.log("");

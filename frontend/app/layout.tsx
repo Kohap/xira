@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { Header } from "@/components/Header";
+import { BuiltOnXLayerBadge } from "@/components/BuiltOnXLayerBadge";
 import "./globals.css";
 
 const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
@@ -102,6 +103,7 @@ export default function RootLayout({
                     { label: "Live dashboard", href: "/dashboard" },
                     { label: "Alerts", href: "/alerts" },
                     { label: "Methodology", href: "/whitepaper" },
+                    { label: "Brand", href: "/#brand" },
                     { label: "Help / FAQ", href: "/#faq" },
                   ],
                 },
@@ -203,30 +205,7 @@ export default function RootLayout({
                 </span>
               </nav>
 
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "8px", padding: "6px 12px" }}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="16" height="16">
-                  <defs>
-                    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#737373" />
-                      <stop offset="50%" stopColor="#555555" />
-                      <stop offset="100%" stopColor="#2a2a2a" />
-                    </linearGradient>
-                  </defs>
-                  <rect width="500" height="500" fill="url(#bgGrad)" />
-                  <g fill="#0b0b0b">
-                    <rect x="120" y="140" width="80" height="80" rx="10" />
-                    <rect x="210" y="210" width="80" height="80" rx="10" />
-                    <rect x="120" y="280" width="80" height="80" rx="10" />
-                    <rect x="300" y="140" width="80" height="80" rx="10" />
-                    <rect x="300" y="280" width="80" height="80" rx="10" />
-                    <rect x="393" y="140" width="20" height="80" rx="6" />
-                    <rect x="424" y="140" width="20" height="80" rx="6" />
-                    <rect x="393" y="280" width="20" height="80" rx="6" />
-                    <rect x="424" y="280" width="20" height="80" rx="6" />
-                  </g>
-                </svg>
-                <span style={{ color: "#a1a1aa", fontWeight: "normal", fontSize: "13px" }}>Built on X Layer</span>
-              </div>
+              <BuiltOnXLayerBadge />{" "}
             </div>
           </div>
         </footer>

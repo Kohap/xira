@@ -7,9 +7,12 @@ from web3 import Web3
 logger = logging.getLogger(__name__)
 
 XLAYER_TESTNET_RPC = "https://testrpc.xlayer.tech"
-XLAYER_EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test"
+XLAYER_MAINNET_RPC = "https://rpc.xlayer.tech"
+DEFAULT_EXPLORER_BASE = "https://www.okx.com/web3/explorer/xlayer-test"
 
 MAX_NONCE_RETRIES = int(os.getenv("XIRA_MAX_NONCE_RETRIES", "3"))
+MIN_SIGNER_BALANCE_OKB = float(os.getenv("XIRA_MIN_SIGNER_BALANCE_OKB", "0.05"))
+BALANCE_CACHE_TTL_S = 60.0
 
 
 def _get_abi() -> list:
@@ -83,7 +86,15 @@ class OnchainPublisher:
         contract_address: str = "",
         private_key: str = "",
     ):
-        self.rpc_url = rpc_url or os.getenv("XLAYER_RPC_URL", XLAYER_TESTNET_RPC)
+        self.rpc_url = rpc_url or os.getenv(
+            "XLAYER_RPC_URL", os.getenv("XIRA_RPC_FALLBACK", XLAYER_TESTNET_RPC)
+        )
+        self.rpc_fallback = os.getenv("XIRA_RPC_FALLBACK", "")
+        self.explorer_base = os.getenv(
+            "XIRA_EXPLORER_BASE",
+            "https://www.okx.com/web3/explorer/xlayer-test",
+        )
+        self.chain_label = os.getenv("XIRA_CHAIN_LABEL", "xlayer-test")
         self.contract_address = contract_address or os.getenv("XIRA_CONTRACT_ADDRESS", "")
         self.private_key = private_key or os.getenv("PRIVATE_KEY", "")
         self.w3: Optional[Web3] = None
@@ -95,6 +106,8 @@ class OnchainPublisher:
             and self.private_key
         )
         self.chain_id: Optional[int] = None
+        self.min_signer_balance_wei = Web3.to_wei(MIN_SIGNER_BALANCE_OKB, "ether")
+        self._balance_cache: Optional[tuple[float, int]] = None
         self.last_tx_error: Optional[str] = None
         self.last_tx_by_token: dict[str, dict] = {}
         self.publishes: int = 0
@@ -109,13 +122,28 @@ class OnchainPublisher:
             logger.info("OnchainPublisher: off-chain mode (no contract or key configured).")
             return
 
-        try:
-            self.w3 = Web3(Web3.HTTPProvider(self.rpc_url))
-            if not self.w3.is_connected():
-                logger.warning(f"RPC connection failed: {self.rpc_url}")
-                self.enabled = False
-                return
+        urls = [self.rpc_url]
+        if self.rpc_fallback and self.rpc_fallback != self.rpc_url:
+            urls.append(self.rpc_fallback)
+        urls.append(XLAYER_MAINNET_RPC if "xlayer-test" in self.chain_label else XLAYER_TESTNET_RPC)
 
+        for url in urls:
+            try:
+                w3 = Web3(Web3.HTTPProvider(url))
+                if w3.is_connected():
+                    self.w3 = w3
+                    self.rpc_url = url
+                    break
+                logger.warning(f"RPC connection failed: {url}")
+            except Exception as e:
+                logger.warning(f"RPC init error for {url}: {e}")
+
+        if self.w3 is None:
+            logger.error("All RPC endpoints unreachable. Running off-chain.")
+            self.enabled = False
+            return
+
+        try:
             self.chain_id = self.w3.eth.chain_id
             self.account = self.w3.eth.account.from_key(self.private_key)
             checksum = self.w3.to_checksum_address(self.contract_address)
@@ -123,13 +151,33 @@ class OnchainPublisher:
             self.contract = self.w3.eth.contract(address=checksum, abi=_get_abi())
 
             logger.info(
-                f"OnchainPublisher connected | Chain: {self.chain_id} "
+                f"OnchainPublisher connected | Chain: {self.chain_id} ({self.chain_label}) "
+                f"| RPC: {self.rpc_url} "
                 f"| Account: {self.account.address[:10]}... "
                 f"| Contract: {self.contract_address[:10]}..."
             )
         except Exception as e:
             logger.warning(f"OnchainPublisher init failed: {e}. Running off-chain.")
             self.enabled = False
+
+    def signer_balance_wei(self) -> Optional[int]:
+        """Signer native-token balance (wei), cached for BALANCE_CACHE_TTL_S."""
+        if not self.enabled or not self.w3 or not self.account:
+            return None
+        now = time.time()
+        if self._balance_cache and now - self._balance_cache[0] < BALANCE_CACHE_TTL_S:
+            return self._balance_cache[1]
+        try:
+            bal = self.w3.eth.get_balance(self.account.address)
+            self._balance_cache = (now, bal)
+            return bal
+        except Exception as e:
+            logger.warning(f"Balance read failed: {e}")
+            return self._balance_cache[1] if self._balance_cache else None
+
+    def signer_balance_okb(self) -> Optional[float]:
+        bal = self.signer_balance_wei()
+        return None if bal is None else float(bal) / 1e18
 
     def _estimate_gas(
         self,
@@ -207,7 +255,7 @@ class OnchainPublisher:
                     return None
 
                 h = tx_hash.hex()
-                explorer = f"{XLAYER_EXPLORER}/tx/{h}"
+                explorer = f"{self.explorer_base}/tx/{h}"
                 logger.info(f"Attestation published: {h[:20]}... ({explorer})")
                 self.publishes += 1
                 self.last_publish_at = time.time()
@@ -255,10 +303,18 @@ class OnchainPublisher:
 
     def status(self) -> dict:
         """Runtime health snapshot for /health and external monitors."""
+        bal_okb = self.signer_balance_okb()
         return {
             "enabled": self.enabled,
             "chain_id": self.chain_id,
+            "chain_label": self.chain_label,
+            "rpc_url": self.rpc_url,
             "signer": self.account.address if self.enabled and self.account else None,
+            "signer_balance_okb": bal_okb,
+            "signer_balance_min_okb": MIN_SIGNER_BALANCE_OKB,
+            "signer_balance_low": bool(
+                bal_okb is not None and bal_okb < MIN_SIGNER_BALANCE_OKB
+            ),
             "publishes": self.publishes,
             "last_publish_at": self.last_publish_at,
             "last_attempt_at": self.last_attempt_at,

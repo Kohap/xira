@@ -5,6 +5,8 @@ import { LiveTicker } from "@/components/landing/LiveTicker";
 import { ProofSection } from "@/components/landing/ProofSection";
 import { LiveHeatmap } from "@/components/landing/LiveHeatmap";
 import { CopyButton } from "@/components/landing/CopyButton";
+import { LogoMark } from "@/components/LogoMark";
+import { BuiltOnXLayerBadge } from "@/components/BuiltOnXLayerBadge";
 
 export const metadata: Metadata = {
   title: "XIRA: One Verifiable Risk Number for Every xStock",
@@ -23,7 +25,7 @@ const PIPELINE = [
   },
   {
     verb: "Score",
-    copy: "A five-factor model compresses them into one weighted 0–100 score per asset.",
+    copy: "A five-factor model compresses them into one weighted 0-100 score per asset.",
   },
   {
     verb: "Sign",
@@ -32,6 +34,44 @@ const PIPELINE = [
   {
     verb: "Verify",
     copy: "The signature lands as an X Layer transaction. Open it in the explorer and check.",
+  },
+];
+
+const WITHOUT_PROOF = [
+  {
+    claim: "Price is quoted as risk",
+    note: "The number ships without a model anyone can inspect.",
+  },
+  {
+    claim: "Risk data is fragmented",
+    note: "Dashboards scatter scores, and nothing downstream can reference them on-chain.",
+  },
+  {
+    claim: "Agents get screenshots, not records",
+    note: "No machine-readable shape to build a position on.",
+  },
+  {
+    claim: "Claims are made off-chain",
+    note: "No transaction exists to open and check.",
+  },
+];
+
+const WITH_ATTESTATION = [
+  {
+    claim: "Five weighted factors, one number",
+    note: "Momentum, volatility, sentiment, volume, and liquidity in a readable score.",
+  },
+  {
+    claim: "One compact record per market",
+    note: "Score, factors, and evidence hash in a single attestation.",
+  },
+  {
+    claim: "The same records feed agents",
+    note: "MCP tools serve one asset, the whole board, or full history.",
+  },
+  {
+    claim: "Every change is a transaction",
+    note: "Each meaningful score update lands on X Layer as a signed attestation.",
   },
 ];
 
@@ -94,7 +134,7 @@ const FAQ = [
   },
   {
     q: "How is the risk score calculated?",
-    a: "It uses a transparent five-factor model: Momentum, Volatility, Sentiment, Volume Anomaly, and Liquidity Proxy. These are combined into a single 0–100 score.",
+    a: "It uses a transparent five-factor model: Momentum, Volatility, Sentiment, Volume Anomaly, and Liquidity Proxy. These are combined into a single 0-100 score.",
   },
   {
     q: "Why put the score onchain?",
@@ -114,28 +154,62 @@ const FAQ = [
   },
 ];
 
-const RWA_GAPS = [
-  {
-    problem: "Price isn't risk",
-    answer:
-      "A 0–100 score built from momentum, volatility, sentiment, volume, and liquidity, with a readable reason so the number explains itself.",
-  },
-  {
-    problem: "Risk data is fragmented",
-    answer:
-      "One compact attestation per market: score, factors, and evidence hash, queryable by contract or agent with no scraping.",
-  },
-  {
-    problem: "Dashboards ignore agents",
-    answer:
-      "The same records feed MCP tooling: one asset, the whole board, or full history in a machine-readable shape.",
-  },
-  {
-    problem: "Off-chain claims need proof",
-    answer:
-      "Every meaningful score change is signed to X Layer testnet as a transaction anyone can replay against the model.",
-  },
+const BRAND_RULES = [
+  "Keep the mark at 32 px or larger, with clearspace of one full mark width on every side.",
+  "Never recolor, redraw, or rotate the mark. It ships in an ivory duotone for dark surfaces and an ink duotone for light.",
+  "Geist carries UI and body copy. Geist Mono is for data: hashes, addresses, timestamps. Instrument Serif italic is reserved for the single accent word in the hero.",
+  "Palette is warm charcoal and ivory. Risk colors belong to scores on the heatmap, nowhere else.",
 ];
+
+const PALETTE = [
+  { name: "Background", hex: "#0D0C0B", cls: "bg-[#0D0C0B] border border-[var(--card-border)]" },
+  { name: "Card", hex: "#161412", cls: "bg-[#161412] border border-[var(--card-border)]" },
+  { name: "Border", hex: "#28241E", cls: "bg-[#28241E]" },
+  { name: "Foreground", hex: "#E9E7E2", cls: "bg-[#E9E7E2]" },
+  { name: "Accent", hex: "#E0DCD2", cls: "bg-[#E0DCD2]" },
+  { name: "Accent ink", hex: "#141210", cls: "bg-[#141210] border border-[var(--card-border)]" },
+];
+
+const RISK_RAMP = [
+  { label: "Low", hex: "#22C55E", cls: "bg-[#22C55E]" },
+  { label: "Moderate", hex: "#EAB308", cls: "bg-[#EAB308]" },
+  { label: "Elevated", hex: "#F97316", cls: "bg-[#F97316]" },
+  { label: "High", hex: "#EF4444", cls: "bg-[#EF4444]" },
+  { label: "Critical", hex: "#DC2626", cls: "bg-[#DC2626]" },
+];
+
+function ComparisonCard({
+  title,
+  tone,
+  rows,
+}: {
+  title: string;
+  tone: "muted" | "primary";
+  rows: { claim: string; note: string }[];
+}) {
+  return (
+    <div
+      className={`flex flex-col rounded-2xl border p-5 sm:p-7 ${
+        tone === "primary"
+          ? "border-[var(--accent)]/30 bg-[var(--card-bg)]"
+          : "border-[var(--card-border)] bg-black/20"
+      }`}
+    >
+      <h3 className="text-sm font-semibold text-neutral-200">{title}</h3>
+      <dl className="mt-5 flex-1">
+        {rows.map((row) => (
+          <div
+            key={row.claim}
+            className="border-t border-[var(--card-border)] py-4 first:border-t-0 first:pt-0"
+          >
+            <dt className="text-[15px] font-medium text-neutral-100">{row.claim}</dt>
+            <dd className="mt-1 text-sm text-neutral-500 leading-relaxed">{row.note}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   return (
@@ -143,7 +217,7 @@ export default function LandingPage() {
       <LiveTicker />
 
       <section className="relative">
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-24 lg:pt-28 pb-14 sm:pb-24 lg:pb-28">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-24 lg:pt-28 pb-14 sm:pb-20">
           <Reveal delay={60}>
             <h1 className="max-w-3xl text-[2.6rem] leading-[1.05] sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
               One risk number for every{" "}
@@ -156,12 +230,12 @@ export default function LandingPage() {
           <Reveal delay={90}>
             <p className="mt-6 text-lg text-neutral-400 max-w-xl leading-relaxed">
               XIRA weighs volatility, momentum, news, volume, and beta into a
-              single 0–100 score, then signs it onto X Layer so the number
-              you see is the transaction anyone can verify.
+              single 0-100 score, then signs it onto X Layer so the number you
+              see is the transaction anyone can verify.
             </p>
           </Reveal>
 
-          <Reveal delay={180}>
+          <Reveal delay={150}>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
               <a
                 href="/dashboard"
@@ -169,54 +243,21 @@ export default function LandingPage() {
               >
                 Open live board
               </a>
-              <a
-                href="#verify"
-                className="text-sm text-neutral-400 hover:text-white transition-colors hover:underline underline-offset-4"
-              >
-                How to verify a score
-              </a>
+              <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)]/70 px-3 py-2">
+                <span className="text-[11px] text-neutral-500 mr-1">oracle</span>
+                <code className="font-mono text-[11px] text-neutral-300">
+                  {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
+                </code>
+                <CopyButton value={CONTRACT} label="contract address" />
+              </div>
             </div>
           </Reveal>
 
-          <Reveal delay={260}>
-            <div className="mt-8 inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
-              <span className="text-[11px] text-neutral-500 mr-1">oracle</span>
-              <code className="font-mono text-[11px] text-neutral-300">
-                {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
-              </code>
-              <CopyButton value={CONTRACT} label="contract address" />
-            </div>
-          </Reveal>
-
-          <Reveal delay={150}>
+          <Reveal delay={200}>
             <div className="mt-12 sm:mt-16">
               <LiveBars />
             </div>
           </Reveal>
-        </div>
-      </section>
-
-      <section className="border-t border-[var(--card-border)] bg-black/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <Reveal>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-balance">
-              Why the risk number belongs on-chain.
-            </h2>
-          </Reveal>
-          <div className="mt-8 grid sm:grid-cols-2 gap-x-10 gap-y-8">
-            {RWA_GAPS.map((g, i) => (
-              <Reveal key={g.problem} delay={Math.min(i * 60, 180)}>
-                <div>
-                  <div className="text-[11px] font-mono text-neutral-500">
-                    {g.problem}
-                  </div>
-                  <p className="mt-1.5 text-sm text-neutral-300 leading-relaxed">
-                    {g.answer}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -226,7 +267,7 @@ export default function LandingPage() {
       >
         <Reveal>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-            Data in. Signed truth out.
+            One cycle, start to proof.
           </h2>
           <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
             The pipeline is short on purpose: every step is accountable, so a
@@ -264,6 +305,77 @@ export default function LandingPage() {
       </section>
 
       <section
+        id="compare"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
+      >
+        <Reveal>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
+            Verified, not promised.
+          </h2>
+          <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
+            A risk score is only as good as the evidence it ships with. This
+            one ships with a transaction.
+          </p>
+        </Reveal>
+
+        <div className="mt-10 grid lg:grid-cols-2 gap-5">
+          <Reveal>
+            <ComparisonCard
+              title="A risk feed without proof"
+              tone="muted"
+              rows={WITHOUT_PROOF}
+            />
+          </Reveal>
+          <Reveal delay={120}>
+            <ComparisonCard
+              title="An XIRA attestation"
+              tone="primary"
+              rows={WITH_ATTESTATION}
+            />
+          </Reveal>
+        </div>
+
+        <Reveal delay={180}>
+          <p className="mt-8 text-sm text-neutral-300 leading-relaxed max-w-2xl">
+            The number and the evidence ship together: open a transaction,
+            replay the inputs, and the score explains itself.{" "}
+            <a
+              href="#verify"
+              className="text-[var(--accent-glow)] hover:underline underline-offset-4"
+            >
+              Verify it on-chain
+            </a>
+            .
+          </p>
+        </Reveal>
+      </section>
+
+      <section
+        id="chain"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
+      >
+        <Reveal>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
+            Open the oracle.
+          </h2>
+          <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
+            The contract is live on X Layer testnet. The oracle re-scores all
+            15 markets every 30 minutes and signs each meaningful change to
+            the chain, open a transaction, and check it against the model.
+          </p>
+        </Reveal>
+
+        <div className="mt-12 grid lg:grid-cols-2 gap-6 items-start">
+          <Reveal>
+            <ProofSection />
+          </Reveal>
+          <Reveal delay={120}>
+            <LiveHeatmap />
+          </Reveal>
+        </div>
+      </section>
+
+      <section
         id="features"
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
       >
@@ -292,29 +404,29 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section
-        id="chain"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
-      >
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24">
         <Reveal>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-            Open the oracle.
+            Give your agents a risk desk.
           </h2>
           <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
-            The contract is live on X Layer testnet. The oracle re-scores all
-            15 markets every 30 minutes and signs each meaningful change to
-            the chain, open a transaction, and check it against the model.
+            The same endpoints the dashboard uses are exposed as MCP tools, so
+            any agent can ask about risk and read the attestation behind the
+            answer.
           </p>
         </Reveal>
-
-        <div className="mt-12 grid lg:grid-cols-2 gap-6 items-start">
-          <Reveal>
-            <ProofSection />
-          </Reveal>
-          <Reveal delay={120}>
-            <LiveHeatmap />
-          </Reveal>
-        </div>
+        <Reveal delay={100}>
+          <ul className="mt-8 flex flex-wrap gap-2">
+            {MCP_TOOLS.map((tool) => (
+              <li
+                key={tool}
+                className="px-3 py-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] font-mono text-xs text-neutral-300"
+              >
+                {tool}
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </section>
 
       <section
@@ -376,39 +488,6 @@ export default function LandingPage() {
             </Reveal>
           ))}
         </ol>
-
-        <Reveal delay={200}>
-          <p className="mt-10 text-sm text-neutral-300 leading-relaxed border-t border-[var(--card-border)] pt-6 max-w-2xl">
-            Each meaningful score update is recorded onchain. Match the score,
-            timestamp, and evidence hash shown on this dashboard with the
-            on-chain data, and every number proves itself.
-          </p>
-        </Reveal>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24">
-        <Reveal>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
-            Give your agents a risk desk.
-          </h2>
-          <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
-            The same endpoints the dashboard uses are exposed as MCP tools, so
-            any agent can ask about risk and read the attestation behind the
-            answer.
-          </p>
-        </Reveal>
-        <Reveal delay={100}>
-          <ul className="mt-8 flex flex-wrap gap-2">
-            {MCP_TOOLS.map((tool) => (
-              <li
-                key={tool}
-                className="px-3 py-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] font-mono text-xs text-neutral-300"
-              >
-                {tool}
-              </li>
-            ))}
-          </ul>
-        </Reveal>
       </section>
 
       <section
@@ -443,6 +522,186 @@ export default function LandingPage() {
             </Reveal>
           ))}
         </div>
+      </section>
+
+      <section
+        id="brand"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24 scroll-mt-20"
+      >
+        <Reveal>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
+            The XIRA brand.
+          </h2>
+          <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
+            The mark, the palette, and the type system: everything needed to
+            use the XIRA identity the way it was drawn.
+          </p>
+        </Reveal>
+
+        <div className="mt-10 grid lg:grid-cols-2 gap-5">
+          <Reveal>
+            <div className="rounded-2xl border border-[var(--card-border)] bg-black/20 p-5 sm:p-7">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-neutral-200">Wordmark</h3>
+                <span className="text-[11px] text-neutral-500">primary lockup</span>
+              </div>
+              <div className="mt-5 grid gap-3">
+                <div className="flex items-center gap-3 rounded-xl bg-[#0D0C0B] border border-[var(--card-border)] px-5 py-4">
+                  <LogoMark size={36} />
+                  <span className="text-xl font-semibold tracking-tight text-[#E9E7E2]">
+                    XIRA
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl bg-[#F5F3EE] border border-[#DFDBD1] px-5 py-4">
+                  <LogoMark size={36} />
+                  <span className="text-xl font-semibold tracking-tight text-[#1D1B17]">
+                    XIRA
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <div className="rounded-2xl border border-[var(--card-border)] bg-black/20 p-5 sm:p-7">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-neutral-200">The mark</h3>
+                <span className="text-[11px] text-neutral-500">ivory duotone, dark surface</span>
+              </div>
+              <div className="mt-5 flex items-start gap-6">
+                <div className="shrink-0 rounded-xl bg-[#0D0C0B] border border-[var(--card-border)] p-6">
+                  <LogoMark size={72} />
+                </div>
+                <ul className="space-y-2.5 text-sm text-neutral-400 leading-relaxed">
+                  <li>Minimum size: 32 px.</li>
+                  <li>Clearspace: one full mark width on every side.</li>
+                  <li>Never recolor, redraw, or rotate the mark.</li>
+                </ul>
+              </div>
+              <div className="mt-5 pt-5 border-t border-[var(--card-border)]">
+                <h4 className="text-sm font-medium text-neutral-200">On X Layer</h4>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <BuiltOnXLayerBadge />
+                  <span className="text-sm text-neutral-500">
+                    Use the badge as drawn. No recolor, no re-layout.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+
+        <div className="mt-5 grid lg:grid-cols-2 gap-5">
+          <Reveal>
+            <div className="rounded-2xl border border-[var(--card-border)] bg-black/20 p-5 sm:p-7">
+              <h3 className="text-sm font-semibold text-neutral-200">Palette</h3>
+              <div className="mt-5 grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {PALETTE.map((c) => (
+                  <div key={c.name}>
+                    <div className={`aspect-square rounded-lg ${c.cls}`} />
+                    <p className="mt-1.5 text-[11px] font-mono text-neutral-500 leading-tight">
+                      {c.hex}
+                    </p>
+                    <p className="text-[11px] text-neutral-400 leading-tight">{c.name}</p>
+                  </div>
+                ))}
+              </div>
+              <h4 className="mt-6 text-sm font-medium text-neutral-200">Risk ramp</h4>
+              <div className="mt-3 grid grid-cols-5 gap-2">
+                {RISK_RAMP.map((c) => (
+                  <div key={c.label}>
+                    <div className={`aspect-square rounded-lg ${c.cls}`} />
+                    <p className="mt-1.5 text-[11px] font-mono text-neutral-500 leading-tight">
+                      {c.hex}
+                    </p>
+                    <p className="text-[11px] text-neutral-400 leading-tight">{c.label}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-5 text-sm text-neutral-500 leading-relaxed">
+                Warm charcoal and ivory everywhere else. Risk colors exist only
+                where scores are shown.
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <div className="rounded-2xl border border-[var(--card-border)] bg-black/20 p-5 sm:p-7">
+              <h3 className="text-sm font-semibold text-neutral-200">Type</h3>
+              <div className="mt-5 space-y-4">
+                <div className="rounded-xl bg-[var(--card-bg)] px-5 py-4">
+                  <p className="text-lg font-medium">
+                    The quick brown fox jumps over the lazy dog
+                  </p>
+                  <p className="mt-1 text-[11px] font-mono text-neutral-500">
+                    Geist · UI and body
+                  </p>
+                </div>
+                <div className="rounded-xl bg-[var(--card-bg)] px-5 py-4">
+                  <p className="text-lg font-mono text-neutral-200">
+                    0xaa5f…be545d0 · score 12 · 30 min cadence
+                  </p>
+                  <p className="mt-1 text-[11px] font-mono text-neutral-500">
+                    Geist Mono · data and code
+                  </p>
+                </div>
+                <div className="rounded-xl bg-[var(--card-bg)] px-5 py-4">
+                  <p className="text-lg font-serif italic">
+                    xStock
+                  </p>
+                  <p className="mt-1 text-[11px] font-mono text-neutral-500">
+                    Instrument Serif italic · hero accent word only
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+
+        <Reveal delay={100}>
+          <div className="mt-5 rounded-2xl border border-[var(--card-border)] bg-black/20 p-5 sm:p-7">
+            <h3 className="text-sm font-semibold text-neutral-200">Usage rules</h3>
+            <ol className="mt-5 space-y-4">
+              {BRAND_RULES.map((rule, i) => (
+                <li key={rule} className="flex gap-4 sm:gap-5">
+                  <span
+                    className="shrink-0 font-mono text-xs text-neutral-600 tabular-nums pt-0.5"
+                    aria-hidden="true"
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <p className="text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
+                    {rule}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </Reveal>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-24">
+        <Reveal>
+          <div className="flex flex-col items-center text-center">
+            <h2 className="max-w-2xl text-3xl sm:text-4xl font-bold tracking-tight text-balance">
+              One verifiable risk number for every{" "}
+              <span className="font-serif italic text-[var(--accent-glow)] tracking-normal">
+                xStock
+              </span>
+              .
+            </h2>
+            <p className="mt-4 text-neutral-400 max-w-xl leading-relaxed">
+              The board is live. Scores update every 30 minutes, and every
+              meaningful change is a transaction you can check.
+            </p>
+            <a
+              href="/dashboard"
+              className="mt-8 inline-flex items-center justify-center px-6 h-12 rounded-xl bg-[var(--accent)] text-[var(--accent-ink)] hover:bg-[var(--accent-glow)] font-medium transition-colors"
+            >
+              Open live board
+            </a>
+          </div>
+        </Reveal>
       </section>
     </>
   );

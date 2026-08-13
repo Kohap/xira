@@ -49,12 +49,17 @@ contract DeployV2 is Script {
         xira.setAuthorizedUpdater(vm.addr(deployerPrivateKey), true);
         console.log("  Authorized:", vm.addr(deployerPrivateKey));
 
+        console.log("");
+        console.log("--- Write cooldown: 60s per asset ---");
+        xira.setMinAttestationInterval(60);
+        console.log("  minAttestationInterval =", xira.minAttestationInterval());
+
         vm.stopBroadcast();
 
         console.log("");
         console.log("========================================");
         console.log("XIRA V2 Contract:", address(xira));
-        console.log("History ring buffer + batch updates live.");
+        console.log("History ring buffer + batch updates + pause + write cooldown live.");
         console.log("Explorer: https://www.okx.com/web3/explorer/xlayer-test/address/");
         console.log(address(xira));
         console.log("========================================");

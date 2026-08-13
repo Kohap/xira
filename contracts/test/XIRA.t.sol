@@ -22,8 +22,11 @@ contract XIRATest is Test {
     );
 
     function setUp() public {
-        vm.prank(owner);
+        vm.startPrank(owner);
         xira = new XIRA();
+        xira.registerAsset(mockToken, "MOCKx");
+        xira.registerAsset(address(0x200), "DUMMYx");
+        vm.stopPrank();
     }
 
     function test_Constructor() public view {
@@ -273,27 +276,125 @@ contract XIRATest is Test {
 
     function test_RegisterAsset() public {
         vm.prank(owner);
-        xira.registerAsset(mockToken, "NVDAx");
+        xira.registerAsset(address(0x300), "NVDAx");
         string[] memory symbols = xira.getAllTrackedSymbols();
-        assertEq(symbols.length, 1);
-        assertEq(symbols[0], "NVDAx");
-        assertEq(xira.symbolAddresses("NVDAx"), mockToken);
+        assertEq(symbols.length, 3);
+        assertEq(symbols[2], "NVDAx");
+        assertEq(xira.symbolAddresses("NVDAx"), address(0x300));
+        assertEq(xira.assetAddresses(address(0x300)), address(0x300));
     }
 
     function test_RevertWhen_RegisterSameSymbolTwice() public {
         vm.startPrank(owner);
-        xira.registerAsset(mockToken, "NVDAx");
+        xira.registerAsset(address(0x300), "NVDAx");
         vm.expectRevert("XIRA: symbol already registered");
-        xira.registerAsset(address(0x200), "NVDAx");
+        xira.registerAsset(address(0x400), "NVDAx");
         vm.stopPrank();
+    }
+
+    function test_RevertWhen_RegisterSameTokenTwice() public {
+        vm.prank(owner);
+        vm.expectRevert("XIRA: token already registered");
+        xira.registerAsset(mockToken, "OTHERx");
+    }
+
+    function test_RevertWhen_UpdateUnregisteredAsset() public {
+        vm.prank(owner);
+        vm.expectRevert("XIRA: asset not registered");
+        xira.updateAttestation(address(0x300), 50, 80, bytes32(0), "v1.0.0", false, "");
+    }
+
+    function test_RevertWhen_BatchUpdateUnregisteredAsset() public {
+        XIRA.AttestationInput[] memory inputs = new XIRA.AttestationInput[](1);
+        inputs[0] = XIRA.AttestationInput({
+            asset: address(0x300),
+            score: 50,
+            confidence: 80,
+            evidenceHash: bytes32(0),
+            modelVersion: "v1.0.0",
+            anomaly: false,
+            anomalyReason: ""
+        });
+        vm.prank(owner);
+        vm.expectRevert("XIRA: asset not registered");
+        xira.batchUpdateAttestations(inputs);
+    }
+
+    function test_PauseBlocksWrites() public {
+        vm.prank(owner);
+        xira.setPaused(true);
+        assertTrue(xira.paused());
+        vm.prank(owner);
+        vm.expectRevert("XIRA: paused");
+        xira.updateAttestation(mockToken, 50, 80, bytes32(0), "v1.0.0", false, "");
+    }
+
+    function test_PausedBlocksBatch() public {
+        XIRA.AttestationInput[] memory inputs = new XIRA.AttestationInput[](1);
+        inputs[0] = XIRA.AttestationInput({
+            asset: mockToken,
+            score: 50,
+            confidence: 80,
+            evidenceHash: bytes32(0),
+            modelVersion: "v1.0.0",
+            anomaly: false,
+            anomalyReason: ""
+        });
+        vm.startPrank(owner);
+        xira.setPaused(true);
+        vm.expectRevert("XIRA: paused");
+        xira.batchUpdateAttestations(inputs);
+        vm.stopPrank();
+    }
+
+    function test_UnpauseResumesWrites() public {
+        vm.startPrank(owner);
+        xira.setPaused(true);
+        vm.expectRevert("XIRA: paused");
+        xira.updateAttestation(mockToken, 50, 80, bytes32(0), "v1.0.0", false, "");
+        xira.setPaused(false);
+        xira.updateAttestation(mockToken, 50, 80, bytes32(0), "v1.0.0", false, "");
+        vm.stopPrank();
+        assertEq(xira.getScore(mockToken), 50);
+    }
+
+    function test_RevertWhen_StrangerPauses() public {
+        vm.prank(stranger);
+        vm.expectRevert("XIRA: caller is not owner");
+        xira.setPaused(true);
+    }
+
+    function test_MinIntervalEnforced() public {
+        vm.startPrank(owner);
+        xira.setAuthorizedUpdater(updater, true);
+        xira.setMinAttestationInterval(60);
+        vm.stopPrank();
+
+        vm.prank(updater);
+        xira.updateAttestation(mockToken, 40, 80, bytes32(0), "v1.0.0", false, "");
+
+        vm.prank(updater);
+        vm.expectRevert("XIRA: attestation too soon");
+        xira.updateAttestation(mockToken, 41, 80, bytes32(0), "v1.0.0", false, "");
+
+        vm.warp(block.timestamp + 61);
+        vm.prank(updater);
+        xira.updateAttestation(mockToken, 41, 80, bytes32(0), "v1.0.0", false, "");
+        assertEq(xira.getScore(mockToken), 41);
+    }
+
+    function test_RevertWhen_StrangerSetsInterval() public {
+        vm.prank(stranger);
+        vm.expectRevert("XIRA: caller is not owner");
+        xira.setMinAttestationInterval(60);
     }
 
     function test_GetAllTrackedAssetsWithScores() public {
         vm.startPrank(owner);
-        xira.registerAsset(address(0x100), "NVDAx");
-        xira.registerAsset(address(0x200), "TSLAx");
-        xira.updateAttestation(address(0x100), 30, 80, bytes32(0), "v1.0.0", false, "");
-        xira.updateAttestation(address(0x200), 70, 75, bytes32(0), "v1.0.0", false, "");
+        xira.registerAsset(address(0x300), "NVDAx");
+        xira.registerAsset(address(0x400), "TSLAx");
+        xira.updateAttestation(address(0x300), 30, 80, bytes32(0), "v1.0.0", false, "");
+        xira.updateAttestation(address(0x400), 70, 75, bytes32(0), "v1.0.0", false, "");
         vm.stopPrank();
 
         (
@@ -303,13 +404,16 @@ contract XIRATest is Test {
             uint64[] memory timestamps
         ) = xira.getAllTrackedAssetsWithScores();
 
-        assertEq(assets.length, 2);
-        assertEq(symbols[0], "NVDAx");
-        assertEq(assets[0], address(0x100));
-        assertEq(scores[0], 30);
-        assertEq(timestamps[0] > 0, true);
-        assertEq(symbols[1], "TSLAx");
-        assertEq(assets[1], address(0x200));
-        assertEq(scores[1], 70);
+        assertEq(assets.length, 4);
+        assertEq(symbols[0], "MOCKx");
+        assertEq(assets[0], mockToken);
+        assertEq(scores[0], 0, "no attestation yet -> 0");
+        assertEq(symbols[2], "NVDAx");
+        assertEq(assets[2], address(0x300));
+        assertEq(scores[2], 30);
+        assertEq(timestamps[2] > 0, true);
+        assertEq(symbols[3], "TSLAx");
+        assertEq(assets[3], address(0x400));
+        assertEq(scores[3], 70);
     }
 }

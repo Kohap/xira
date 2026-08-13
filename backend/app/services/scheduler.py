@@ -92,6 +92,9 @@ def _check_alert_flags() -> None:
             "consecutive_failures": pub["consecutive_failures"],
             "last_error": pub["last_error"],
             "signer": pub["signer"],
+            "signer_balance_low": pub["signer_balance_low"],
+            "signer_balance_okb": pub["signer_balance_okb"],
+            "signer_balance_min_okb": pub["signer_balance_min_okb"],
         },
     )
 

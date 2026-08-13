@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
-from app.services.publisher import publisher, XLAYER_EXPLORER
+from app.services.publisher import publisher
 from app.services.scheduler import scheduler_diag, HEARTBEAT_MINUTES
 from app.services.history_db import history_db
 from app.services.rate_limit import enforce_rate_limit
@@ -235,7 +235,7 @@ async def health_check(request: Request):
     return HealthResponse(
         status="ok",
         version=os.getenv("MODEL_VERSION", "v1.0.0"),
-        chain="xlayer-testnet",
+        chain=publisher.chain_label,
         contract=contract_addr,
         tracked_assets=len(get_tracked_assets()),
         live_data=live,
@@ -437,7 +437,7 @@ def rescore_asset(symbol: str, request: Request):
                 if tx:
                     published = True
                     result.chain_tx = tx["tx_hash"]
-                    result.chain_explorer = f"{XLAYER_EXPLORER}/tx/{tx['tx_hash']}"
+                    result.chain_explorer = f"{publisher.explorer_base}/tx/{tx['tx_hash']}"
                     reason = "Attestation published on-chain."
                 else:
                     reason = "Publish failed – check the API health diagnostics."
