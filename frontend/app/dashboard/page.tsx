@@ -4,30 +4,13 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import type { AllAssetsResponse, MarketHistoryResponse } from "@/lib/types";
 import { API_BASE, fetchMarketHistory } from "@/lib/api";
+import { SECTOR_MAP, trackedAssets } from "@/lib/markets";
 import { ScoreCard, RiskBadge } from "@/components/ScoreCard";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
 
 const POLL_SECONDS = 60;
 const MAX_COLD_START_RETRIES = 8;
 const RETRY_DELAY_MS = 10000;
-
-const SECTOR_MAP: Record<string, string> = {
-  NVDAx: "Technology",
-  TSLAx: "Consumer Cyclical",
-  AAPLx: "Technology",
-  MSFTx: "Technology",
-  GOOGLx: "Communication",
-  AMZNx: "Consumer Cyclical",
-  METAx: "Communication",
-  SPYx: "ETF",
-  QQQx: "ETF",
-  AMDx: "Technology",
-  INTCx: "Technology",
-  NFLXx: "Communication",
-  BAx: "Industrials",
-  JPMx: "Financial",
-  XOMx: "Energy",
-};
 
 const RISK_BAR_COLORS: Record<string, string> = {
   LOW: "bg-[var(--risk-low)]",
@@ -307,8 +290,12 @@ export default function DashboardPage() {
           throw new Error(`API error: ${res.status} ${res.statusText}`);
         }
         const json: AllAssetsResponse = await res.json();
-        setData(json);
-        dataRef.current = json;
+        const board: AllAssetsResponse = {
+          ...json,
+          assets: trackedAssets(json.assets),
+        };
+        setData(board);
+        dataRef.current = board;
         setColdStart(false);
         setRefreshError(false);
         retriesRef.current = 0;

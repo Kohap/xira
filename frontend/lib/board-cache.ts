@@ -1,4 +1,5 @@
 import { fetchAllAssets } from "./api";
+import { trackedAssets } from "./markets";
 import type { AllAssetsResponse } from "./types";
 
 /**
@@ -23,9 +24,13 @@ export function fetchBoard(): Promise<AllAssetsResponse> {
   if (!inFlight) {
     inFlight = fetchAllAssets()
       .then((data) => {
-        cached = data;
+        const filtered: AllAssetsResponse = {
+          ...data,
+          assets: trackedAssets(data.assets),
+        };
+        cached = filtered;
         cachedAt = Date.now();
-        return data;
+        return filtered;
       })
       .finally(() => {
         inFlight = null;
