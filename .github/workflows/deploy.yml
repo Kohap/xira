@@ -32,7 +32,7 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://xira-gsb3.onrender.com' }}
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://xira-api-production.up.railway.app' }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
