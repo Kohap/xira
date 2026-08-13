@@ -176,7 +176,8 @@ export default function RootLayout({
               </div>
             </nav>
 
-            <div className="mt-12 pt-6 border-t border-[var(--card-border)] flex flex-col gap-3">
+            <div className="mt-12 pt-6 border-t border-[var(--card-border)] flex flex-col items-center gap-3">
+              <p className="text-xs text-neutral-500">© 2026 XIRA</p>
               <nav
                 aria-label="Footer links"
                 className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs"
@@ -202,9 +203,8 @@ export default function RootLayout({
                 </span>
               </nav>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", fontFamily: "sans-serif", fontSize: "14px", color: "#a1a1aa" }}>
-                <span>Built on</span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="24" height="24" style={{ borderRadius: "4px" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "8px", padding: "6px 12px" }}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="16" height="16">
                   <defs>
                     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" stopColor="#737373" />
@@ -225,7 +225,7 @@ export default function RootLayout({
                     <rect x="424" y="280" width="20" height="80" rx="6" />
                   </g>
                 </svg>
-                <span style={{ color: "#ffffff", background: "transparent", padding: 0, margin: 0 }}>XLayer</span>
+                <span style={{ color: "#a1a1aa", fontWeight: "normal", fontSize: "13px" }}>Built on X Layer</span>
               </div>
             </div>
           </div>
