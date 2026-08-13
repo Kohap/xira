@@ -68,6 +68,14 @@ const ENDPOINTS = [
     note: "The landing page's oracle card mirrors this data.",
   },
   {
+    method: "POST",
+    path: "/api/assets/{symbol}/rescore",
+    desc: "Force a fresh re-score for one market, bypassing the price cache. If the new score deviates past the publish threshold (default ±3), the attestation is signed on-chain and the transaction is returned in the response.",
+    query: "publish follows the same ±3 deviation rule as the heartbeat scheduler",
+    returns: "RescoreResponse",
+    note: "Read-only until a meaningful change: scores within the threshold return the reason instead of a transaction.",
+  },
+  {
     method: "GET",
     path: "/api/assets/history/stats",
     desc: "SQLite store statistics (row counts per symbol).",

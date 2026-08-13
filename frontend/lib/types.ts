@@ -159,6 +159,28 @@ export interface AssetDetail {
   data_freshness_ms: number;
 }
 
+export interface RescoreResponse {
+  symbol: string;
+  risk_score: number;
+  risk_level: RiskLevel;
+  confidence: number;
+  factors: FactorScore[];
+  explanation: string;
+  anomaly: boolean;
+  anomaly_reason: string;
+  evidence_hash: string;
+  timestamp: number;
+  model_version: string;
+  data_source: string;
+  data_freshness_ms: number;
+  previous_score: number | null;
+  score_delta: number | null;
+  chain_tx: string | null;
+  chain_explorer: string | null;
+  published: boolean;
+  reason: string;
+}
+
 export function riskLevelColor(level: RiskLevel): string {
   switch (level) {
     case "LOW":

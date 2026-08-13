@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import type { AssetDetail, Attestation, AttestationHistory, OnchainHistoryResponse } from "@/lib/types";
+import type { AssetDetail, Attestation, AttestationHistory, OnchainHistoryResponse, RescoreResponse } from "@/lib/types";
 import { API_BASE } from "@/lib/api";
 import { RiskBadge } from "@/components/ScoreCard";
 import { FactorBreakdown, HistoryChart, AlertBanner } from "@/components/FactorBreakdown";
@@ -46,6 +46,9 @@ export function AssetDetailClient() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [rescoring, setRescoring] = useState(false);
+  const [rescoreResult, setRescoreResult] = useState<RescoreResponse | null>(null);
+  const [rescoreError, setRescoreError] = useState<string | null>(null);
 
   const copySummary = async () => {
     if (!attestation) return;
@@ -108,6 +111,29 @@ export function AssetDetailClient() {
     const id = setTimeout(() => void fetchData(), 0);
     return () => clearTimeout(id);
   }, [fetchData]);
+
+  const doRescore = async () => {
+    setRescoring(true);
+    setRescoreError(null);
+    setRescoreResult(null);
+    try {
+      const res = await fetch(`${apiBase}/api/assets/${encodeURIComponent(symbol)}/rescore`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`Rescore failed (${res.status})${body ? " – " + body : ""}`);
+      }
+      const json: RescoreResponse = await res.json();
+      setRescoreResult(json);
+      await fetchData();
+    } catch (e: unknown) {
+      setRescoreError(e instanceof Error ? e.message : "Rescore failed");
+    } finally {
+      setRescoring(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -409,7 +435,97 @@ export function AssetDetailClient() {
         )}
       </div>
 
+      {rescoreError && (
+        <div className="mt-6 rounded-xl border border-red-800/50 bg-red-950/20 px-4 py-3 text-xs text-red-300">
+          {rescoreError}
+        </div>
+      )}
+
+      {rescoreResult && (
+        <div className="mt-6 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-xl p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h2 className="font-semibold text-sm text-neutral-300">Re-score result</h2>
+            {rescoreResult.published ? (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-emerald-700/50 bg-emerald-900/40 text-emerald-400">
+                <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M2.5 8.5l3.5 3.5 7.5-8" />
+                </svg>
+                Attestation published on-chain
+              </span>
+            ) : (
+              <span className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full border border-[var(--card-border)] bg-black/20 text-neutral-400">
+                No new attestation
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+            <span className="text-3xl font-bold tabular-nums">
+              {rescoreResult.risk_score}
+            </span>
+            {rescoreResult.score_delta !== null &&
+              rescoreResult.score_delta !== undefined &&
+              rescoreResult.score_delta !== 0 ? (
+              <span
+                className={`inline-flex items-center gap-1 text-sm font-mono tabular-nums ${
+                  rescoreResult.score_delta > 0 ? "text-red-400" : "text-green-400"
+                }`}
+              >
+                {rescoreResult.score_delta > 0 ? "▲" : "▼"} {Math.abs(rescoreResult.score_delta)}
+              </span>
+            ) : (
+              <span className="text-sm text-neutral-500 font-mono">no change</span>
+            )}
+            <span className="text-xs text-neutral-500 font-mono">
+              previous {rescoreResult.previous_score ?? "–"} · confidence{" "}
+              {rescoreResult.confidence}% · {rescoreResult.data_source.toUpperCase()}
+            </span>
+          </div>
+
+          <p className="mt-3 text-sm text-neutral-400 leading-relaxed">
+            {rescoreResult.explanation}
+          </p>
+
+          {rescoreResult.published && rescoreResult.chain_tx ? (
+            <div className="mt-4 pt-3 border-t border-[var(--card-border)] space-y-2 text-xs font-mono">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="text-neutral-500">transaction</span>
+                <a
+                  href={rescoreResult.chain_explorer ?? `${EXPLORER}/tx/${rescoreResult.chain_tx}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--accent-glow)] hover:underline break-all"
+                >
+                  {rescoreResult.chain_tx.slice(0, 18)}…{rescoreResult.chain_tx.slice(-4)}
+                </a>
+                <span className="text-neutral-600">
+                  Open on OKX Explorer →
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="text-neutral-500">evidence hash</span>
+                <span className="text-neutral-300 break-all">
+                  {rescoreResult.evidence_hash.slice(0, 18)}…{rescoreResult.evidence_hash.slice(-6)}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 pt-3 border-t border-[var(--card-border)] text-xs text-neutral-500 leading-relaxed">
+              {rescoreResult.reason}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={doRescore}
+          disabled={rescoring}
+          className="inline-flex items-center justify-center gap-2 px-5 h-11 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-sm font-medium transition-colors disabled:opacity-60 active:scale-[0.98]"
+        >
+          {rescoring ? "Re-scoring…" : "Force re-score"}
+        </button>
         <button
           type="button"
           onClick={copySummary}

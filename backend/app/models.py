@@ -47,6 +47,11 @@ class AttestationHistory(BaseModel):
     history: list[AttestationResponse]
 
 
+class RescoreResponse(AttestationResponse):
+    published: bool = False
+    reason: str = ""
+
+
 class AllAssetsResponse(BaseModel):
     generated_at: int
     model_version: str

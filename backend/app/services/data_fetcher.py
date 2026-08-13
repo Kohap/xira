@@ -193,8 +193,8 @@ def _fetch_finnhub_profile(ticker: str) -> dict:
         return {}
 
 
-def fetch_price_data(ticker: str) -> Optional[PriceData]:
-    if ticker in _price_cache:
+def fetch_price_data(ticker: str, force: bool = False) -> Optional[PriceData]:
+    if not force and ticker in _price_cache:
         cached_data, cached_time = _price_cache[ticker]
         if time.time() - cached_time < CACHE_TTL:
             return cached_data
@@ -278,7 +278,7 @@ class DataFetcher:
     def __init__(self, use_live: bool = True):
         self.use_live = use_live
 
-    def fetch_all_prices(self, tickers: list[str]) -> tuple[dict[str, Optional[PriceData]], float]:
+    def fetch_all_prices(self, tickers: list[str], force: bool = False) -> tuple[dict[str, Optional[PriceData]], float]:
         results: dict[str, Optional[PriceData]] = {}
 
         if not self.use_live:
@@ -287,7 +287,7 @@ class DataFetcher:
             return results, time.time()
 
         with ThreadPoolExecutor(max_workers=1) as executor:
-            futures = {executor.submit(fetch_price_data, t): t for t in tickers}
+            futures = {executor.submit(fetch_price_data, t, force): t for t in tickers}
             for future in as_completed(futures):
                 ticker = futures[future]
                 try:

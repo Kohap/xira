@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine
-from app.services.publisher import publisher
+from app.services.publisher import publisher, XLAYER_EXPLORER
 from app.services.scheduler import scheduler_diag
 from app.services.history_db import history_db
 from app.services.rate_limit import enforce_rate_limit
@@ -16,6 +16,7 @@ from app.models import (
     MarketHistoryPoint,
     MarketHistoryResponse,
     MarketStatsResponse,
+    RescoreResponse,
 )
 
 router = APIRouter(prefix="/api/assets", tags=["assets"])
@@ -319,6 +320,94 @@ async def onchain_history(symbol: str, request: Request):
         "history": entries,
         "count": len(entries),
     }
+
+
+@router.post("/{symbol}/rescore", response_model=RescoreResponse)
+async def rescore_asset(symbol: str):
+    """Force a fresh re-score for one asset, bypassing the price cache.
+
+    Mirrors the heartbeat scheduler for a single symbol: if the new score
+    deviates past the threshold (and differs from the on-chain evidence),
+    the attestation is published on-chain and the tx is returned.
+    """
+    match = _find_asset(symbol)
+    ticker = match["underlying"]
+
+    prices, _ = data_fetcher.fetch_all_prices([ticker], force=True)
+    price_data = prices.get(ticker)
+    if price_data is None:
+        raise HTTPException(status_code=502, detail=f"No price data for {ticker}.")
+
+    sentiments, _ = data_fetcher.fetch_all_sentiments([ticker], prices)
+    sentiment = sentiments.get(ticker)
+    s_val = (
+        sentiment.score
+        if hasattr(sentiment, "score")
+        else sentiment if isinstance(sentiment, (int, float)) else 0.0
+    )
+
+    model_version = os.getenv("MODEL_VERSION", "v1.0.0")
+    result = ai_engine.analyze(
+        symbol=match["symbol"],
+        price_data=price_data,
+        sentiment=s_val,
+        model_version=model_version,
+    )
+    result.timestamp = int(time.time())
+
+    published = False
+    reason = ""
+
+    if not publisher.enabled:
+        reason = "On-chain publishing is not configured for this deployment."
+    elif result.data_source == "mock":
+        reason = "Scored on simulated data – not published to chain."
+    else:
+        chain_latest = publisher.read_latest(match["token_address"])
+        chain_score = chain_latest["score"] if chain_latest else None
+        same_hash = (
+            chain_latest is not None
+            and chain_latest.get("evidence_hash", "").replace("0x", "").lower()
+            == result.evidence_hash.lower()
+        )
+        if same_hash:
+            reason = "Score unchanged since the last attestation – nothing to publish."
+        else:
+            delta = abs(result.risk_score - chain_score) if chain_score is not None else None
+            if delta is not None and delta < int(os.getenv("XIRA_DEVIATION_THRESHOLD", "3")):
+                reason = (
+                    f"Score moved {delta} pts – below the ±3 publish threshold, "
+                    "no new attestation."
+                )
+            else:
+                tx = publisher.update_attestation(
+                    token_address=match["token_address"],
+                    score=result.risk_score,
+                    confidence=result.confidence,
+                    evidence_hash_hex=result.evidence_hash,
+                    model_version=result.model_version,
+                    anomaly=result.anomaly,
+                    anomaly_reason=result.anomaly_reason,
+                )
+                if tx:
+                    published = True
+                    result.chain_tx = tx["tx_hash"]
+                    result.chain_explorer = f"{XLAYER_EXPLORER}/tx/{tx['tx_hash']}"
+                    reason = "Attestation published on-chain."
+                else:
+                    reason = "Publish failed – check the API health diagnostics."
+
+    if published:
+        from app.routers.attestations import _store_history as store_published
+
+        store_published(match["symbol"], result, published=True)
+    else:
+        _store_asset_history(match["symbol"], result)
+
+    _board_cache["board"] = None
+    _board_cache["computed_at"] = 0
+
+    return RescoreResponse(**result.model_dump(), published=published, reason=reason)
 
 
 @router.get("/{symbol}", response_model=AssetDetailResponse)
