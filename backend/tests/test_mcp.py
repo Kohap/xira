@@ -41,7 +41,7 @@ def stub_fetcher(monkeypatch):
 
         return fetch
 
-    monkeypatch.setattr(mcp_router, "make_http_fetcher", fake_fetcher)
+    monkeypatch.setattr(mcp_router, "_make_httpx_fetcher", fake_fetcher)
     yield
 
 

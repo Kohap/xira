@@ -15,8 +15,10 @@ Transport notes (MCP 2025-06-18 streamable HTTP):
 """
 
 from __future__ import annotations
+import asyncio
 import json
 import os
+import httpx
 from typing import Any
 
 from fastapi import APIRouter, Request, Response
@@ -24,12 +26,17 @@ from fastapi.responses import JSONResponse
 
 from app.services.mcp_core import (
     MCPError,
+    MCP_TOOLS,
+    MCP_SERVER_INFO,
+    SUPPORTED_PROTOCOL_VERSIONS,
+    SERVER_PROTOCOL_VERSION,
     handle_message,
-    make_http_fetcher,
 )
 from app.services.rate_limit import enforce_rate_limit
 
 router = APIRouter(prefix="/mcp", tags=["mcp"])
+
+HTTPX_TIMEOUT = 30
 
 
 def _error_response(msg_id: Any, code: int, message: str) -> dict:
@@ -61,6 +68,22 @@ def _process_message(msg: Any, fetcher) -> dict | None:
     return {"jsonrpc": "2.0", "id": msg_id, "result": result}
 
 
+def _make_httpx_fetcher(base_url: str):
+    """Build a fetcher using httpx (supports async context)."""
+    base = base_url.rstrip("/")
+
+    def fetch(path: str) -> dict:
+        with httpx.Client(timeout=HTTPX_TIMEOUT) as client:
+            try:
+                resp = client.get(f"{base}{path}", headers={"Accept": "application/json"})
+                resp.raise_for_status()
+                return resp.json()
+            except Exception as e:
+                return {"error": str(e)}
+
+    return fetch
+
+
 @router.post("")
 async def mcp_post(request: Request):
     enforce_rate_limit(request, "mcp", limit=120)
@@ -78,8 +101,14 @@ async def mcp_post(request: Request):
     messages = payload if is_batch else [payload]
 
     base = os.getenv("XIRA_API_URL") or str(request.base_url).rstrip("/")
-    fetcher = make_http_fetcher(base)
-    responses = [r for m in messages if (r := _process_message(m, fetcher)) is not None]
+    fetcher = _make_httpx_fetcher(base)
+
+    # Run message processing in a threadpool so the blocking self-HTTP
+    # calls inside tool handlers don't starve the event loop.
+    def process_all():
+        return [r for m in messages if (r := _process_message(m, fetcher)) is not None]
+
+    responses = await asyncio.to_thread(process_all)
 
     if not responses:
         return Response(status_code=202)
