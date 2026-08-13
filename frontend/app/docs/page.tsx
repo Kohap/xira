@@ -421,16 +421,6 @@ curl ${API_BASE}/api/alerts
 curl ${API_BASE}/api/assets/health`}
             </pre>
           </section>
-
-          <section id="versioning" className="mt-14 border-t border-[var(--card-border)] pt-8 scroll-mt-24">
-            <h2 className="text-sm font-semibold">Versioning and compatibility</h2>
-            <p className="mt-3 text-xs text-neutral-500 leading-relaxed">
-              Endpoints are additive; breaking changes will bump the model
-              version and the docs page together. The contract ABI is fixed at
-              the deployed address and is the compatibility boundary. A future
-              verify() addition would be an additive function.
-            </p>
-          </section>
         </div>
       </div>
     </div>

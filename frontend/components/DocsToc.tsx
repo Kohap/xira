@@ -9,7 +9,6 @@ const TOC = [
   { id: "contract", label: "On-chain contract" },
   { id: "mcp", label: "Agents (MCP tools)" },
   { id: "quickstart", label: "Quickstart" },
-  { id: "versioning", label: "Versioning" },
 ];
 
 export function DocsToc() {
