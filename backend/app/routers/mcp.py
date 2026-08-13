@@ -73,7 +73,9 @@ def _make_httpx_fetcher(base_url: str):
     base = base_url.rstrip("/")
 
     def fetch(path: str) -> dict:
-        with httpx.Client(timeout=HTTPX_TIMEOUT) as client:
+        # Internal Railway traffic arrives over http://, so follow the
+        # LB's http→https redirect when resolving the public URL.
+        with httpx.Client(timeout=HTTPX_TIMEOUT, follow_redirects=True) as client:
             try:
                 resp = client.get(f"{base}{path}", headers={"Accept": "application/json"})
                 resp.raise_for_status()
