@@ -323,13 +323,14 @@ async def onchain_history(symbol: str, request: Request):
 
 
 @router.post("/{symbol}/rescore", response_model=RescoreResponse)
-async def rescore_asset(symbol: str):
+async def rescore_asset(symbol: str, request: Request):
     """Force a fresh re-score for one asset, bypassing the price cache.
 
     Mirrors the heartbeat scheduler for a single symbol: if the new score
     deviates past the threshold (and differs from the on-chain evidence),
     the attestation is published on-chain and the tx is returned.
     """
+    enforce_rate_limit(request, "assets_rescore", limit=10)
     match = _find_asset(symbol)
     ticker = match["underlying"]
 
