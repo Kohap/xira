@@ -366,6 +366,9 @@ async def rescore_asset(symbol: str, request: Request):
     else:
         chain_latest = publisher.read_latest(match["token_address"])
         chain_score = chain_latest["score"] if chain_latest else None
+        if chain_score is not None:
+            result.previous_score = chain_score
+            result.score_delta = result.risk_score - chain_score
         same_hash = (
             chain_latest is not None
             and chain_latest.get("evidence_hash", "").replace("0x", "").lower()
