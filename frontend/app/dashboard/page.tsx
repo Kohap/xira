@@ -22,11 +22,6 @@ const RISK_BAR_COLORS: Record<string, string> = {
 
 const RISK_ORDER = ["LOW", "MODERATE", "ELEVATED", "HIGH", "CRITICAL"] as const;
 
-const HEATMAP_SYMBOLS = new Set([
-  "NVDAx", "TSLAx", "AAPLx", "MSFTx", "GOOGLx", "AMZNx", "METAx",
-  "SPYx", "QQQx", "AMDx", "INTCx", "NFLXx", "BAx", "JPMx", "XOMx",
-]);
-
 function MarketPulse({ assets }: { assets: AllAssetsResponse["assets"] }) {
   if (assets.length === 0) return null;
   const avg = Math.round(
@@ -547,9 +542,7 @@ export default function DashboardPage() {
       <div>
         <AlertsStrip assets={data.assets} />
 
-        <RiskHeatmap
-          assets={data.assets.filter((a) => HEATMAP_SYMBOLS.has(a.symbol))}
-        />
+        <RiskHeatmap assets={data.assets} />
       </div>
 
       <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">

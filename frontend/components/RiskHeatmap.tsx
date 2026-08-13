@@ -8,8 +8,11 @@ interface HeatmapProps {
 }
 
 export function RiskHeatmap({ assets }: HeatmapProps) {
-  // Sort by risk score descending (highest risk first, top-left)
-  const sorted = [...assets].sort((a, b) => b.risk_score - a.risk_score);
+  const HEATMAP_LIMIT = 15;
+
+  const sorted = [...assets]
+    .sort((a, b) => b.risk_score - a.risk_score)
+    .slice(0, HEATMAP_LIMIT);
 
   const getLevel = (score: number) => {
     if (score <= 20) return "LOW";
