@@ -152,7 +152,26 @@ function SummaryBar({
 
 function AlertsStrip({ assets }: { assets: AllAssetsResponse["assets"] }) {
   const alerts = assets.filter((a) => a.anomaly);
+  const [limit, setLimit] = useState<number>(5);
+  const visible = alerts.slice(0, limit);
   if (alerts.length === 0) return null;
+
+  useEffect(() => {
+    try {
+      const stored = Number(window.localStorage.getItem("xira-alert-limit"));
+      if (Number.isInteger(stored) && stored > 0) setLimit(stored);
+    } catch {
+      // storage may be unavailable; default applies
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("xira-alert-limit", String(limit));
+    } catch {
+      // storage may be unavailable (private mode); in-memory limit still applies
+    }
+  }, [limit]);
 
   return (
     <div className="mb-6 rounded-xl border border-red-800/50 bg-red-950/20 p-4" role="status">
@@ -160,15 +179,31 @@ function AlertsStrip({ assets }: { assets: AllAssetsResponse["assets"] }) {
         <span className="live-dot w-2 h-2 rounded-full bg-red-400" aria-hidden="true" />
         <h3 className="text-sm font-semibold text-red-300">Anomaly alerts</h3>
         <span className="text-[11px] text-red-400/70 font-mono">factor consensus broken</span>
-        <Link
-          href="/alerts"
-          className="ml-auto text-xs text-red-400/90 hover:text-red-300 hover:underline underline-offset-4 transition-colors"
-        >
-          View all alerts →
-        </Link>
+        <div className="ml-auto flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-[11px] text-red-400/70">
+            Show
+            <select
+              value={limit}
+              onChange={(e) => setLimit(Number(e.target.value))}
+              aria-label="Number of alerts to show"
+              className="bg-[var(--card-bg)] border border-red-800/40 rounded px-1 py-0.5 text-[11px] text-red-300 focus:outline-none focus:border-red-600"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={alerts.length}>All ({alerts.length})</option>
+            </select>
+          </label>
+          <Link
+            href="/alerts"
+            className="text-xs text-red-400/90 hover:text-red-300 hover:underline underline-offset-4 transition-colors"
+          >
+            View all alerts →
+          </Link>
+        </div>
       </div>
       <ul className="flex flex-col gap-2">
-        {alerts.map((a) => (
+        {visible.map((a) => (
           <li key={a.symbol}>
             <Link
               href={`/asset/${a.symbol}`}
