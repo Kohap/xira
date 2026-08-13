@@ -317,16 +317,16 @@ input {
   animation: bar-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* Risk-curve chart: continuous left-to-right draw so the line flows like
-   a live chart (dashoffset runs 100 -> 0 on a loop, then resets) */
+/* Risk-curve chart: draws once with a smooth ease and stays drawn (no
+   looping reset so the line never snaps back) */
 @keyframes chart-draw {
   from { stroke-dashoffset: 100; }
   to { stroke-dashoffset: 0; }
 }
 .chart-line {
   stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  animation: chart-draw 3s linear infinite;
+  stroke-dashoffset: 0;
+  animation: chart-draw 3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* Live ticker marquee */
@@ -356,5 +356,8 @@ input {
   }
   .score-bar {
     height: var(--bar-h);
+  }
+  .chart-line {
+    stroke-dashoffset: 0;
   }
 }
