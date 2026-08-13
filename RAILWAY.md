@@ -103,3 +103,16 @@ Flip it on Vercel first so the change is reversible without a code deploy:
   A separate cron service is a later option.
 - `XIRA_ADMIN_TOKEN` remains optional; without it `?fresh=true` is disabled
   (the safe default).
+
+## Frontend API key
+
+The xira.surf frontend authenticates with `X-API-Key`. Vercel must define
+`NEXT_PUBLIC_XIRA_API_KEY` (Production + Preview) — it is inlined at build
+time, so an env change requires a redeploy. `frontend/lib/api.ts` no longer
+ships a fallback key: builds without the env var send an empty key and 401 on
+all protected endpoints.
+
+Local dev: copy the current key into `frontend/.env.local` (gitignored).
+Backend operators can rotate keys at `POST/GET/DELETE /api/admin/keys`
+(requires `X-Admin-Token` plus a key) — issue the replacement first, update
+Vercel, redeploy, verify, then revoke the old key.

@@ -20,8 +20,7 @@ export const API_BASE = normalizeBase(
 );
 
 export const API_KEY =
-  process.env.NEXT_PUBLIC_XIRA_API_KEY ||
-  "xira_BIy-PMdDgiEKeMBFxt7pjAKsMd5tYMZ6SZmfdulKfJA";
+  process.env.NEXT_PUBLIC_XIRA_API_KEY || "";
 
 const FETCH_TIMEOUT_MS = 25_000;
 
