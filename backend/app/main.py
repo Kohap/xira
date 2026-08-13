@@ -87,6 +87,11 @@ async def api_key_middleware(request: Request, call_next):
     if path in PUBLIC_PATHS or request.method == "OPTIONS":
         return await call_next(request)
 
+    # Admin routes carry their own XIRA_ADMIN_TOKEN auth; the API-key gate
+    # must not shadow them.
+    if path.startswith("/api/admin"):
+        return await call_next(request)
+
     supplied = request.headers.get("x-api-key", "")
     if supplied:
         from app.services.api_keys import api_keys
