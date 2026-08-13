@@ -27,7 +27,7 @@ def _store_history(symbol: str, result: AttestationResponse, published: bool = F
 
 
 @router.get("/{symbol}", response_model=AttestationResponse)
-async def get_attestation(symbol: str, request: Request):
+def get_attestation(symbol: str, request: Request):
     enforce_rate_limit(request, "attestation", limit=20)
     symbol_upper = symbol.upper()
     assets = get_tracked_assets()

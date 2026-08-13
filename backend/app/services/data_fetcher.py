@@ -2,7 +2,7 @@ from __future__ import annotations
 import os, logging, time, random, re
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -141,8 +141,8 @@ def _fetch_finnhub_quote(ticker: str) -> Optional[dict]:
     if not FINNHUB_KEY:
         return None
     try:
-        url = f"{FINNHUB_BASE}/quote?symbol={ticker}&token={FINNHUB_KEY}"
-        resp = httpx.get(url, timeout=15)
+        url = f"{FINNHUB_BASE}/quote?symbol={ticker}"
+        resp = httpx.get(url, timeout=15, headers={"X-Finnhub-Token": FINNHUB_KEY})
         if resp.status_code != 200:
             return None
         data = resp.json()
@@ -165,9 +165,8 @@ def _fetch_finnhub_candles(ticker: str, days: int = 21) -> list[float]:
         url = (
             f"{FINNHUB_BASE}/stock/candle"
             f"?symbol={ticker}&resolution=D&from={from_ts}&to={to_ts}"
-            f"&token={FINNHUB_KEY}"
         )
-        resp = httpx.get(url, timeout=15)
+        resp = httpx.get(url, timeout=15, headers={"X-Finnhub-Token": FINNHUB_KEY})
         if resp.status_code != 200:
             return []
         data = resp.json()
@@ -184,13 +183,23 @@ def _fetch_finnhub_profile(ticker: str) -> dict:
     if not FINNHUB_KEY:
         return {}
     try:
-        url = f"{FINNHUB_BASE}/stock/profile2?symbol={ticker}&token={FINNHUB_KEY}"
-        resp = httpx.get(url, timeout=15)
+        url = f"{FINNHUB_BASE}/stock/profile2?symbol={ticker}"
+        resp = httpx.get(url, timeout=15, headers={"X-Finnhub-Token": FINNHUB_KEY})
         if resp.status_code != 200:
             return {}
         return resp.json()
     except Exception:
         return {}
+
+
+def _deterministic_gauss(seed_key: str, mean: float, std: float) -> float:
+    """Gaussian draw seeded by (ticker, time bucket) instead of the global
+    RNG. Finnhub's free tier does not expose volume, so volume-based factors
+    must not inject fresh noise into every analysis: the same inputs in the
+    same 30-minute bucket must produce the same score, or the on-chain
+    evidence hash is not reproducible and the scheduler keeps re-publishing
+    random jitter."""
+    return random.Random(seed_key).gauss(mean, std)
 
 
 def fetch_price_data(ticker: str, force: bool = False) -> Optional[PriceData]:
@@ -219,10 +228,24 @@ def fetch_price_data(ticker: str, force: bool = False) -> Optional[PriceData]:
         pc = quote.get("pc", 0.0) or data.price
         data.daily_prices = [pc] * 20 + [data.price]
 
-    data.volume = int(random.gauss(50_000_000, 15_000_000))
-    data.avg_volume_20d = int(data.volume * random.gauss(1.0, 0.15))
-    data.high_52w = data.price * 1.3
-    data.low_52w = data.price * 0.7
+    # Volume proxies are deterministic within the 30-minute bucket so the
+    # score (and its evidence hash) is reproducible from the same inputs.
+    bucket = int(time.time() // 1800)
+    volume_seed = f"{ticker}:{bucket}"
+    data.volume = int(_deterministic_gauss(volume_seed, 50_000_000, 15_000_000))
+    data.avg_volume_20d = int(
+        data.volume * _deterministic_gauss(volume_seed + ":avg", 1.0, 0.15)
+    )
+    # 52-week range derived from the closes we actually hold; without real
+    # 52w data a fabricated symmetric band makes the momentum term constant.
+    if len(data.daily_prices) >= 5:
+        hi, lo = max(data.daily_prices), min(data.daily_prices)
+        spread = max(hi - lo, max(hi, lo) * 0.001)
+        data.high_52w = hi + 0.05 * spread
+        data.low_52w = max(0.0, lo - 0.05 * spread)
+    else:
+        data.high_52w = data.price * 1.05
+        data.low_52w = data.price * 0.95
     data.beta = 1.0
 
     profile = _fetch_finnhub_profile(ticker)
@@ -236,14 +259,13 @@ def fetch_price_data(ticker: str, force: bool = False) -> Optional[PriceData]:
 def fetch_news_sentiment(ticker: str) -> SentimentData:
     if FINNHUB_KEY:
         try:
-            to_date = datetime.utcnow().strftime("%Y-%m-%d")
-            from_date = (datetime.utcnow() - timedelta(days=7)).strftime("%Y-%m-%d")
+            to_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            from_date = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
             url = (
                 f"{FINNHUB_BASE}/company-news"
                 f"?symbol={ticker}&from={from_date}&to={to_date}"
-                f"&token={FINNHUB_KEY}"
             )
-            resp = httpx.get(url, timeout=15)
+            resp = httpx.get(url, timeout=15, headers={"X-Finnhub-Token": FINNHUB_KEY})
             if resp.status_code == 200:
                 articles = resp.json()
                 if isinstance(articles, list) and articles:

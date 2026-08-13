@@ -152,7 +152,7 @@ def _find_asset(symbol: str) -> dict:
 
 
 @router.get("/all", response_model=AllAssetsResponse)
-async def get_all_assets(fresh: bool = False, request: Request = None):
+def get_all_assets(fresh: bool = False, request: Request = None):
     enforce_rate_limit(request, "assets_all", limit=30)
     if fresh:
         # Manual refresh burns the full upstream quota; gate it behind an
@@ -170,7 +170,7 @@ async def get_all_assets(fresh: bool = False, request: Request = None):
 
 
 @router.get("/stats", response_model=MarketStatsResponse)
-async def market_stats(request: Request):
+def market_stats(request: Request):
     """Market-level statistics: risk distribution, average, extremes."""
     enforce_rate_limit(request, "assets_stats", limit=60)
     board = _get_board()
@@ -288,7 +288,7 @@ async def market_history(request: Request, hours: int = Query(default=24, ge=1, 
 
 
 @router.get("/verify/{symbol}")
-async def verify_attestation(symbol: str, request: Request):
+def verify_attestation(symbol: str, request: Request):
     """Compare the last published attestation against what is stored on-chain.
 
     The API side is the record the oracle actually signed (stored in the
@@ -342,7 +342,7 @@ async def verify_attestation(symbol: str, request: Request):
 
 
 @router.get("/{symbol}/onchain-history")
-async def onchain_history(symbol: str, request: Request):
+def onchain_history(symbol: str, request: Request):
     """Last N attestations stored on-chain for an asset (V2 contract)."""
     enforce_rate_limit(request, "assets_onchain_history", limit=30)
     match = _find_asset(symbol)
@@ -357,7 +357,7 @@ async def onchain_history(symbol: str, request: Request):
 
 
 @router.post("/{symbol}/rescore", response_model=RescoreResponse)
-async def rescore_asset(symbol: str, request: Request):
+def rescore_asset(symbol: str, request: Request):
     """Force a fresh re-score for one asset, bypassing the price cache.
 
     Mirrors the heartbeat scheduler for a single symbol: if the new score
@@ -456,7 +456,7 @@ async def rescore_asset(symbol: str, request: Request):
 
 
 @router.get("/{symbol}", response_model=AssetDetailResponse)
-async def get_asset_detail(symbol: str, request: Request):
+def get_asset_detail(symbol: str, request: Request):
     """Single-asset detail: metadata, current score, 24h score delta."""
     enforce_rate_limit(request, "assets_detail", limit=60)
     match = _find_asset(symbol)

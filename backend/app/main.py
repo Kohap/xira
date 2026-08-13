@@ -14,6 +14,10 @@ from app.services import scheduler as scheduler_service
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("xira")
 
+# httpx logs full request URLs at INFO, which would print the Finnhub API key
+# and the Telegram bot token (both travel in URLs) into the log stream.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 _scheduler_task: asyncio.Task | None = None
 
 # Explicit, known frontend origins only. Wildcard CORS combined with
@@ -53,7 +57,7 @@ app.add_middleware(
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "PUT", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "x-api-key", "x-admin-token", "authorization"],
 )
 
 app.include_router(assets.router)
@@ -103,7 +107,7 @@ async def api_key_middleware(request: Request, call_next):
     enforce = os.getenv("XIRA_REQUIRE_API_KEY", "false").lower() == "true"
     if enforce:
         origin = request.headers.get("origin", "") or request.headers.get("referer", "")
-        if not any(o in origin for o in ALLOWED_ORIGINS):
+        if origin not in ALLOWED_ORIGINS:
             return JSONResponse(status_code=401, content={"detail": "Missing API key."})
 
     return await call_next(request)
