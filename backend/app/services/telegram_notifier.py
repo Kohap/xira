@@ -60,6 +60,15 @@ def notify(alert_type: str, title: str, lines: list[str]) -> bool:
     return ok
 
 
+def seed_flag(alert_type: str, flag: bool) -> None:
+    """Set the latch without notifying. Used to record the state that was
+    already true at startup, so a restart does not replay old alerts."""
+    if flag:
+        _active.add(alert_type)
+    else:
+        _active.discard(alert_type)
+
+
 def flag_alert(alert_type: str, flag: bool, title: str, lines: list[str]) -> None:
     """Fire on false->true transition; clear the latch when healthy again."""
     if flag:

@@ -5,7 +5,7 @@ from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine, risk_level_from_score
 from app.services.history_db import history_db
 from app.services.publisher import publisher
-from app.services.telegram_notifier import evaluate_alerts, flag_alert
+from app.services.telegram_notifier import evaluate_alerts, flag_alert, seed_flag
 from app.models import AttestationResponse
 
 logger = logging.getLogger(__name__)
@@ -15,6 +15,9 @@ DEVIATION_THRESHOLD = int(os.getenv("XIRA_DEVIATION_THRESHOLD", "3"))
 FIRST_PASS_DELAY_S = float(os.getenv("XIRA_FIRST_PASS_DELAY_S", "60"))
 
 _last_published: dict[str, int] = {}
+
+# The first pass after startup seeds alert latches instead of firing them.
+_risk_baseline_done = False
 
 _diag: dict = {
     "last_pass_at": None,
@@ -38,13 +41,19 @@ def scheduler_diag() -> dict:
 
 def _check_risk_alert(symbol: str, result, thresholds: dict) -> None:
     """Telegram alert when an asset trips an anomaly or a user threshold.
-    Latched per symbol, so a sustained condition alerts once, not every pass."""
+    Latched per symbol, so a sustained condition alerts once, not every pass.
+    The first pass after startup only records the baseline: a restart must not
+    replay alerts for conditions that were already true."""
     reasons: list[str] = []
     if result.anomaly:
         reasons.append(result.anomaly_reason or "Anomaly flagged by factor model.")
     t = thresholds.get(symbol)
     if t and t.get("enabled") and t.get("threshold") is not None and result.risk_score >= t["threshold"]:
         reasons.append(f"Score {result.risk_score} is at or above your threshold of {t['threshold']}.")
+
+    if not _risk_baseline_done:
+        seed_flag(f"risk:{symbol}", bool(reasons))
+        return
 
     flag_alert(
         f"risk:{symbol}",
@@ -189,6 +198,11 @@ def _run_pass() -> None:
                 _diag["errors"].pop(0)
             _diag["errors"].append(msg)
             logger.error(f"Scheduler: pass failed for {symbol}: {e}")
+
+    global _risk_baseline_done
+    if not _risk_baseline_done:
+        _risk_baseline_done = True
+        logger.info("Scheduler: risk alert baseline recorded; alerts arm from the next pass.")
 
 
 async def backfill_published_from_chain() -> None:
