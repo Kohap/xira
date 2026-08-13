@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import { AssetDetailClient } from "./client";
 
+// Mirrors the enabled assets in catalogs/asset_catalog.json (50).
 const SYMBOLS = [
-  "NVDAx", "TSLAx", "AAPLx", "MSFTx", "GOOGLx", "AMZNx", "METAx",
-  "SPYx", "QQQx", "AMDx", "INTCx", "NFLXx", "BAx", "JPMx", "XOMx",
+  "SNDKx", "SPCXx", "MUx", "SOXLx", "LITEx", "MRVLx", "SKHYx", "INTCx",
+  "MSTRx", "AAPLx", "GOOGLx", "CRCLx", "NBISx", "PLx", "TSLAx", "METAx",
+  "NVDAx", "EWYx", "AMDx", "COINx", "ORCLx", "ONDSx", "DELLx", "CSCOx",
+  "CRWVx", "HIMSx", "PLTRx", "TSMx", "QQQx", "HOODx", "AMZNx", "SPYx",
+  "MSFTx", "ARMx", "RKLBx", "ASTSx", "AVGOx", "CBRSx", "TQQQx", "ADBEx",
+  "IRENx", "AAOIx", "ASMLx", "IBMx", "XLEx", "NFLXx", "BMNRx", "TERx",
+  "USARx", "GMEx",
 ];
 
 export function generateStaticParams() {

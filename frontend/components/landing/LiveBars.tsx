@@ -222,7 +222,7 @@ export function LiveBars() {
 
       <div className="mt-4 pt-3.5 border-t border-[var(--card-border)] flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-neutral-400">
         <span className="font-mono tabular-nums">
-          15 markets · 5 factors · 30 min cadence · 1:1 attestation
+          All tracked markets · 5 factors · 30 min cadence · 1:1 attestation
         </span>
       </div>
     </div>

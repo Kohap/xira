@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import type { AllAssetsResponse, MarketHistoryResponse } from "@/lib/types";
 import { API_BASE, API_KEY, fetchMarketHistory } from "@/lib/api";
-import { SECTOR_MAP, trackedAssets } from "@/lib/markets";
+import { sectorFor } from "@/lib/markets";
 import { ScoreCard, RiskBadge } from "@/components/ScoreCard";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
 
@@ -294,7 +294,7 @@ export default function DashboardPage() {
         const json: AllAssetsResponse = await res.json();
         const board: AllAssetsResponse = {
           ...json,
-          assets: trackedAssets(json.assets),
+          assets: json.assets,
         };
         setData(board);
         dataRef.current = board;
@@ -388,7 +388,7 @@ export default function DashboardPage() {
               </span>
             </span>
           ) : (
-            <span className="text-neutral-500">Loading risk data for 15 xStocks…</span>
+            <span className="text-neutral-500">Loading risk data…</span>
           )}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -460,7 +460,11 @@ export default function DashboardPage() {
   }, {});
 
   const sectors = Array.from(
-    new Set(data.assets.map((a) => SECTOR_MAP[a.symbol]).filter(Boolean))
+    new Set(
+      data.assets
+        .map((a) => sectorFor(a.symbol))
+        .filter((s): s is string => Boolean(s))
+    )
   ).sort();
 
   const visibleAssets = data.assets
@@ -469,7 +473,7 @@ export default function DashboardPage() {
         (query.trim() === "" ||
           a.symbol.toLowerCase().includes(query.trim().toLowerCase())) &&
         (levelFilter === "ALL" || a.risk_level === levelFilter) &&
-        (sectorFilter === "ALL" || SECTOR_MAP[a.symbol] === sectorFilter) &&
+        (sectorFilter === "ALL" || sectorFor(a.symbol) === sectorFilter) &&
         (!anomalyOnly || a.anomaly)
     )
     .slice()
@@ -640,7 +644,7 @@ export default function DashboardPage() {
             const count =
               sector === "ALL"
                 ? data.assets.length
-                : data.assets.filter((a) => SECTOR_MAP[a.symbol] === sector).length;
+                : data.assets.filter((a) => sectorFor(a.symbol) === sector).length;
             return (
               <button
                 key={sector}
@@ -755,7 +759,7 @@ export default function DashboardPage() {
               <ScoreCard
                 key={asset.symbol}
                 symbol={asset.symbol}
-                sector={SECTOR_MAP[asset.symbol]}
+                sector={sectorFor(asset.symbol)}
                 risk_score={asset.risk_score}
                 risk_level={asset.risk_level}
                 confidence={asset.confidence}
@@ -909,7 +913,7 @@ export default function DashboardPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-xs text-neutral-500">
-                    {SECTOR_MAP[asset.symbol] ?? "-"}
+                    {sectorFor(asset.symbol) ?? "-"}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -999,7 +1003,7 @@ export default function DashboardPage() {
             <ScoreCard
               key={asset.symbol}
               symbol={asset.symbol}
-              sector={SECTOR_MAP[asset.symbol]}
+              sector={sectorFor(asset.symbol)}
               risk_score={asset.risk_score}
               risk_level={asset.risk_level}
               confidence={asset.confidence}
