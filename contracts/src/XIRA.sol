@@ -48,6 +48,7 @@ contract XIRA {
     event UpdaterAuthorized(address indexed updater, bool authorized);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event AssetRegistered(address indexed tokenAddr, string symbol);
+    event AssetUnregistered(address indexed tokenAddr, string symbol);
     event Paused(address indexed account, bool state);
 
     modifier onlyOwner() {
@@ -103,6 +104,23 @@ contract XIRA {
         symbolAddresses[symbol] = tokenAddr;
         trackedSymbols.push(symbol);
         emit AssetRegistered(tokenAddr, symbol);
+    }
+
+    /// Lifecycle management: remove an asset from the registry. Historical
+    /// attestations stay readable; new writes for the token revert.
+    function unregisterAsset(string calldata symbol) external onlyOwner {
+        address token = symbolAddresses[symbol];
+        require(token != address(0), "XIRA: symbol not registered");
+        delete symbolAddresses[symbol];
+        delete assetAddresses[token];
+        for (uint256 i = 0; i < trackedSymbols.length; i++) {
+            if (keccak256(abi.encodePacked(trackedSymbols[i])) == keccak256(abi.encodePacked(symbol))) {
+                trackedSymbols[i] = trackedSymbols[trackedSymbols.length - 1];
+                trackedSymbols.pop();
+                break;
+            }
+        }
+        emit AssetUnregistered(token, symbol);
     }
 
     function updateAttestation(

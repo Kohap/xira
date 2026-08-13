@@ -156,6 +156,52 @@ SQLite lives on the `xira-data` volume at `/data/xira_history.db`. A fresh
 volume is healed on startup: `backfill_published_from_chain()` imports
 existing on-chain attestations as published records.
 
+## Asset universe (v2: 2026-08-13)
+
+The backend is now catalog-driven; the hardcoded 15-asset list is gone.
+
+- `catalogs/asset_catalog.json` — single source of truth. 65 xStocks listed
+  on OKX as `X…-USDT`, ranked by 24h USDT volume; **50 enabled**, 15 kept as
+  a listed-but-idle tail. Every entry carries its X Layer mainnet token
+  address, verified on-chain via `symbol()` (issuer naming: `NVDAx`).
+- `catalogs/asset_catalog.deploy.json` — flat arrays consumed by
+  `contracts/script/DeployV2.s.sol` (same 50, same order).
+- Regenerate: `python scripts/build_catalog.py --limit 50` (pulls OKX
+  instruments + tickers and the Backed/xStocks registry, then verifies each
+  address against `rpc.xlayer.tech`). Both files are committed and diffable.
+- Removed from the old catalog (not tradable on OKX): `BAx`, `JPMx`, `XOMx`.
+  Note `BAx` was registered on-chain with a placeholder address — historical
+  entries only; do not re-enable.
+
+### Hybrid data feeds
+
+- Quotes/OHLCV: Yahoo chart API (`XIRA_QUOTE_PROVIDER=yahoo`, no key; real
+  volume + 52w range). `finnhub` keeps the old path; `mock` forces mock.
+- News/sentiment: Finnhub free tier, rotated `XIRA_NEWS_PER_PASS` (default
+  15) assets per scheduler pass; the rest use the price-priority proxy.
+  This keeps 50-asset passes under the 60 req/min free limit.
+- Publishing: `publish_batch` chunks pending attestations into
+  `batchUpdateAttestations` txs (`XIRA_BATCH_CHUNK`, default 12 → ~4-5 txs
+  per full pass at 50 assets; ~$0.001 ETH-equivalent gas on testnet).
+  Chunk failure falls back to per-asset txs so one bad asset can't block
+  a pass. Per-asset 60s write cooldown is enforced on-chain.
+
+### Mainnet checklist (not yet done)
+
+1. Decision gates: premium/managed data decision, cold-wallet custody of
+   owner key (hot updater key stays on Railway), OKB funding, deploy approval.
+2. Deploy hardened contract (pause + registered-assets-only + 60s cooldown
+   + `unregisterAsset`) to chain 196:
+   `PRIVATE_KEY=… forge script script/DeployV2.s.sol:DeployV2
+   --rpc-url https://rpc.xlayer.tech --broadcast`
+   (reads 50 assets from the catalog; dry-run first).
+3. Set `XIRA_CHAIN_LABEL=xlayer`, `XIRA_EXPLORER_BASE=…/xlayer`,
+   `XIRA_RPC_FALLBACK=https://xlayerrpc.okx.com`, then redeploy the backend.
+4. Fund signer ≥ 0.5 OKB; low-balance alert fires below
+   `XIRA_MIN_SIGNER_BALANCE_OKB` (default 0.05).
+5. Run `python scripts/recompute_score.py --max-age-min 25`; exit 0 = chain
+   matches live recomputation (hash-level).
+
 ## Frontend
 
 Vercel auto-deploys from `main` (xira.surf). No manual steps; a push is a

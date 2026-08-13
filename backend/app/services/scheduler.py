@@ -120,6 +120,7 @@ def _run_pass() -> None:
     _diag["pass_count"] += 1
 
     thresholds = history_db.get_thresholds()
+    pending: list[dict] = []
 
     for asset in get_tracked_assets():
         symbol = asset["symbol"]
@@ -181,26 +182,35 @@ def _run_pass() -> None:
                 continue
 
             result.timestamp = int(time.time())
-            tx = publisher.update_attestation(
-                token_address=asset["token_address"],
-                score=result.risk_score,
-                confidence=result.confidence,
-                evidence_hash_hex=result.evidence_hash,
-                model_version=result.model_version,
-                anomaly=result.anomaly,
-                anomaly_reason=result.anomaly_reason,
-            )
-            if tx:
-                _last_published[symbol] = result.risk_score
-                _diag["publishes"] += 1
-                _store_history(symbol, result)
-                logger.info(f"Scheduler: {symbol} published ({tx['tx_hash'][:14]}…).")
+            pending.append({
+                "token_address": asset["token_address"],
+                "score": result.risk_score,
+                "confidence": result.confidence,
+                "evidence_hash_hex": result.evidence_hash,
+                "model_version": result.model_version,
+                "anomaly": result.anomaly,
+                "anomaly_reason": result.anomaly_reason,
+                "symbol": symbol,
+                "result": result,
+            })
         except Exception as e:
             msg = f"{symbol}: {e}"
             if len(_diag["errors"]) >= 5:
                 _diag["errors"].pop(0)
             _diag["errors"].append(msg)
             logger.error(f"Scheduler: pass failed for {symbol}: {e}")
+
+    if pending:
+        summary = publisher.publish_batch(pending)
+        for s in summary["txs"]:
+            logger.info(f"Scheduler: batch tx {s['tx_hash'][:14]}… ({s['entries']} entries)")
+        for entry in pending:
+            if entry["token_address"] in summary["succeeded"]:
+                _last_published[entry["symbol"]] = entry["score"]
+                _store_history(entry["symbol"], entry["result"])
+                _diag["publishes"] += 1
+        if summary["fallbacks"]:
+            logger.warning(f"Scheduler: {summary['fallbacks']} chunk(s) fell back to per-asset txs")
 
     global _risk_baseline_done
     if not _risk_baseline_done:

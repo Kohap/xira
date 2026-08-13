@@ -389,6 +389,44 @@ contract XIRATest is Test {
         xira.setMinAttestationInterval(60);
     }
 
+    function test_UnregisterAsset() public {
+        vm.prank(owner);
+        xira.unregisterAsset("MOCKx");
+        string[] memory symbols = xira.getAllTrackedSymbols();
+        assertEq(symbols.length, 1);
+        assertEq(symbols[0], "DUMMYx");
+        assertEq(xira.assetAddresses(mockToken), address(0));
+        assertEq(xira.symbolAddresses("MOCKx"), address(0));
+        vm.prank(owner);
+        vm.expectRevert("XIRA: asset not registered");
+        xira.updateAttestation(mockToken, 50, 80, bytes32(0), "v1.0.0", false, "");
+    }
+
+    function test_UnregisterRemovesOrdering() public {
+        vm.startPrank(owner);
+        xira.registerAsset(address(0x300), "AAx");
+        xira.registerAsset(address(0x400), "BBx");
+        xira.registerAsset(address(0x500), "CCx");
+        xira.unregisterAsset("BBx");
+        vm.stopPrank();
+        string[] memory symbols = xira.getAllTrackedSymbols();
+        assertEq(symbols.length, 4);
+        assertEq(xira.symbolAddresses("BBx"), address(0));
+        assertEq(xira.assetAddresses(address(0x400)), address(0));
+    }
+
+    function test_RevertWhen_UnregisterUnknownSymbol() public {
+        vm.prank(owner);
+        vm.expectRevert("XIRA: symbol not registered");
+        xira.unregisterAsset("NOPE");
+    }
+
+    function test_RevertWhen_StrangerUnregisters() public {
+        vm.prank(stranger);
+        vm.expectRevert("XIRA: caller is not owner");
+        xira.unregisterAsset("MOCKx");
+    }
+
     function test_GetAllTrackedAssetsWithScores() public {
         vm.startPrank(owner);
         xira.registerAsset(address(0x300), "NVDAx");

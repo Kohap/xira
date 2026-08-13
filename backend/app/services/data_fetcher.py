@@ -1,5 +1,5 @@
 from __future__ import annotations
-import os, logging, time, random, re
+import os, logging, time, random, re, json
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
@@ -11,27 +11,53 @@ logger = logging.getLogger(__name__)
 FINNHUB_KEY = os.getenv("FINNHUB_API_KEY", "")
 FINNHUB_BASE = "https://finnhub.io/api/v1"
 
+# Hybrid quotes: Yahoo chart API is the default bulk provider (no key, full
+# OHLCV + real 52w range); Finnhub is reserved for news/sentiment headers.
+QUOTE_PROVIDER = os.getenv("XIRA_QUOTE_PROVIDER", "yahoo").strip().lower()  # yahoo|finnhub|mock
+YAHOO_CHART_BASE = "https://query1.finance.yahoo.com/v8/finance/chart"
+YAHOO_DAYS = 370
+
 # In-memory cache for price data (5 minute TTL)
 _price_cache: dict[str, tuple[PriceData, float]] = {}
 CACHE_TTL = 300  # 5 minutes
 
-TRACKED_ASSETS: list[dict] = [
-    {"symbol": "NVDAx", "underlying": "NVDA", "sector": "Technology", "token_address": "0xc845b2894dbddd03858fd2d643b4ef725fe0849d"},
-    {"symbol": "TSLAx", "underlying": "TSLA", "sector": "Consumer Cyclical", "token_address": "0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0"},
-    {"symbol": "AAPLx", "underlying": "AAPL", "sector": "Technology", "token_address": "0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a"},
-    {"symbol": "MSFTx", "underlying": "MSFT", "sector": "Technology", "token_address": "0x5621737f42dae558b81269fcb9e9e70c19aa6b35"},
-    {"symbol": "GOOGLx", "underlying": "GOOGL", "sector": "Communication", "token_address": "0xe92f673ca36c5e2efd2de7628f815f84807e803f"},
-    {"symbol": "AMZNx", "underlying": "AMZN", "sector": "Consumer Cyclical", "token_address": "0x3557ba345b01efa20a1bddc61f573bfd87195081"},
-    {"symbol": "METAx", "underlying": "META", "sector": "Communication", "token_address": "0x96702be57cd9777f835117a809c7124fe4ec989a"},
-    {"symbol": "SPYx", "underlying": "SPY", "sector": "ETF", "token_address": "0x90a2a4c76b5d8c0bc892a69ea28aa775a8f2dd48"},
-    {"symbol": "QQQx", "underlying": "QQQ", "sector": "ETF", "token_address": "0xa753a7395cae905cd615da0b82a53e0560f250af"},
-    {"symbol": "AMDx", "underlying": "AMD", "sector": "Technology", "token_address": "0x3522513e5f146a2006e2901b05f16b2821485e19"},
-    {"symbol": "INTCx", "underlying": "INTC", "sector": "Technology", "token_address": "0xf8a80d1cb9cfd70d03d655d9df42339846f3b3c8"},
-    {"symbol": "NFLXx", "underlying": "NFLX", "sector": "Communication", "token_address": "0xa6a65ac27e76cd53cb790473e4345c46e5ebf961"},
-    {"symbol": "BAx", "underlying": "BA", "sector": "Industrials", "token_address": "0xDDdDddDdDdddDDddDDddDDDDdDdDDdDDdDDDDDDd"},
-    {"symbol": "JPMx", "underlying": "JPM", "sector": "Financial", "token_address": "0xd9fc3e075d45254a1d834fea18af8041207dea0a"},
-    {"symbol": "XOMx", "underlying": "XOM", "sector": "Energy", "token_address": "0xeedb0273c5af792745180e9ff568cd01550ffa13"},
-]
+CATALOG_PATH = os.getenv(
+    "XIRA_CATALOG_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "catalogs", "asset_catalog.json"),
+)
+
+
+def _load_catalog() -> list[dict]:
+    """Tracked assets come from the versioned catalog (built by
+    scripts/build_catalog.py from OKX + Backed + on-chain verification).
+    Only `enabled` entries are active; the `listed` tail stays available."""
+    try:
+        with open(CATALOG_PATH) as f:
+            catalog = json.load(f)
+        assets = []
+        for a in catalog.get("assets", []):
+            if not a.get("enabled", False):
+                continue
+            assets.append(
+                {
+                    "symbol": a["symbol"],
+                    "underlying": a["underlying"],
+                    "sector": a.get("sector") or "Equity",
+                    "token_address": a["token_address"],
+                    "quote_asset": a.get("quote_asset", "USDT"),
+                    "okx_pair": a.get("okx_pair", ""),
+                    "name": a.get("name", ""),
+                }
+            )
+        if not assets:
+            raise ValueError("catalog has no enabled assets")
+        return assets
+    except Exception as e:
+        logger.warning(f"Catalog load failed ({e}); empty asset universe.")
+        return []
+
+
+TRACKED_ASSETS: list[dict] = _load_catalog()
 
 
 def get_tracked_symbols() -> list[str]:
@@ -202,12 +228,96 @@ def _deterministic_gauss(seed_key: str, mean: float, std: float) -> float:
     return random.Random(seed_key).gauss(mean, std)
 
 
+def _fetch_yahoo_chart(ticker: str) -> Optional[dict]:
+    """One-call bulk quote + OHLCV for a ticker. No API key required."""
+    url = f"{YAHOO_CHART_BASE}/{ticker}?range={YAHOO_DAYS}d&interval=1d"
+    try:
+        resp = httpx.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"})
+        if resp.status_code != 200:
+            logger.warning(f"Yahoo chart failed for {ticker}: HTTP {resp.status_code}")
+            return None
+        return resp.json().get("chart", {}).get("result", [None])[0]
+    except Exception as e:
+        logger.warning(f"Yahoo chart error for {ticker}: {e}")
+        return None
+
+
+def _yahoo_candles(result: dict) -> tuple[list[float], list[int]]:
+    ts = result.get("timestamp", [])
+    q = (result.get("indicators", {}).get("quote") or [{}])[0]
+    closes, volumes = q.get("close", []), q.get("volume", [])
+    pairs = [
+        (t, c, v)
+        for t, c, v in zip(ts, closes, volumes)
+        if c is not None and v is not None
+    ]
+    return [c for _, c, _ in pairs], [v for _, _, v in pairs]
+
+
+def fetch_price_data_yahoo(ticker: str) -> Optional[PriceData]:
+    result = _fetch_yahoo_chart(ticker)
+    if not result or result.get("timestamp") is None:
+        return None
+    closes, volumes = _yahoo_candles(result)
+    if len(closes) < 5 or closes[-1] is None:
+        return None
+    if closes[-1] <= 0:
+        return None
+
+    data = PriceData()
+    data.price = closes[-1]
+    data.daily_prices = closes[-21:]
+    data.volume = volumes[-1] if volumes else 0
+    data.avg_volume_20d = int(sum(volumes[-20:]) / max(1, len(volumes[-20:])))
+    data.high_52w = max(closes)
+    data.low_52w = min(closes)
+    data.change_24h = (
+        (closes[-1] - closes[-2]) / closes[-2] * 100 if len(closes) >= 2 and closes[-2] > 0 else 0.0
+    )
+    idx7 = len(closes) - 8
+    data.change_7d = (
+        (closes[-1] - closes[idx7]) / closes[idx7] * 100
+        if 0 <= idx7 < len(closes) - 1 and closes[idx7] > 0
+        else 0.0
+    )
+    data.market_cap = 0.0
+    data.beta = 1.0
+    data.source = "yahoo"
+    data.fetched_at = time.time()
+    return data
+
+
 def fetch_price_data(ticker: str, force: bool = False) -> Optional[PriceData]:
     if not force and ticker in _price_cache:
         cached_data, cached_time = _price_cache[ticker]
         if time.time() - cached_time < CACHE_TTL:
             return cached_data
 
+    if QUOTE_PROVIDER == "mock":
+        return None
+
+    if QUOTE_PROVIDER == "finnhub":
+        data = _fetch_finnhub_price(ticker)
+    else:
+        data = fetch_price_data_yahoo(ticker)
+
+    if data is None:
+        return None
+
+    # Real 52w range; only fall back to a derived band when the candle
+    # history can't support it (e.g. a freshly listed ticker).
+    if not data.high_52w and len(data.daily_prices) >= 5:
+        hi, lo = max(data.daily_prices), min(data.daily_prices)
+        spread = max(hi - lo, max(hi, lo) * 0.001)
+        data.high_52w = hi + 0.05 * spread
+        data.low_52w = max(0.0, lo - 0.05 * spread)
+
+    _price_cache[ticker] = (data, time.time())
+    logger.info(f"Quote ({data.source}): {ticker} ${data.price:.2f} vol {data.volume:,}")
+    return data
+
+
+def _fetch_finnhub_price(ticker: str) -> Optional[PriceData]:
     if not FINNHUB_KEY:
         return None
 
@@ -299,6 +409,11 @@ def generate_mock_price_data(ticker: str) -> PriceData:
 class DataFetcher:
     def __init__(self, use_live: bool = True):
         self.use_live = use_live
+        self._news_offset = 0
+        # Finnhub news is the only rate-limit-sensitive call left in the
+        # hybrid design; rotate which assets get fresh headlines per pass
+        # (price-proxy for the rest) so 50+ assets stay under 60 req/min.
+        self.news_per_pass = max(1, int(os.getenv("XIRA_NEWS_PER_PASS", "15")))
 
     def fetch_all_prices(self, tickers: list[str], force: bool = False) -> tuple[dict[str, Optional[PriceData]], float]:
         results: dict[str, Optional[PriceData]] = {}
@@ -341,8 +456,20 @@ class DataFetcher:
                 results[t] = s
             return results, time.time()
 
+        n = len(tickers)
+        if n == 0:
+            return results, time.time()
+        start = self._news_offset % n
+        news_set = set(tickers[start : start + self.news_per_pass])
+        if start + self.news_per_pass > n:
+            news_set.update(tickers[: (start + self.news_per_pass) % n])
+        self._news_offset += self.news_per_pass
+
         for ticker in tickers:
-            sentiment = fetch_news_sentiment(ticker)
+            if ticker in news_set:
+                sentiment = fetch_news_sentiment(ticker)
+            else:
+                sentiment = SentimentData()
             if sentiment.headline_count == 0:
                 pd = price_data.get(ticker) if price_data else None
                 sentiment = _derive_sentiment_from_price(pd) if pd else SentimentData()
@@ -351,7 +478,10 @@ class DataFetcher:
             results[ticker] = sentiment
 
         headline_count = sum(1 for s in results.values() if s.source == "headlines")
-        logger.info(f"Sentiment: {headline_count}/{len(tickers)} from news headlines, rest from price proxy")
+        logger.info(
+            f"Sentiment: {headline_count}/{len(tickers)} headlines this pass "
+            f"(rotation {self.news_per_pass}/pass), rest price proxy"
+        )
 
         return results, time.time()
 

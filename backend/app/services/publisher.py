@@ -13,10 +13,32 @@ DEFAULT_EXPLORER_BASE = "https://www.okx.com/web3/explorer/xlayer-test"
 MAX_NONCE_RETRIES = int(os.getenv("XIRA_MAX_NONCE_RETRIES", "3"))
 MIN_SIGNER_BALANCE_OKB = float(os.getenv("XIRA_MIN_SIGNER_BALANCE_OKB", "0.05"))
 BALANCE_CACHE_TTL_S = 60.0
+BATCH_CHUNK = max(1, int(os.getenv("XIRA_BATCH_CHUNK", "12")))
 
 
 def _get_abi() -> list:
+    attestation_input = {
+        "components": [
+            {"internalType": "address", "name": "asset", "type": "address"},
+            {"internalType": "uint8", "name": "score", "type": "uint8"},
+            {"internalType": "uint8", "name": "confidence", "type": "uint8"},
+            {"internalType": "bytes32", "name": "evidenceHash", "type": "bytes32"},
+            {"internalType": "string", "name": "modelVersion", "type": "string"},
+            {"internalType": "bool", "name": "anomaly", "type": "bool"},
+            {"internalType": "string", "name": "anomalyReason", "type": "string"},
+        ],
+        "internalType": "struct XIRA.AttestationInput",
+        "name": "inputs",
+        "type": "tuple[]",
+    }
     return [
+        {
+            "inputs": [attestation_input],
+            "name": "batchUpdateAttestations",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function",
+        },
         {
             "inputs": [
                 {"internalType": "address", "name": "asset", "type": "address"},
@@ -203,6 +225,103 @@ class OnchainPublisher:
             })
         except Exception:
             return 300000
+
+    def publish_batch(self, entries: list[dict]) -> dict:
+        """Publish several attestations in chunked batchUpdateAttestations
+        txs (gas-efficient at 50+ assets). Falls back to per-asset txs if a
+        chunk reverts (e.g. an asset tripped the per-asset min interval)."""
+        summary = {"sent": 0, "published": 0, "failed": 0, "txs": [], "fallbacks": 0, "succeeded": set()}
+        if not self.enabled or not self.contract or not self.w3 or not self.account:
+            summary["failed"] = len(entries)
+            return summary
+
+        def _succeed(e):
+            summary["published"] += 1
+            summary["succeeded"].add(e["token_address"])
+
+        for start in range(0, len(entries), BATCH_CHUNK):
+            chunk = entries[start : start + BATCH_CHUNK]
+            inputs = []
+            for e in chunk:
+                ev = bytes.fromhex(e["evidence_hash_hex"].replace("0x", ""))
+                if len(ev) != 32:
+                    ev = ev.ljust(32, b"\x00")[:32]
+                inputs.append([
+                    self.w3.to_checksum_address(e["token_address"]),
+                    e["score"],
+                    e["confidence"],
+                    ev,
+                    e["model_version"],
+                    e["anomaly"],
+                    e.get("anomaly_reason") or "",
+                ])
+
+            self.last_attempt_at = time.time()
+            for attempt in range(MAX_NONCE_RETRIES):
+                try:
+                    tx = self.contract.functions.batchUpdateAttestations(inputs).build_transaction({
+                        "from": self.account.address,
+                        "nonce": self.w3.eth.get_transaction_count(self.account.address),
+                        "gas": self._estimate_batch_gas(inputs),
+                        "gasPrice": self.w3.eth.gas_price,
+                        "chainId": self.chain_id,
+                    })
+                    signed = self.account.sign_transaction(tx)
+                    tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+                    receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+                    if receipt.get("status") != 1:
+                        raise RuntimeError(f"batch tx reverted: {tx_hash.hex()}")
+                    summary["sent"] += len(chunk)
+                    for e in chunk:
+                        _succeed(e)
+                    summary["txs"].append({
+                        "tx_hash": tx_hash.hex(),
+                        "explorer_url": f"{self.explorer_base}/tx/{tx_hash.hex()}",
+                        "block": receipt.get("blockNumber", 0),
+                        "entries": len(chunk),
+                        "gas_used": receipt.get("gasUsed", 0),
+                    })
+                    self.publishes += 1
+                    self.last_publish_at = time.time()
+                    self.consecutive_failures = 0
+                    for e in chunk:
+                        self.last_tx_by_token[e["token_address"]] = summary["txs"][-1]
+                    break
+                except Exception as e:
+                    err = f"{e}"
+                    if "nonce too low" in err.lower() and attempt < MAX_NONCE_RETRIES - 1:
+                        time.sleep(1.0 * (attempt + 1))
+                        continue
+                    if attempt < MAX_NONCE_RETRIES - 1:
+                        time.sleep(1.0)
+                        continue
+                    # Last attempt failed: retry each entry individually so
+                    # one bad asset doesn't block the whole pass.
+                    summary["fallbacks"] += 1
+                    for e in chunk:
+                        tx = self.update_attestation(
+                            token_address=e["token_address"],
+                            score=e["score"],
+                            confidence=e["confidence"],
+                            evidence_hash_hex=e["evidence_hash_hex"],
+                            model_version=e["model_version"],
+                            anomaly=e["anomaly"],
+                            anomaly_reason=e.get("anomaly_reason") or "",
+                        )
+                        if tx:
+                            _succeed(e)
+                        else:
+                            summary["failed"] += 1
+                    break
+        return summary
+
+    def _estimate_batch_gas(self, inputs: list) -> int:
+        try:
+            return self.contract.functions.batchUpdateAttestations(inputs).estimate_gas(
+                {"from": self.account.address}
+            )
+        except Exception:
+            return 300000 * max(1, len(inputs))
 
     def update_attestation(
         self,

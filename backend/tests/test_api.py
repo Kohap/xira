@@ -11,9 +11,12 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.main import app
+from app.services.data_fetcher import get_tracked_assets
 
 
 client = TestClient(app)
+
+EXPECTED_ASSETS = len(get_tracked_assets())
 
 
 def test_root():
@@ -29,7 +32,7 @@ def test_health():
     assert res.status_code == 200
     body = res.json()
     assert body["status"] == "ok"
-    assert body["tracked_assets"] == 15
+    assert body["tracked_assets"] == EXPECTED_ASSETS
 
     # Publisher visibility block (P0.2): present even when off-chain.
     pub = body["publisher"]
@@ -50,7 +53,7 @@ def test_assets_all():
     res = client.get("/api/assets/all")
     assert res.status_code == 200
     body = res.json()
-    assert len(body["assets"]) == 15
+    assert len(body["assets"]) == EXPECTED_ASSETS
     assert "summary" in body
     assert all(0 <= a["risk_score"] <= 100 for a in body["assets"])
     assert all("factors" in a for a in body["assets"])
@@ -60,7 +63,7 @@ def test_assets_stats():
     res = client.get("/api/assets/stats")
     assert res.status_code == 200
     body = res.json()
-    assert body["total_assets"] == 15
+    assert body["total_assets"] == EXPECTED_ASSETS
     assert body["average_score"] >= 0
     assert "distribution" in body
     assert body["best"] is not None
