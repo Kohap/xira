@@ -31,7 +31,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://xira-gsb3.onrender.com",
+      "connect-src 'self' https://xira-api-production.up.railway.app",
       "object-src 'none'",
       "frame-ancestors 'none'",
       "base-uri 'self'",

@@ -70,8 +70,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
       >
         <head>
-          <link rel="preconnect" href="https://xira-gsb3.onrender.com" crossOrigin="anonymous" />
-          <link rel="dns-prefetch" href="https://xira-gsb3.onrender.com" />
+          <link rel="preconnect" href="https://xira-api-production.up.railway.app" crossOrigin="anonymous" />
+          <link rel="dns-prefetch" href="https://xira-api-production.up.railway.app" />
           <link rel="apple-touch-icon" href={`${ASSET_BASE}/apple-touch-icon.png`} />
           <meta name="theme-color" content="#0d0c0b" />
         </head>
