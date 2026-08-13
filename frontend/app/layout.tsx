@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import Image from "next/image";
 import { Header } from "@/components/Header";
+import XiraMark from "@/components/XiraMark";
 import xlayerLogo from "./xlayer-logo-light.png";
 import "./globals.css";
 
+const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
+const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
+const CONTRACT_URL = `${EXPLORER}/address/${CONTRACT}`;
 const ASSET_BASE = process.env.VERCEL === "1" ? "" : "/xira";
 
 const geistSans = Geist({
@@ -92,21 +96,105 @@ export default function RootLayout({
           {children}
         </main>
         <footer className="border-t border-[var(--card-border)] bg-black/30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-center gap-2.5">
-            <span className="text-xs text-neutral-500">Built on</span>
-            <span className="inline-flex items-center gap-1.5">
-              <Image
-                src={xlayerLogo}
-                alt=""
-                width={20}
-                height={16}
-                className="w-5 h-4 object-contain"
-                loading="lazy"
-              />
-              <span className="text-sm font-semibold text-neutral-300">
-                XLayer
-              </span>
-            </span>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+            <nav aria-label="Footer" className="grid grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
+              {[
+                {
+                  heading: "Product",
+                  links: [
+                    { label: "Live dashboard", href: "/dashboard" },
+                    { label: "Alerts", href: "/alerts" },
+                    { label: "Methodology", href: "/whitepaper" },
+                    { label: "Help / FAQ", href: "/#faq" },
+                  ],
+                },
+                {
+                  heading: "Developers",
+                  links: [
+                    { label: "Docs", href: "/docs" },
+                    { label: "Verify a score", href: "/verify" },
+                    { label: "Evidence hash", href: "/docs" },
+                    { label: "Contract ABI", href: "/docs" },
+                  ],
+                },
+                {
+                  heading: "Legal & Compliance",
+                  links: [
+                    { label: "Privacy Policy", href: "/privacy" },
+                    { label: "Terms of Service", href: "/terms" },
+                  ],
+                },
+              ].map((col) => (
+                <div key={col.heading}>
+                  <h3 className="text-[11px] font-medium text-neutral-500 mb-3">
+                    {col.heading}
+                  </h3>
+                  <ul className="space-y-2.5">
+                    {col.links.map((link) => (
+                      <li key={link.label}>
+                        <a
+                          href={link.href}
+                          className="text-sm text-neutral-400 hover:text-white transition-colors"
+                        >
+                          {link.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </nav>
+
+            <div className="mt-12 pt-6 border-t border-[var(--card-border)] flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p className="text-xs text-neutral-500">
+                  © 2026 XIRA · Built by <span className="text-neutral-400">Gift</span>
+                </p>
+                <nav
+                  aria-label="Footer links"
+                  className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs"
+                >
+                  <a
+                    href={CONTRACT_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-neutral-400 hover:text-white transition-colors"
+                  >
+                    View Contract
+                  </a>
+                  <span className="text-neutral-700" aria-hidden="true">·</span>
+                  <a
+                    href="/dashboard"
+                    className="text-neutral-400 hover:text-white transition-colors"
+                  >
+                    Live Dashboard
+                  </a>
+                  <span className="text-neutral-700" aria-hidden="true">·</span>
+                  <span className="text-neutral-500">
+                    Mainnet: soon
+                  </span>
+                </nav>
+              </div>
+
+              <div className="flex items-center justify-center gap-2.5">
+                <span className="text-xs text-neutral-500">Built on</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <XiraMark className="w-5 h-5 rounded shadow-sm" />
+                  <span className="text-neutral-700" aria-hidden="true">·</span>
+                  <Image
+                    src={xlayerLogo}
+                    alt=""
+                    width={20}
+                    height={16}
+                    className="w-5 h-4 object-contain"
+                    loading="lazy"
+                  />
+                  <span className="text-sm font-semibold text-neutral-300">
+                    XLayer
+                  </span>
+                </span>
+              </div>
+            </div>
           </div>
         </footer>
       </body>
