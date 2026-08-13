@@ -25,6 +25,7 @@ export interface Attestation {
   chain_tx?: string;
   chain_explorer?: string;
   chain_block?: number;
+  onchain_verified?: boolean;
   previous_score?: number | null;
   score_delta?: number | null;
 }

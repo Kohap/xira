@@ -61,6 +61,11 @@ async def get_attestation(symbol: str, request: Request):
         onchain = publisher.read_latest(match["token_address"])
         if onchain:
             result.chain_id = publisher.chain_id
+            result.onchain_verified = bool(
+                int(onchain["score"]) == result.risk_score
+                and onchain["evidence_hash"].replace("0x", "").lower()
+                == result.evidence_hash.replace("0x", "").lower()
+            )
             last = publisher.last_tx(match["token_address"])
             if last:
                 result.chain_tx = last["tx_hash"]

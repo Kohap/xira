@@ -38,6 +38,7 @@ class AttestationResponse(BaseModel):
     chain_explorer: Optional[str] = None
     chain_block: Optional[int] = None
     chain_id: Optional[int] = None
+    onchain_verified: bool = False
     previous_score: Optional[int] = None
     score_delta: Optional[int] = None
 

@@ -203,6 +203,25 @@ export function AssetDetailClient() {
             </h1>
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               <RiskBadge level={attestation.risk_level} />
+              {attestation.onchain_verified && (
+                <a
+                  href={
+                    attestation.chain_explorer ??
+                    (attestation.chain_tx
+                      ? `${EXPLORER}/tx/${attestation.chain_tx}`
+                      : undefined)
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400 transition-colors hover:border-emerald-400/50"
+                  title="This attestation is published on X Layer testnet"
+                >
+                  <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M3.5 8.5l3 3 6-6" />
+                  </svg>
+                  Verified on-chain
+                </a>
+              )}
               <span className="text-sm text-neutral-500">
                 Last update: {formatTimestamp(attestation.timestamp)}
               </span>
