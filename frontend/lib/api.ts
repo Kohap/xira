@@ -16,7 +16,7 @@ function normalizeBase(url: string): string {
 }
 
 export const API_BASE = normalizeBase(
-  process.env.NEXT_PUBLIC_API_URL || "https://xira-gsb3.onrender.com"
+  process.env.NEXT_PUBLIC_API_URL || "https://xira-api-production.up.railway.app"
 );
 
 const FETCH_TIMEOUT_MS = 25_000;

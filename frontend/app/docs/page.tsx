@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     "A plain-language guide to the XIRA API: what it does, how to read a score, the on-chain contract, and how agents use it.",
 };
 
-const API_BASE = "https://xira-gsb3.onrender.com";
+const API_BASE = "https://xira-api-production.up.railway.app";
 const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
 
 const ENDPOINTS = [
@@ -15,7 +15,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/api/assets/all",
     desc: "The main board. Returns a risk score for every tracked market plus a one-line market summary.",
-    query: "?fresh=true forces a recalculation instead of using the price cache",
+    query: "?fresh=true forces a recalculation (requires the XIRA_ADMIN_TOKEN header)",
     returns: "AllAssetsResponse",
     note: "data_source is 'live', 'partial', or 'mock' depending on how many assets resolved from Finnhub.",
   },
