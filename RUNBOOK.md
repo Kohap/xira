@@ -113,7 +113,7 @@ plaintext is shown once at issuance). The keys themselves are not secrets
 persisted in the codebase or the DB.
 
 - Issue: `POST /api/admin/keys` with `{"name": "..."}` and
-  `X-API-Key: <admin token>` or `Authorization: Bearer <admin token>`.
+  `X-Admin-Token: <admin token>` (or `Authorization: Bearer <admin token>`).
 - List: `GET /api/admin/keys` (hashes never returned).
 - Revoke: `DELETE /api/admin/keys/{prefix}`.
 - Use: integrators send `X-API-Key: <key>` on every request. Keyless
@@ -122,6 +122,33 @@ persisted in the codebase or the DB.
 - Always open, key or not: `/`, `/docs`, `/redoc`, `/openapi.json`,
   `/api/assets/health`, `/api/alerts/ops/test`, the `/mcp` agent surface,
   and `/api/admin/*` (which has its own admin-token auth).
+
+## Secret rotation
+
+Status ledger (last check 2026-08-13):
+
+| Secret | Status |
+| --- | --- |
+| Contract deployer key | **Rotated.** Live contract `0xaa5f62…45d0` and the older `0x64288cc…2AE` are both owned by the current signer `0x0CE306…ED3c0`, which is also an authorized updater. The leaked Render-era key no longer controls anything; `scripts/rotate-key.sh` is a completed reference. |
+| `FINNHUB_API_KEY` | **Rotated 2026-08-13.** New key live (board 15/15 Finnhub). Revoke the old key in the Finnhub dashboard. |
+| `TELEGRAM_BOT_TOKEN` | **Rotated 2026-08-13.** New token live (`/api/alerts/ops/test` returns `sent`). Revoke the old token via BotFather `/revoke`. |
+
+Procedure for any future rotation:
+
+1. Generate the replacement in the provider dashboard (Finnhub
+   dashboard / BotFather).
+2. Push it to Railway **without touching shell history or chat**:
+   `printf '%s' 'NEWVALUE' | railway variable set --stdin <VAR>`.
+   Railway restarts the service with the new value.
+3. Verify live: Finnhub → `curl -H "Origin: https://www.xira.surf" .../api/assets/all`
+   shows `finnhub` for all 15 assets; Telegram → `POST /api/alerts/ops/test`
+   returns `{"ok": true, "detail": "sent"}`.
+4. Revoke the old value in the provider dashboard.
+
+Log hygiene: `httpx` logging is pinned to WARNING and upstream auth uses
+headers (`X-Finnhub-Token`), so keys no longer appear in log streams. Any
+secret that was ever visible in logs, CI output, or terminal scrollback
+should be rotated once — that is why the entries above were replaced.
 
 ## Database
 
