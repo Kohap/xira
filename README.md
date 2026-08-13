@@ -1,6 +1,6 @@
 # XIRA — X-Layer Intelligence & Risk Analytics
 
-<img src="https://www.xira.surf/xira/icon.png" width="48" height="48" align="left" alt="XIRA">
+<img src="https://www.xira.surf/icon.png" width="48" height="48" align="left" alt="XIRA">
 
 **One verifiable risk number for every xStock — signed onchain.**
 
@@ -19,7 +19,7 @@ this site.
 | **App** | [https://www.xira.surf](https://www.xira.surf) |
 | **Risk board** | [https://www.xira.surf/dashboard](https://www.xira.surf/dashboard) |
 | **API base** | [https://xira-gsb3.onrender.com](https://xira-gsb3.onrender.com) |
-| **API docs** | [https://xira-gsb3.onrender.com/docs](https://xira-gsb3.onrender.com/docs) |
+| **Docs** | [https://xira-gsb3.onrender.com/docs](https://xira-gsb3.onrender.com/docs) |
 | **Verify a score** | [https://www.xira.surf/verify](https://www.xira.surf/verify) |
 | **Oracle contract** | [`0xaa5f6215e947ffce2f46513a926af3239be545d0`](https://www.okx.com/web3/explorer/xlayer-test/address/0xaa5f6215e947ffce2f46513a926af3239be545d0) on OKX Explorer |
 | **Source** | [github.com/Kohap/xira](https://github.com/Kohap/xira) |

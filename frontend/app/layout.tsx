@@ -158,7 +158,7 @@ export default function RootLayout({
                   {
                     heading: "Developers",
                     links: [
-                      { label: "API", href: "/docs" },
+                      { label: "Docs", href: "/docs" },
                       { label: "Verify a score", href: "/verify" },
                       { label: "Evidence hash", href: "/docs" },
                       { label: "Contract ABI", href: "/docs" },

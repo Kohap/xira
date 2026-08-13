@@ -23,7 +23,7 @@ const MENU_GROUPS = [
     heading: "Learn",
     items: [
       { label: "Methodology", href: "/whitepaper", note: "The model, exactly as built" },
-      { label: "API", href: "/docs", note: "Endpoints, types, contract ABI" },
+      { label: "Docs", href: "/docs", note: "Endpoints, types, contract ABI" },
       { label: "How it works", href: "/#how", note: "Collect, score, sign, verify" },
       { label: "On-chain", href: "/#chain", note: "Open the oracle" },
     ],
