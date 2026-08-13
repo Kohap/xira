@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const onVercel = process.env.VERCEL === "1";
 
+const apiOrigin = (() => {
+  const url =
+    process.env.NEXT_PUBLIC_API_URL || "https://xira-api-production.up.railway.app";
+  try {
+    return new URL(url).origin;
+  } catch {
+    return url;
+  }
+})();
+
 const securityHeaders = [
   {
     key: "Strict-Transport-Security",
@@ -31,7 +41,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://xira-api-production.up.railway.app",
+      `connect-src 'self' ${apiOrigin}`,
       "object-src 'none'",
       "frame-ancestors 'none'",
       "base-uri 'self'",
@@ -39,11 +49,7 @@ const securityHeaders = [
       "upgrade-insecure-requests",
     ].join("; "),
   },
-  {
-    key: "Access-Control-Allow-Origin",
-    value: "https://xira-tan.vercel.app",
-  },
-];
+  ];
 
 const nextConfig: NextConfig = {
   images: {

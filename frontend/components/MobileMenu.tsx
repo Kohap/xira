@@ -6,8 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoMark } from "@/components/LogoMark";
 import { CopyButton } from "@/components/landing/CopyButton";
-
-const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
+import { CHAIN_ID, CHAIN_LABEL, CONTRACT_ADDRESS } from "@/lib/chain";
 
 const MENU_GROUPS = [
   {
@@ -139,18 +138,18 @@ export function MobileMenu() {
 
           <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4">
             <p className="text-[11px] text-neutral-500 mb-1.5">
-              Contract (X Layer Testnet)
+              Contract ({CHAIN_LABEL})
             </p>
             <div className="flex items-center gap-2">
               <code className="font-mono text-[11px] text-neutral-300 break-all min-w-0">
-                {CONTRACT}
+                {CONTRACT_ADDRESS}
               </code>
               <span className="ml-auto shrink-0">
-                <CopyButton value={CONTRACT} label="contract address" />
+                <CopyButton value={CONTRACT_ADDRESS} label="contract address" />
               </span>
             </div>
             <p className="mt-2 text-[11px] text-neutral-500">
-              Chain ID: <span className="font-mono text-neutral-400">1952</span> · X Layer Testnet
+              Chain ID: <span className="font-mono text-neutral-400">{CHAIN_ID}</span> · {CHAIN_LABEL}
             </p>
           </div>
         </div>

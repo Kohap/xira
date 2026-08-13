@@ -5,9 +5,13 @@ import { fetchAttestation } from "@/lib/api";
 import { fetchBoard } from "@/lib/board-cache";
 import type { Attestation } from "@/lib/types";
 import { CopyButton } from "./CopyButton";
+import {
+  CHAIN_ID,
+  CHAIN_NAME,
+  CONTRACT_ADDRESS,
+  CONTRACT_URL,
+} from "@/lib/chain";
 
-const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
-const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
 const RETRY_MS = 8000;
 
 export function ProofSection() {
@@ -55,7 +59,7 @@ export function ProofSection() {
     };
   }, []);
 
-  const contractUrl = `${EXPLORER}/address/${CONTRACT}`;
+  const contractUrl = CONTRACT_URL;
 
   return (
     <div className="space-y-6">
@@ -75,11 +79,11 @@ export function ProofSection() {
           </a>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <code className="font-mono text-xs text-neutral-300 truncate">{CONTRACT}</code>
-          <CopyButton value={CONTRACT} label="contract address" />
+          <code className="font-mono text-xs text-neutral-300 truncate">{CONTRACT_ADDRESS}</code>
+          <CopyButton value={CONTRACT_ADDRESS} label="contract address" />
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-neutral-400">
-          <span>chain 1952 · X Layer testnet</span>
+          <span>chain {CHAIN_ID} · {CHAIN_NAME}</span>
           <span className="inline-flex items-center gap-1.5">
             <span
               className={`w-1.5 h-1.5 rounded-full ${status === "live" ? "bg-emerald-400" : status === "offline" ? "bg-yellow-400" : "bg-neutral-500"} live-dot`}

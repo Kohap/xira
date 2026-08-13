@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { DocsToc } from "@/components/DocsToc";
+import { API_BASE } from "@/lib/api";
+import { CHAIN_ID, CHAIN_NAME, CONTRACT_ADDRESS, EXPLORER_BASE } from "@/lib/chain";
 
 export const metadata: Metadata = {
   title: "API Docs: XIRA",
   description:
     "A plain-language guide to the XIRA API: what it does, how to read a score, the on-chain contract, and how agents use it.",
 };
-
-const API_BASE = "https://xira-api-production.up.railway.app";
-const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
 
 const ENDPOINTS = [
   {
@@ -213,9 +212,9 @@ const SAMPLE_ATTESTATION = `{
   "data_source": "finnhub",
   "data_freshness_ms": 4120,
   "chain_tx": "0xabf3…",
-  "chain_explorer": "https://www.okx.com/web3/explorer/xlayer-test/tx/0xabf3…",
+  "chain_explorer": "${EXPLORER_BASE}/tx/0xabf3…",
   "chain_block": 9480231,
-  "chain_id": 1952
+  "chain_id": ${CHAIN_ID}
 }`;
 
 export default function DocsPage() {
@@ -329,8 +328,8 @@ export default function DocsPage() {
               blockchain, so the number does not live only on one server.
               Anyone can read it there, and the stored fingerprint lets you
               confirm the API and the chain agree. The contract runs on X
-              Layer Testnet (chain 1952) at{" "}
-              <code className="font-mono text-[12px] text-neutral-300 break-all">{CONTRACT}</code>.
+              Layer {CHAIN_NAME} (chain {CHAIN_ID}) at{" "}
+              <code className="font-mono text-[12px] text-neutral-300 break-all">{CONTRACT_ADDRESS}</code>.
             </p>
             <p className="mt-3 text-sm sm:text-[15px] text-neutral-400 leading-relaxed max-w-2xl">
               Think of it as a public notice board: the oracle posts the

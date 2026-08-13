@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { fetchVerify } from "@/lib/api";
 import type { VerifyResult } from "@/lib/types";
+import { CHAIN_ID, CHAIN_LABEL } from "@/lib/chain";
 
 const SYMBOLS = [
   "NVDAx", "TSLAx", "AAPLx", "MSFTx", "GOOGLx", "AMZNx", "METAx",
@@ -100,7 +101,7 @@ export default function VerifyPage() {
       </h1>
       <p className="mt-4 text-neutral-400 leading-relaxed max-w-2xl">
         Pick a market and compare what the oracle last signed against what
-        the XIRA contract actually stores on X Layer Testnet (Chain ID 1952).
+        the XIRA contract actually stores on {CHAIN_LABEL} (Chain ID {CHAIN_ID}).
       </p>
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3">

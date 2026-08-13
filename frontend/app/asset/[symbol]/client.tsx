@@ -5,10 +5,9 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { AssetDetail, Attestation, AttestationHistory, OnchainHistoryResponse, RescoreResponse } from "@/lib/types";
 import { API_BASE } from "@/lib/api";
+import { explorerTxUrl } from "@/lib/chain";
 import { RiskBadge } from "@/components/ScoreCard";
 import { FactorBreakdown, HistoryChart, AlertBanner } from "@/components/FactorBreakdown";
-
-const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
 
 function formatTimestamp(ts: number): string {
   return new Date(ts * 1000).toLocaleString();
@@ -208,13 +207,13 @@ export function AssetDetailClient() {
                   href={
                     attestation.chain_explorer ??
                     (attestation.chain_tx
-                      ? `${EXPLORER}/tx/${attestation.chain_tx}`
+                      ? explorerTxUrl(attestation.chain_tx)
                       : undefined)
                   }
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400 transition-colors hover:border-emerald-400/50"
-                  title="This attestation is published on X Layer testnet"
+                  title="This attestation is published on X Layer"
                 >
                   <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M3.5 8.5l3 3 6-6" />
@@ -366,7 +365,7 @@ export function AssetDetailClient() {
               Latest on-chain tx:{" "}
             </span>
             <a
-              href={attestation.chain_explorer ?? `${EXPLORER}/tx/${attestation.chain_tx}`}
+              href={attestation.chain_explorer ?? explorerTxUrl(attestation.chain_tx)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-[var(--accent-glow)] hover:underline break-all font-mono"
@@ -517,7 +516,7 @@ export function AssetDetailClient() {
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="text-neutral-500">transaction</span>
                 <a
-                  href={rescoreResult.chain_explorer ?? `${EXPLORER}/tx/${rescoreResult.chain_tx}`}
+                  href={rescoreResult.chain_explorer ?? explorerTxUrl(rescoreResult.chain_tx)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[var(--accent-glow)] hover:underline break-all"

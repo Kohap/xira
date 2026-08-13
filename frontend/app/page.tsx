@@ -5,16 +5,19 @@ import { LiveTicker } from "@/components/landing/LiveTicker";
 import { ProofSection } from "@/components/landing/ProofSection";
 import { LiveHeatmap } from "@/components/landing/LiveHeatmap";
 import { CopyButton } from "@/components/landing/CopyButton";
+import {
+  CHAIN_ID,
+  CHAIN_LABEL,
+  CHAIN_NAME,
+  CONTRACT_ADDRESS,
+  CONTRACT_URL,
+} from "@/lib/chain";
 
 export const metadata: Metadata = {
   title: "XIRA: One Verifiable Risk Number for Every xStock",
   description:
     "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
 };
-
-const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
-const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
-const CONTRACT_URL = `${EXPLORER}/address/${CONTRACT}`;
 
 const PIPELINE = [
   {
@@ -226,9 +229,9 @@ export default function LandingPage() {
               <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)]/70 px-3 py-2">
                 <span className="text-[11px] text-neutral-500 mr-1">oracle</span>
                 <code className="font-mono text-[11px] text-neutral-300">
-                  {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
+                  {CONTRACT_ADDRESS.slice(0, 10)}…{CONTRACT_ADDRESS.slice(-6)}
                 </code>
-                <CopyButton value={CONTRACT} label="contract address" />
+                <CopyButton value={CONTRACT_ADDRESS} label="contract address" />
               </div>
             </div>
           </Reveal>
@@ -339,7 +342,7 @@ export default function LandingPage() {
             Open the oracle.
           </h2>
           <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
-            The contract is live on X Layer testnet. The oracle re-scores all
+            The contract is live on {CHAIN_NAME}. The oracle re-scores all
             15 markets every 30 minutes and signs each meaningful change to
             the chain, open a transaction, and check it against the model.
           </p>
@@ -418,8 +421,8 @@ export default function LandingPage() {
             How to verify a score.
           </h2>
           <p className="mt-4 text-neutral-400 max-w-2xl leading-relaxed">
-            Every risk number you see can be independently verified on X Layer
-            Testnet (Chain ID 1952) in a few steps.
+            Every risk number you see can be independently verified on
+            {CHAIN_LABEL} (Chain ID {CHAIN_ID}) in a few steps.
           </p>
         </Reveal>
 
@@ -441,9 +444,9 @@ export default function LandingPage() {
                     {i === 0 ? (
                       <div className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2">
                         <code className="font-mono text-[11px] text-neutral-300 break-all">
-                          {CONTRACT}
+                          {CONTRACT_ADDRESS}
                         </code>
-                        <CopyButton value={CONTRACT} label="contract address" />
+                        <CopyButton value={CONTRACT_ADDRESS} label="contract address" />
                       </div>
                     ) : i === 1 ? (
                       <p className="text-sm sm:text-[15px] text-neutral-400 leading-relaxed">

@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { Header } from "@/components/Header";
 import { BuiltOnXLayerBadge } from "@/components/BuiltOnXLayerBadge";
+import { CONTRACT_URL } from "@/lib/chain";
+import { API_BASE } from "@/lib/api";
 import "./globals.css";
 
-const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
-const EXPLORER = "https://www.okx.com/web3/explorer/xlayer-test";
-const CONTRACT_URL = `${EXPLORER}/address/${CONTRACT}`;
 const ASSET_BASE = process.env.VERCEL === "1" ? "" : "/xira";
 
 const geistSans = Geist({
@@ -67,8 +66,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
       >
         <head>
-          <link rel="preconnect" href="https://xira-api-production.up.railway.app" crossOrigin="anonymous" />
-          <link rel="dns-prefetch" href="https://xira-api-production.up.railway.app" />
+          <link rel="preconnect" href={API_BASE} crossOrigin="anonymous" />
+          <link rel="dns-prefetch" href={API_BASE} />
           <link rel="apple-touch-icon" href={`${ASSET_BASE}/apple-touch-icon.png`} />
           <meta name="theme-color" content="#0d0c0b" />
         </head>

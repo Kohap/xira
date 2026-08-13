@@ -2,14 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LogoMark } from "@/components/LogoMark";
 import { BuiltOnXLayerBadge } from "@/components/BuiltOnXLayerBadge";
+import { CONTRACT_ADDRESS } from "@/lib/chain";
 
 export const metadata: Metadata = {
   title: "Brand - XIRA",
   description:
     "The XIRA brand kit: the mark, the palette, the type system, and usage rules.",
 };
-
-const CONTRACT = "0xaa5f6215e947ffce2f46513a926af3239be545d0";
 
 const BRAND_RULES = [
   "Keep the mark at 32 px or larger, with clearspace of one full mark width on every side.",
@@ -147,7 +146,7 @@ export default function BrandPage() {
             </div>
             <div className="rounded-xl bg-[var(--card-bg)] px-5 py-4">
               <p className="text-lg font-mono text-neutral-200">
-                {CONTRACT.slice(0, 6)}…{CONTRACT.slice(-6)} · score 12 · 30 min
+                {CONTRACT_ADDRESS.slice(0, 6)}…{CONTRACT_ADDRESS.slice(-6)} · score 12 · 30 min
                 cadence
               </p>
               <p className="mt-1 text-[11px] font-mono text-neutral-500">
