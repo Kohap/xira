@@ -4,10 +4,11 @@ import asyncio, os, logging
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from app.routers import assets, attestations, alerts, mcp
+from app.routers import assets, attestations, alerts, mcp, keys
 from app.services import scheduler as scheduler_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -60,6 +61,47 @@ app.include_router(assets.router)
 app.include_router(attestations.router)
 app.include_router(alerts.router)
 app.include_router(mcp.router)
+app.include_router(keys.router)
+
+
+# Endpoints that stay open to everyone (docs, monitors, ops test).
+PUBLIC_PATHS = {
+    "/",
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+    "/api/assets/health",
+    "/api/alerts/ops/test",
+}
+
+
+@app.middleware("http")
+async def api_key_middleware(request: Request, call_next):
+    """Optional API-key gate for external integrators.
+
+    A valid X-API-Key header is always accepted. When XIRA_REQUIRE_API_KEY
+    is enabled, requests without a key are rejected unless they come from a
+    known frontend origin (the xira.surf site keeps working keyless).
+    """
+    path = request.url.path
+    if path in PUBLIC_PATHS or request.method == "OPTIONS":
+        return await call_next(request)
+
+    supplied = request.headers.get("x-api-key", "")
+    if supplied:
+        from app.services.api_keys import api_keys
+
+        if api_keys.validate(supplied):
+            return await call_next(request)
+        return JSONResponse(status_code=401, content={"detail": "Invalid API key."})
+
+    enforce = os.getenv("XIRA_REQUIRE_API_KEY", "false").lower() == "true"
+    if enforce:
+        origin = request.headers.get("origin", "") or request.headers.get("referer", "")
+        if not any(o in origin for o in ALLOWED_ORIGINS):
+            return JSONResponse(status_code=401, content={"detail": "Missing API key."})
+
+    return await call_next(request)
 
 
 @app.on_event("startup")

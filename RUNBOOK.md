@@ -100,6 +100,22 @@ railway variables --set "KEY=value"
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | — | Ops alerts |
 | `XIRA_ALERT_COOLDOWN_S` | `1800` | Per-flag alert cooldown |
 | `XIRA_ENABLE_DEBUG` | `false` | Enables `/debug/data-sources` |
+| `XIRA_ADMIN_TOKEN` | — | Admin endpoints (issue/revoke API keys) |
+| `XIRA_REQUIRE_API_KEY` | `false` | When `true`, non-frontend callers need an `X-API-Key` header |
+
+## API keys for integrators
+
+Issued keys are stored as SHA-256 hashes with a display prefix (the
+plaintext is shown once at issuance). The keys themselves are not secrets
+persisted in the codebase or the DB.
+
+- Issue: `POST /api/admin/keys` with `{"name": "..."}` and
+  `X-API-Key: <admin token>` or `Authorization: Bearer <admin token>`.
+- List: `GET /api/admin/keys` (hashes never returned).
+- Revoke: `DELETE /api/admin/keys/{prefix}`.
+- Use: integrators send `X-API-Key: <key>` on every request. Keyless
+  requests are accepted until `XIRA_REQUIRE_API_KEY=true`; even then the
+  xira.surf frontend origins are exempt.
 
 ## Database
 
