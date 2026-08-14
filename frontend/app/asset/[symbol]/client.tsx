@@ -4,7 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { AssetDetail, Attestation, AttestationHistory, OnchainHistoryResponse, RescoreResponse } from "@/lib/types";
-import { API_BASE } from "@/lib/api";
+import {
+  API_BASE,
+  fetchAssetDetail,
+  fetchAttestation,
+  fetchAttestationHistory,
+  fetchOnchainHistory,
+} from "@/lib/api";
 import { explorerTxUrl } from "@/lib/chain";
 import { RiskBadge } from "@/components/ScoreCard";
 import { FactorBreakdown, HistoryChart, AlertBanner } from "@/components/FactorBreakdown";
@@ -92,22 +98,12 @@ export function AssetDetailClient() {
     setRefreshNotice(null);
     setRefreshError(null);
     try {
-      const [aRes, hRes, dRes, cRes] = await Promise.all([
-        fetch(`${apiBase}/api/attestations/${encodeURIComponent(symbol)}`),
-        fetch(`${apiBase}/api/attestations/${encodeURIComponent(symbol)}/history?limit=10`),
-        fetch(`${apiBase}/api/assets/${encodeURIComponent(symbol)}`),
-        fetch(`${apiBase}/api/assets/${encodeURIComponent(symbol)}/onchain-history`),
+      const [aData, hData, dData, cData] = await Promise.all([
+        fetchAttestation(symbol),
+        fetchAttestationHistory(symbol, 10),
+        fetchAssetDetail(symbol),
+        fetchOnchainHistory(symbol),
       ]);
-
-      if (!aRes.ok) throw new Error(`API error: ${aRes.status}`);
-      if (!hRes.ok) throw new Error(`History API error: ${hRes.status}`);
-      if (!dRes.ok) throw new Error(`Detail API error: ${dRes.status}`);
-      if (!cRes.ok) throw new Error(`On-chain history error: ${cRes.status}`);
-
-      const aData: Attestation = await aRes.json();
-      const hData: AttestationHistory = await hRes.json();
-      const dData: AssetDetail = await dRes.json();
-      const cData: OnchainHistoryResponse = await cRes.json();
 
       setAttestation(aData);
       setHistory(hData);
@@ -134,7 +130,7 @@ export function AssetDetailClient() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [symbol, apiBase]);
+  }, [symbol]);
 
   useEffect(() => {
     const id = setTimeout(() => void fetchData("initial"), 0);
