@@ -1,3 +1,14 @@
+# XIRA
+
+AI-powered risk intelligence for xStocks on X Layer Mainnet.
+
+XIRA turns live market signals into verifiable risk scores, anomaly alerts, factor breakdowns, and onchain attestations for agents, protocols, and users.
+
+Live app: https://www.xira.surf
+
+Docs: https://www.xira.surf/docs
+
+
 # XIRA — X-Layer Intelligence & Risk Analytics
 
 <img src="https://www.xira.surf/icon.png" width="48" height="48" align="left" alt="XIRA">
