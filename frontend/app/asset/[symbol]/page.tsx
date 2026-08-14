@@ -1,24 +1,40 @@
 import type { Metadata } from "next";
+import { ASSET_SYMBOLS } from "@/lib/seo";
 import { AssetDetailClient } from "./client";
 
-// Mirrors the enabled assets in catalogs/asset_catalog.json (50).
-const SYMBOLS = [
-  "SNDKx", "SPCXx", "MUx", "SOXLx", "LITEx", "MRVLx", "SKHYx", "INTCx",
-  "MSTRx", "AAPLx", "GOOGLx", "CRCLx", "NBISx", "PLx", "TSLAx", "METAx",
-  "NVDAx", "EWYx", "AMDx", "COINx", "ORCLx", "ONDSx", "DELLx", "CSCOx",
-  "CRWVx", "HIMSx", "PLTRx", "TSMx", "QQQx", "HOODx", "AMZNx", "SPYx",
-  "MSFTx", "ARMx", "RKLBx", "ASTSx", "AVGOx", "CBRSx", "TQQQx", "ADBEx",
-  "IRENx", "AAOIx", "ASMLx", "IBMx", "XLEx", "NFLXx", "BMNRx", "TERx",
-  "USARx", "GMEx",
-];
-
 export function generateStaticParams() {
-  return SYMBOLS.map((symbol) => ({ symbol }));
+  return ASSET_SYMBOLS.map((symbol) => ({ symbol }));
 }
 
-export const metadata: Metadata = {
-  title: "Asset Detail: XIRA",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ symbol: string }>;
+}): Promise<Metadata> {
+  const { symbol } = await params;
+  const canonical = `/asset/${symbol}`;
+  const title = `${symbol} Risk Score & Factor Breakdown | XIRA`;
+  const description = `${symbol}: the latest XIRA 0-100 risk score, five-factor breakdown, and on-chain attestations on X Layer Mainnet.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 export default function AssetDetailPage() {
   return <AssetDetailClient />;

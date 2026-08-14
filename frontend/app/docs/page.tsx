@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "API Docs: XIRA",
   description:
     "A plain-language guide to the XIRA API: what it does, how to read a score, the on-chain contract, and how agents use it.",
+  alternates: {
+    canonical: "/docs",
+  },
 };
 
 const ENDPOINTS = [
@@ -220,6 +223,24 @@ const SAMPLE_ATTESTATION = `{
 export default function DocsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "XIRA API Docs",
+            url: "https://www.xira.surf/docs",
+            description:
+              "Plain-language guide to the XIRA API: how to read a score, the on-chain contract, and how agents can use it.",
+            isPartOf: {
+              "@type": "WebSite",
+              name: "XIRA",
+              url: "https://www.xira.surf",
+            },
+          }),
+        }}
+      />
       <div className="grid lg:grid-cols-[220px_1fr] gap-10 lg:gap-16 items-start">
         {/* Sticky topic navigation with scroll-spy */}
         <DocsToc />

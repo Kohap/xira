@@ -51,7 +51,7 @@ export default function RootLayout({
           <link rel="preconnect" href={API_BASE} crossOrigin="anonymous" />
           <link rel="dns-prefetch" href={API_BASE} />
           <link rel="apple-touch-icon" href={`${ASSET_BASE}/apple-touch-icon.png`} />
-          <meta name="theme-color" content="#0d0c0b" />
+          <meta name="theme-color" id="theme-color-meta" content="#0d0c0b" />
         </head>
       <body
         className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]"
@@ -61,7 +61,7 @@ export default function RootLayout({
       >
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("xira-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}})();`,
+            __html: `(function(){try{var theme="dark";var t=localStorage.getItem("xira-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"}document.documentElement.dataset.theme=t;var band=document.getElementById("theme-color-meta");if(band){band.content=t==="light"?"#f5f3ee":"#0d0c0b"}}catch(e){document.documentElement.dataset.theme="dark"}})();`,
           }}
         />
         <a

@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Brand - XIRA",
   description:
     "The XIRA brand kit: the mark, the palette, the type system, and usage rules.",
+  alternates: {
+    canonical: "/brand",
+  },
 };
 
 const BRAND_RULES = [
