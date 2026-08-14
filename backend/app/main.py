@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.routers import assets, attestations, alerts, mcp, keys
 from app.services import scheduler as scheduler_service
-from app.services.auth import admin_authorized
+from app.services.auth import admin_authorized, require_admin
 from app.services.startup_checks import run_startup_checks
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -188,13 +188,15 @@ async def root():
 
 
 @app.get("/debug/data-sources")
-async def debug_data_sources():
+async def debug_data_sources(request: Request):
     """Diagnostic endpoint to show data source status and errors.
 
-    Gated behind XIRA_ENABLE_DEBUG to avoid leaking cache internals publicly.
+    Gated behind XIRA_ENABLE_DEBUG *and* admin auth, so even with debug
+    enabled the cache internals are never public.
     """
     if os.getenv("XIRA_ENABLE_DEBUG", "false").lower() != "true":
         raise HTTPException(status_code=404, detail="Not found.")
+    require_admin(request)
     import sys
     import time
     from app.services.data_fetcher import _price_cache, CACHE_TTL, data_fetcher

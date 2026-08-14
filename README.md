@@ -41,6 +41,9 @@ this site.
   served both locally (`python mcp_server/server.py`) and as a hosted
   endpoint at `https://xira-api-production.up.railway.app/mcp` — point any
   MCP client straight at the URL, no local server needed.
+  The hosted `/mcp` is a public, read-only, per-IP rate-limited surface
+  (tools only ever read cached scores). Operators who need to gate it can
+  set `XIRA_REQUIRE_API_KEY=true` and issue keys via `POST /api/admin/keys`.
 
 Every score carries an `evidence_hash` (sha256 of score, confidence, factors
 and data source). Match it against the on-chain record and the number proves

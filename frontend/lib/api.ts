@@ -19,9 +19,6 @@ export const API_BASE = normalizeBase(
   process.env.NEXT_PUBLIC_API_URL || "https://xira-api-production.up.railway.app"
 );
 
-export const API_KEY =
-  process.env.NEXT_PUBLIC_XIRA_API_KEY || "";
-
 const FETCH_TIMEOUT_MS = 25_000;
 
 async function fetchJSON<T>(url: string): Promise<T> {
@@ -31,7 +28,6 @@ async function fetchJSON<T>(url: string): Promise<T> {
     const res = await fetch(url, {
       cache: "no-store",
       signal: controller.signal,
-      headers: { "X-API-Key": API_KEY },
     });
     if (!res.ok) {
       throw new Error(`API error: ${res.status} ${res.statusText}`);

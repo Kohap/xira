@@ -40,11 +40,7 @@ export default function AlertsPage() {
     text: string;
   } | null>(null);
   const [savingSymbol, setSavingSymbol] = useState<string | null>(null);
-  const [adminToken, setAdminToken] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : window.localStorage.getItem("xira_admin_token") ?? ""
-  );
+  const [adminToken, setAdminToken] = useState("");
   const retriesRef = useRef(0);
   const dataRef = useRef<AlertsResponse | null>(null);
   const fetchDataRef = useRef<((showLoading?: boolean) => Promise<void>) | null>(null);
@@ -57,18 +53,6 @@ export default function AlertsPage() {
     }, 0);
     return () => clearTimeout(id);
   }, []);
-
-  useEffect(() => {
-    try {
-      if (adminToken.trim()) {
-        window.localStorage.setItem("xira_admin_token", adminToken.trim());
-      } else {
-        window.localStorage.removeItem("xira_admin_token");
-      }
-    } catch {
-      // storage may be unavailable; the token still works for this session
-    }
-  }, [adminToken]);
 
   const applyThreshold = async (symbol: string) => {
     const token = adminToken.trim();
@@ -208,16 +192,17 @@ export default function AlertsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <h2 className="text-sm font-semibold">Risk thresholds</h2>
               <label className="flex flex-col sm:flex-row sm:items-center gap-1.5 text-[11px] text-neutral-500">
-                Admin token
-                <input
-                  type="password"
-                  value={adminToken}
-                  onChange={(e) => setAdminToken(e.target.value)}
-                  placeholder="required to save"
-                  autoComplete="off"
-                  className="h-8 w-full sm:w-56 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 text-sm sm:text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-600 transition-colors"
-                />
-              </label>
+                  Admin token
+                  <input
+                    type="password"
+                    value={adminToken}
+                    onChange={(e) => setAdminToken(e.target.value)}
+                    placeholder="required to save"
+                    autoComplete="off"
+                    className="h-8 w-full sm:w-56 rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-2 text-sm sm:text-xs text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-600 transition-colors"
+                  />
+                  <span className="text-neutral-600">Token is kept only for this tab.</span>
+                </label>
             </div>
             {thresholdMsg && (
               <p
