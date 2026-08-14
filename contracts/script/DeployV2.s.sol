@@ -7,6 +7,12 @@ import "../src/XIRA.sol";
 contract DeployV2 is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address deployer = vm.addr(deployerPrivateKey);
+        // Optional: XIRA_OWNER=<address> transfers ownership at the end of
+        // the script (e.g. a Safe). Defaults to deployer-owned.
+        string memory ownerStr = vm.envOr("XIRA_OWNER", string(""));
+        address desiredOwner =
+            bytes(ownerStr).length > 0 ? vm.parseAddress(ownerStr) : address(0);
         string memory catalogPath = "../catalogs/asset_catalog.deploy.json";
         if (vm.envOr("XIRA_CATALOG_PATH", false)) {
             catalogPath = vm.envString("XIRA_CATALOG_PATH");
@@ -42,12 +48,20 @@ contract DeployV2 is Script {
         xira.setMinAttestationInterval(60);
         console.log("  minAttestationInterval =", xira.minAttestationInterval());
 
+        if (desiredOwner != address(0) && desiredOwner != deployer) {
+            console.log("");
+            console.log("--- Transferring ownership to", desiredOwner, "---");
+            xira.transferOwnership(desiredOwner);
+        }
+
         vm.stopBroadcast();
 
         console.log("");
         console.log("========================================");
         console.log("XIRA V2 Contract:", address(xira));
         console.log("Catalog-driven registration + pause + write cooldown live.");
+        console.log("Owner:", xira.owner());
+        console.log("Authorized updater:", deployer);
         console.log("Explorer: https://www.okx.com/web3/explorer/xlayer/address/");
         console.log(address(xira));
         console.log("========================================");

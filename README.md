@@ -21,7 +21,7 @@ this site.
 | **API base** | [https://xira-api-production.up.railway.app](https://xira-api-production.up.railway.app) |
 | **Docs** | [https://xira-api-production.up.railway.app/docs](https://xira-api-production.up.railway.app/docs) |
 | **Verify a score** | [https://www.xira.surf/verify](https://www.xira.surf/verify) |
-| **Oracle contract** | [`0x22851e160aef3e3aeb373fd351a07ff7c65c9b57`](https://www.okx.com/web3/explorer/xlayer/address/0x22851e160aef3e3aeb373fd351a07ff7c65c9b57) on OKX Explorer |
+| **Oracle contract** | [`0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E`](https://www.okx.com/web3/explorer/xlayer/address/0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E) on OKX Explorer |
 | **Source** | [github.com/Kohap/xira](https://github.com/Kohap/xira) |
 
 ## The build in 30 seconds

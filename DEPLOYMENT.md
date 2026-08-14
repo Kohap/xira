@@ -10,7 +10,7 @@ This guide is for X Layer Mainnet only.
 | Chain ID | `196` |
 | RPC | `https://rpc.xlayer.tech` |
 | Explorer | `https://www.okx.com/web3/explorer/xlayer` |
-| Current contract | `0x22851e160aef3e3aeb373fd351a07ff7c65c9b57` |
+| Current contract | `0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E` |
 | Current signer/updater | `0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0` |
 
 ## Secret hygiene
@@ -79,7 +79,7 @@ NEXT_PUBLIC_CHAIN_ID=196
 NEXT_PUBLIC_CHAIN_NAME=X Layer
 NEXT_PUBLIC_CHAIN_LABEL=X Layer Mainnet
 NEXT_PUBLIC_EXPLORER_URL=https://www.okx.com/web3/explorer/xlayer
-NEXT_PUBLIC_CONTRACT_ADDRESS=0x22851e160aef3e3aeb373fd351a07ff7c65c9b57
+NEXT_PUBLIC_CONTRACT_ADDRESS=0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E
 ```
 
 Validate before release:

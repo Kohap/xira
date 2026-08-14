@@ -12,7 +12,7 @@ services:
       - key: XLAYER_RPC_URL
         value: https://rpc.xlayer.tech
       - key: XIRA_CONTRACT_ADDRESS
-        value: "0x22851e160aef3e3aeb373fd351a07ff7c65c9b57"
+        value: "0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E"
       - key: XIRA_EXPECTED_CHAIN_ID
         value: "196"
       - key: XIRA_CHAIN_LABEL

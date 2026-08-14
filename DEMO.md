@@ -10,7 +10,7 @@ state: Vercel frontend, Railway API, and X Layer Mainnet attestations.
 - Verify flow: https://www.xira.surf/verify
 - API docs: https://xira-api-production.up.railway.app/docs
 - API health: https://xira-api-production.up.railway.app/api/assets/health
-- Mainnet contract: https://www.okx.com/web3/explorer/xlayer/address/0x22851e160aef3e3aeb373fd351a07ff7c65c9b57
+- Mainnet contract: https://www.okx.com/web3/explorer/xlayer/address/0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E
 
 ## Demo flow
 

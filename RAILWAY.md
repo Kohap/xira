@@ -14,7 +14,7 @@ railway variables --set "MODEL_VERSION=v1.0.0"
 railway variables --set "XLAYER_RPC_URL=https://rpc.xlayer.tech"
 railway variables --set "XIRA_EXPLORER_BASE=https://www.okx.com/web3/explorer/xlayer"
 railway variables --set "XIRA_CHAIN_LABEL=xlayer-mainnet"
-railway variables --set "XIRA_CONTRACT_ADDRESS=0x22851e160aef3e3aeb373fd351a07ff7c65c9b57"
+railway variables --set "XIRA_CONTRACT_ADDRESS=0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E"
 railway variables --set "XIRA_EXPECTED_CHAIN_ID=196"
 railway variables --set "XIRA_EXPECTED_SIGNER=0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0"
 railway variables --set "XIRA_EXPECTED_OWNER=0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0"
@@ -61,7 +61,7 @@ Expected health signals:
 - `publisher.enabled` is `true`
 - `publisher.chain_id` is `196`
 - `publisher.rpc_url` is `https://rpc.xlayer.tech`
-- `contract` is `0x22851e160aef3e3aeb373fd351a07ff7c65c9b57`
+- `contract` is `0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E`
 - `publish_failing`, `publish_stale`, and `scheduler_stalled` are `false`
 
 ## Rollback

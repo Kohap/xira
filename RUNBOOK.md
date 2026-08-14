@@ -75,7 +75,7 @@ curl -X POST \
 | `XLAYER_RPC_URL` | `https://rpc.xlayer.tech` |
 | `XIRA_EXPLORER_BASE` | `https://www.okx.com/web3/explorer/xlayer` |
 | `XIRA_CHAIN_LABEL` | `xlayer-mainnet` |
-| `XIRA_CONTRACT_ADDRESS` | `0x22851e160aef3e3aeb373fd351a07ff7c65c9b57` |
+| `XIRA_CONTRACT_ADDRESS` | `0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E` |
 | `PRIVATE_KEY` | Oracle updater key; never commit |
 | `XIRA_EXPECTED_CHAIN_ID` | `196` |
 | `XIRA_EXPECTED_SIGNER` | Expected updater address |
@@ -89,24 +89,26 @@ curl -X POST \
 
 ## Mainnet governance state (2026-08-14)
 
-A Safe migration attempt ended with `xira.owner()` pinned to the canonical
-Safe singleton instance `0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552` (a
-mis-parsed proxy address during `transferOwnership`). That instance is
-already initialized (threshold 1, unknown first owner) and Safe's `GS200`
-guard blocks re-`setup()`, so **contract governance is now frozen**: no one
-can transfer ownership, pause, unregister assets, or change authorized
-updaters.
+The original contract `0x22851e…b57` is **frozen legacy**: its `owner()` is
+pinned to the canonical Safe singleton instance `0xd9Db…552` (a mis-aimed
+`transferOwnership` during an earlier Safe migration) and Safe's `GS200`
+guard blocks re-`setup()`, so nobody can change anything on it. Its
+attestation history remains readable and immutable.
 
-Publishing is unaffected — the hot key `0x0CE306…D3c0` was authorized as
-updater before the transfer and can never be revoked. A correctly configured
-2-of-2 Safe proxy exists at `0x689f6c845598891207bd3e2274110101d6abacdd`
-(signers `0xE86E…2bfB`, `0xE54E…1920`) but holds no role. `XIRA_EXPECTED_OWNER`
-on Railway matches the singleton so the startup gate passes.
+A **new XIRA contract** was deployed 2026-08-14 to replace it:
 
-If governance is ever needed again (new updater, pause, etc.): deploy a new
-XIRA contract (`contracts/script/DeployV2.s.sol`, owner = a fresh Safe) and
-repoint `XIRA_CONTRACT_ADDRESS` + `XIRA_EXPECTED_OWNER`. Old attestation
-records remain readable and immutable.
+- Contract: `0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E`
+- **Owner: Safe proxy `0x689F6C845598891207bD3E2274110101D6aBacDd`**
+  (2-of-2 multisig, signers `0xE86E…2bfB`, `0xE54E…1920`) — governance is
+  now multisig-controlled, not single-EOA.
+- Authorized updater: `0x0CE306…D3c0` (hot key on Railway, publishing only).
+- 50 assets registered from the catalog, 60s per-asset write cooldown.
+- Backend repointed (`XIRA_CONTRACT_ADDRESS` + `XIRA_EXPECTED_OWNER` on
+  Railway); startup gates re-verified on boot; publishing confirmed on-chain
+  (first records 2026-08-14 04:06 UTC).
+
+Governance actions (pause, unregister, add/remove updaters, transfer
+ownership) now require 2-of-2 signatures from the Safe signers.
 
 ## Production review smoke checks
 
