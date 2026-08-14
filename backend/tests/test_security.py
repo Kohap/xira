@@ -131,6 +131,29 @@ def test_forged_origin_does_not_bypass_auth(monkeypatch):
     assert res.status_code == 200, "public reads stay open regardless of Origin"
 
 
+def test_debug_endpoint_requires_admin_even_when_enabled(monkeypatch):
+    monkeypatch.setenv("XIRA_ENABLE_DEBUG", "true")
+    monkeypatch.setenv("XIRA_ADMIN_TOKEN", "topsecret")
+    res = client.get("/debug/data-sources")
+    assert res.status_code == 401, "debug endpoint must 401 without an admin token"
+    res = client.get(
+        "/debug/data-sources",
+        headers={"x-admin-token": "topsecret"},
+    )
+    assert res.status_code == 200, "debug endpoint must answer admins"
+    res = client.get(
+        "/debug/data-sources",
+        headers={"authorization": "Bearer topsecret"},
+    )
+    assert res.status_code == 200, "Bearer admin auth must also pass"
+
+
+def test_debug_endpoint_hidden_when_disabled(monkeypatch):
+    monkeypatch.setenv("XIRA_ENABLE_DEBUG", "false")
+    res = client.get("/debug/data-sources")
+    assert res.status_code == 404, "disabled debug endpoint must stay 404"
+
+
 def test_rescore_never_publishes_without_admin(monkeypatch):
     from app.routers.assets import publisher as pub
     from app.routers.assets import ai_engine

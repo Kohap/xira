@@ -87,6 +87,17 @@ def test_tools_list():
     ]
 
 
+def test_mcp_public_keyless_when_api_key_not_required(monkeypatch):
+    """MCP is a read-only surface: keyless by default (the prod setting),
+    rate-limited per IP. If the API key gate is enabled it must demand a key."""
+    monkeypatch.delenv("XIRA_REQUIRE_API_KEY", raising=False)
+    res = client.post("/mcp", json={"jsonrpc": "2.0", "id": 99, "method": "tools/list"})
+    assert res.status_code == 200, "tools/list must work keyless by default"
+    monkeypatch.setenv("XIRA_REQUIRE_API_KEY", "true")
+    res = client.post("/mcp", json={"jsonrpc": "2.0", "id": 99, "method": "tools/list"})
+    assert res.status_code == 401, "with the key gate on, /mcp must 401 keyless"
+
+
 def test_tools_call_health():
     body = post({"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "xira_get_health"}})
     content = body["result"]["content"][0]["text"]

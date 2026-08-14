@@ -58,11 +58,7 @@ export function AssetDetailClient() {
   const [rescoring, setRescoring] = useState(false);
   const [rescoreResult, setRescoreResult] = useState<RescoreResponse | null>(null);
   const [rescoreError, setRescoreError] = useState<string | null>(null);
-  const [adminToken, setAdminToken] = useState(() =>
-    typeof window === "undefined"
-      ? ""
-      : window.localStorage.getItem("xira_admin_token") ?? ""
-  );
+  const [adminToken, setAdminToken] = useState("");
 
   const copySummary = async () => {
     if (!attestation) return;
@@ -137,18 +133,6 @@ export function AssetDetailClient() {
     const id = setTimeout(() => void fetchData("initial"), 0);
     return () => clearTimeout(id);
   }, [fetchData]);
-
-  useEffect(() => {
-    try {
-      if (adminToken.trim()) {
-        window.localStorage.setItem("xira_admin_token", adminToken.trim());
-      } else {
-        window.localStorage.removeItem("xira_admin_token");
-      }
-    } catch {
-      // storage may be unavailable; the token still works for this session
-    }
-  }, [adminToken]);
 
   const doRescore = async () => {
     setRescoring(true);
@@ -668,6 +652,7 @@ export function AssetDetailClient() {
               autoComplete="off"
               className="h-11 w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 text-base text-neutral-200 transition-colors placeholder:text-neutral-600 focus:border-neutral-600 sm:w-64 sm:text-sm"
             />
+            <span className="text-neutral-600">Token is kept only for this tab.</span>
           </label>
           <button
             type="button"

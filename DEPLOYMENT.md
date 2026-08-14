@@ -61,11 +61,12 @@ After deploy:
 See [`RAILWAY.md`](./RAILWAY.md). The required production gates are:
 
 - `XIRA_EXPECTED_CHAIN_ID=196`
-- `XIRA_EXPECTED_SIGNER=<expected updater>`
-- `XIRA_EXPECTED_OWNER=<expected owner>`
+- `XIRA_EXPECTED_SIGNER=0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0` (Railway hot updater)
+- `XIRA_EXPECTED_OWNER=0x689F6C845598891207bD3E2274110101D6aBacDd` (2-of-2 Safe proxy owner)
 
 These gates refuse startup if the service is pointed at the wrong chain,
-phantom contract, wrong signer, or unexpected owner.
+phantom contract, wrong signer, or unexpected owner. The signer is the
+publishing hot key; the owner is the multisig Safe that controls governance.
 
 ## Deploy frontend
 
