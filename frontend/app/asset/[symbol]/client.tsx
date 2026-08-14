@@ -45,6 +45,9 @@ export function AssetDetailClient() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [rescoring, setRescoring] = useState(false);
   const [rescoreResult, setRescoreResult] = useState<RescoreResponse | null>(null);
   const [rescoreError, setRescoreError] = useState<string | null>(null);
@@ -79,7 +82,15 @@ export function AssetDetailClient() {
 
   const apiBase = API_BASE;
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (mode: "initial" | "manual" = "manual") => {
+    const initial = mode === "initial";
+    if (initial) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
+    setRefreshNotice(null);
+    setRefreshError(null);
     try {
       const [aRes, hRes, dRes, cRes] = await Promise.all([
         fetch(`${apiBase}/api/attestations/${encodeURIComponent(symbol)}`),
@@ -103,15 +114,30 @@ export function AssetDetailClient() {
       setDetail(dData);
       setOnchainHistory(cData);
       setError(null);
+      if (!initial) {
+        setRefreshNotice(
+          `Refreshed ${new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}`
+        );
+      }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      const message = e instanceof Error ? e.message : "Unknown error";
+      if (initial) {
+        setError(message);
+      } else {
+        setRefreshError(`Refresh failed. Showing the last loaded record. ${message}`);
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [symbol, apiBase]);
 
   useEffect(() => {
-    const id = setTimeout(() => void fetchData(), 0);
+    const id = setTimeout(() => void fetchData("initial"), 0);
     return () => clearTimeout(id);
   }, [fetchData]);
 
@@ -131,10 +157,15 @@ export function AssetDetailClient() {
     setRescoring(true);
     setRescoreError(null);
     setRescoreResult(null);
+    setRefreshNotice(null);
+    setRefreshError(null);
     try {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       const token = adminToken.trim();
-      if (token) headers["x-admin-token"] = token;
+      if (!token) {
+        throw new Error("Enter an admin token before forcing a re-score.");
+      }
+      headers["X-Admin-Token"] = token;
       const res = await fetch(`${apiBase}/api/assets/${encodeURIComponent(symbol)}/rescore`, {
         method: "POST",
         headers,
@@ -145,7 +176,7 @@ export function AssetDetailClient() {
       }
       const json: RescoreResponse = await res.json();
       setRescoreResult(json);
-      await fetchData();
+      await fetchData("manual");
     } catch (e: unknown) {
       setRescoreError(e instanceof Error ? e.message : "Rescore failed");
     } finally {
@@ -182,7 +213,7 @@ export function AssetDetailClient() {
             <p className="text-red-400/80 text-xs mb-4 font-mono">{error}</p>
           )}
           <button
-            onClick={fetchData}
+            onClick={() => void fetchData("initial")}
             className="px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] rounded-lg text-sm transition-colors"
           >
             Retry
@@ -554,6 +585,19 @@ export function AssetDetailClient() {
         </div>
       )}
 
+      {(refreshNotice || refreshError) && (
+        <div
+          className={`mt-6 rounded-xl border px-4 py-3 text-xs ${
+            refreshError
+              ? "border-yellow-800/50 bg-yellow-950/20 text-yellow-300"
+              : "border-emerald-800/50 bg-emerald-950/20 text-emerald-300"
+          }`}
+          role="status"
+        >
+          {refreshError ?? refreshNotice}
+        </div>
+      )}
+
       <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
         <label className="flex w-full sm:w-auto flex-col gap-1 text-[11px] text-neutral-500">
           Admin token
@@ -597,11 +641,14 @@ export function AssetDetailClient() {
           {copied ? "Copied summary" : "Copy score summary"}
         </button>
         <button
-          onClick={fetchData}
-          disabled={loading}
+          type="button"
+          onClick={() => void fetchData("manual")}
+          disabled={loading || refreshing}
+          aria-busy={refreshing}
+          title="Reload latest API and on-chain records"
           className="px-4 py-2 bg-[var(--accent)]/20 hover:bg-[var(--accent)]/40 text-[var(--accent-glow)] rounded-lg text-sm transition-colors disabled:opacity-50"
         >
-          {loading ? "Refreshing..." : "Refresh Data"}
+          {refreshing ? "Refreshing..." : "Refresh Data"}
         </button>
       </div>
     </div>
