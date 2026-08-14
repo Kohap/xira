@@ -40,8 +40,8 @@ contract DeployV2 is Script {
 
         console.log("");
         console.log("--- Deployer as authorized updater ---");
-        xira.setAuthorizedUpdater(vm.addr(deployerPrivateKey), true);
-        console.log("  Authorized:", vm.addr(deployerPrivateKey));
+        xira.setAuthorizedUpdater(deployer, true);
+        console.log("  Authorized:", deployer);
 
         console.log("");
         console.log("--- Write cooldown: 60s per asset ---");

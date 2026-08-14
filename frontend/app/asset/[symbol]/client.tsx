@@ -54,6 +54,7 @@ export function AssetDetailClient() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [adminActionsOpen, setAdminActionsOpen] = useState(false);
   const [rescoring, setRescoring] = useState(false);
   const [rescoreResult, setRescoreResult] = useState<RescoreResponse | null>(null);
   const [rescoreError, setRescoreError] = useState<string | null>(null);
@@ -595,25 +596,6 @@ export function AssetDetailClient() {
       )}
 
       <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <label className="flex w-full sm:w-auto flex-col gap-1 text-[11px] text-neutral-500">
-          Admin token
-          <input
-            type="password"
-            value={adminToken}
-            onChange={(e) => setAdminToken(e.target.value)}
-            placeholder="required to re-score"
-            autoComplete="off"
-            className="h-11 w-full sm:w-64 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 text-base sm:text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-600 transition-colors"
-          />
-        </label>
-        <button
-          type="button"
-          onClick={doRescore}
-          disabled={rescoring}
-          className="inline-flex items-center justify-center gap-2 px-5 h-11 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-glow)] text-[var(--accent-ink)] text-sm font-medium transition-colors disabled:opacity-60 active:scale-[0.98]"
-        >
-          {rescoring ? "Re-scoring…" : "Force re-score"}
-        </button>
         <button
           type="button"
           onClick={copySummary}
@@ -646,7 +628,57 @@ export function AssetDetailClient() {
         >
           {refreshing ? "Refreshing..." : "Refresh Data"}
         </button>
+        <button
+          type="button"
+          onClick={() => setAdminActionsOpen((open) => !open)}
+          aria-expanded={adminActionsOpen}
+          aria-controls="asset-admin-actions"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[var(--card-border)] px-4 text-sm font-medium text-neutral-300 transition-colors hover:border-neutral-600 hover:text-white active:scale-[0.98]"
+        >
+          Admin actions
+          <svg
+            viewBox="0 0 16 16"
+            className={`h-4 w-4 transition-transform ${
+              adminActionsOpen ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 6l4 4 4-4" />
+          </svg>
+        </button>
       </div>
+
+      {adminActionsOpen && (
+        <div
+          id="asset-admin-actions"
+          className="mt-3 flex flex-col items-center justify-center gap-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)]/60 p-3 sm:flex-row"
+        >
+          <label className="flex w-full flex-col gap-1 text-[11px] text-neutral-500 sm:w-auto">
+            Admin token
+            <input
+              type="password"
+              value={adminToken}
+              onChange={(e) => setAdminToken(e.target.value)}
+              placeholder="required to re-score"
+              autoComplete="off"
+              className="h-11 w-full rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 text-base text-neutral-200 transition-colors placeholder:text-neutral-600 focus:border-neutral-600 sm:w-64 sm:text-sm"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={doRescore}
+            disabled={rescoring}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--accent)] px-5 text-sm font-medium text-[var(--accent-ink)] transition-colors hover:bg-[var(--accent-glow)] active:scale-[0.98] disabled:opacity-60"
+          >
+            {rescoring ? "Re-scoring…" : "Force re-score"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
