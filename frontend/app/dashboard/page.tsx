@@ -881,11 +881,18 @@ export default function DashboardPage() {
                 return `${x.toFixed(2)},${y.toFixed(2)}`;
               });
               const line = coords.join(" ");
+              const path = coords
+                .map((point, i) => {
+                  const [x, y] = point.split(",");
+                  return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+                })
+                .join(" ");
               return (
                 <>
                   <polygon points={`0,32 ${line} 100,32`} fill="url(#trend-fill)" />
-                  <polyline
-                    points={line}
+                  <path
+                    id="dashboard-risk-trend"
+                    d={path}
                     fill="none"
                     stroke="var(--accent-glow)"
                     strokeWidth="1.5"
@@ -893,6 +900,16 @@ export default function DashboardPage() {
                     vectorEffect="non-scaling-stroke"
                     className="chart-line"
                   />
+                  <circle
+                    r="1.8"
+                    fill="var(--accent-glow)"
+                    className="curve-scan-dot motion-reduce:hidden"
+                    aria-hidden="true"
+                  >
+                    <animateMotion dur="4s" repeatCount="indefinite" rotate="auto">
+                      <mpath href="#dashboard-risk-trend" />
+                    </animateMotion>
+                  </circle>
                 </>
               );
             })()}

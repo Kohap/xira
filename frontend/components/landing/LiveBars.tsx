@@ -28,32 +28,6 @@ export function LiveBars() {
   const [tries, setTries] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const curveLineRef = useRef<SVGPolylineElement | null>(null);
-  const curveDotRef = useRef<HTMLDivElement | null>(null);
-  const curveWrapRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const line = curveLineRef.current;
-    const dot = curveDotRef.current;
-    const wrap = curveWrapRef.current;
-    if (!line || !dot || !wrap) return;
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
-    const total = line.getTotalLength();
-    if (!total) return;
-    let raf = 0;
-    const start = performance.now();
-    const tick = (t: number) => {
-      const progress = ((t - start) % 3000) / 3000;
-      const p = line.getPointAtLength(progress * total);
-      dot.style.opacity = "1";
-      dot.style.transform = `translate(calc(${(p.x / 100) * wrap.clientWidth}px - 50%), calc(${(p.y / 40) * wrap.clientHeight}px - 50%))`;
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [data]);
-
   useEffect(() => {
     let cancelled = false;
     let localTries = 0;
@@ -90,12 +64,16 @@ export function LiveBars() {
   const top = [...assets].sort((a, b) => b.risk_score - a.risk_score).slice(0, 8);
   const max = Math.max(1, ...top.map((a) => a.risk_score));
 
-  const curvePoints = top
-    .map((a, i) => {
-      const x = top.length > 1 ? (i / (top.length - 1)) * 100 : 50;
-      const y = 40 - (a.risk_score / 100) * 36;
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    })
+  const curveCoords = top.map((a, i) => {
+    const x = top.length > 1 ? (i / (top.length - 1)) * 100 : 50;
+    const y = 40 - (a.risk_score / 100) * 36;
+    return { x, y };
+  });
+  const curvePoints = curveCoords
+    .map(({ x, y }) => `${x.toFixed(2)},${y.toFixed(2)}`)
+    .join(" ");
+  const curvePath = curveCoords
+    .map(({ x, y }, i) => `${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`)
     .join(" ");
 
   return (
@@ -165,7 +143,7 @@ export function LiveBars() {
               top {top.length} of {data.assets.length}
             </span>
           </div>
-          <div className="relative" ref={curveWrapRef}>
+          <div className="relative">
             <svg
               key={data.generated_at}
               viewBox="0 0 100 40"
@@ -184,9 +162,9 @@ export function LiveBars() {
                 points={`0,40 ${curvePoints} 100,40`}
                 fill="url(#xira-curve-fill)"
               />
-              <polyline
-                ref={curveLineRef}
-                points={curvePoints}
+              <path
+                id="live-board-risk-curve"
+                d={curvePath}
                 fill="none"
                 stroke="var(--accent-glow)"
                 strokeWidth="1.5"
@@ -210,12 +188,17 @@ export function LiveBars() {
                   />
                 );
               })}
+              <circle
+                r="2.2"
+                fill="var(--accent-glow)"
+                className="curve-scan-dot motion-reduce:hidden"
+                aria-hidden="true"
+              >
+                <animateMotion dur="3.6s" repeatCount="indefinite" rotate="auto">
+                  <mpath href="#live-board-risk-curve" />
+                </animateMotion>
+              </circle>
             </svg>
-            <div
-              ref={curveDotRef}
-              className="absolute top-0 left-0 w-2 h-2 rounded-full bg-[var(--accent-glow)] opacity-0 motion-reduce:hidden"
-              aria-hidden="true"
-            />
           </div>
         </div>
       )}
