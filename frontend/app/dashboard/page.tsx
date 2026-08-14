@@ -860,7 +860,7 @@ export default function DashboardPage() {
           <svg
             viewBox="0 0 100 32"
             preserveAspectRatio="none"
-            className="w-full h-20"
+            className="chart-wipe w-full h-20"
             role="img"
             aria-label="Average market risk over the last 24 hours"
           >
@@ -898,7 +898,6 @@ export default function DashboardPage() {
                     strokeWidth="1.5"
                     pathLength={100}
                     vectorEffect="non-scaling-stroke"
-                    className="chart-line"
                   />
                   <circle
                     r="1.8"

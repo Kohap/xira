@@ -321,16 +321,17 @@ input {
   animation: bar-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* Risk-curve chart: draws once with a smooth ease and stays drawn (no
-   looping reset so the line never snaps back) */
-@keyframes chart-draw {
-  from { stroke-dashoffset: 100; }
-  to { stroke-dashoffset: 0; }
+/* Risk-curve charts: a soft left-to-right wipe that loops with a masked
+   restart (no backwards snap). Clip-path works identically in every engine,
+   unlike stroke-dasharray which Safari renders as broken dashes. */
+@keyframes chart-wipe {
+  0% { clip-path: inset(0 100% 0 0); }
+  55% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
 }
-.chart-line {
-  stroke-dasharray: 100;
-  stroke-dashoffset: 0;
-  animation: chart-draw 3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.chart-wipe {
+  clip-path: inset(0 0 0 0);
+  animation: chart-wipe 9s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
 /* Live ticker marquee */
@@ -355,13 +356,13 @@ input {
 @media (prefers-reduced-motion: reduce) {
   .marquee-track,
   .score-bar,
-  .chart-line {
+  .chart-wipe {
     animation: none;
   }
   .score-bar {
     height: var(--bar-h);
   }
-  .chart-line {
-    stroke-dashoffset: 0;
+  .chart-wipe {
+    clip-path: inset(0 0 0 0);
   }
 }
