@@ -5,11 +5,9 @@ import Link from "next/link";
 import { fetchVerify } from "@/lib/api";
 import type { VerifyResult } from "@/lib/types";
 import { CHAIN_LABEL } from "@/lib/chain";
+import { ASSET_SYMBOLS } from "@/lib/seo";
 
-const SYMBOLS = [
-  "NVDAx", "TSLAx", "AAPLx", "MSFTx", "GOOGLx", "AMZNx", "METAx",
-  "SPYx", "QQQx", "AMDx", "INTCx", "NFLXx", "BAx", "JPMx", "XOMx",
-];
+const SYMBOLS = ASSET_SYMBOLS;
 
 function fmt(ts: number): string {
   if (!ts) return "–";

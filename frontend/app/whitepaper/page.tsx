@@ -455,7 +455,7 @@ export default function WhitepaperPage() {
             (default 30) the backend re-scores each tracked market and writes a
             new on-chain attestation only if the score moved by at least{" "}
             <code className="font-mono text-neutral-300">XIRA_DEVIATION_THRESHOLD</code>{" "}
-            points (default ±3). There is no tx on a flat market. All 15 assets are
+            points (default ±3). There is no tx on a flat market. All tracked assets are
             passed in one pass, and simulated (non-live) data is never
             published on-chain, so every attestation transaction corresponds to
             a real score. The first pass runs 60s after startup, so the oracle

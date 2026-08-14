@@ -148,7 +148,7 @@ export function LiveBars() {
               key={data.generated_at}
               viewBox="0 0 100 40"
               preserveAspectRatio="none"
-              className="w-full h-16"
+              className="chart-wipe w-full h-16"
               role="img"
               aria-label="Risk curve of the highest scoring markets"
             >
@@ -170,7 +170,6 @@ export function LiveBars() {
                 strokeWidth="1.5"
                 pathLength={100}
                 vectorEffect="non-scaling-stroke"
-                className="chart-line"
               />
               {top.map((asset, i) => {
                 const x = top.length > 1 ? (i / (top.length - 1)) * 100 : 50;

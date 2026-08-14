@@ -175,11 +175,11 @@ function AlertsStrip({ assets }: { assets: AllAssetsResponse["assets"] }) {
 
   return (
     <div className="mb-6 rounded-xl border border-red-800/50 bg-red-950/20 p-4" role="status">
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-3">
         <span className="live-dot w-2 h-2 rounded-full bg-red-400" aria-hidden="true" />
         <h3 className="text-sm font-semibold text-red-300">Anomaly alerts</h3>
         <span className="text-[11px] text-red-400/70 font-mono">factor consensus broken</span>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-3 min-w-0">
           <label className="flex items-center gap-1.5 text-[11px] text-red-400/70">
             Show
             <select
@@ -697,7 +697,7 @@ export default function DashboardClient() {
           })}
         </div>
 
-        <div className="flex items-center gap-2 sm:ml-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
           <button
             type="button"
             onClick={() => setAnomalyOnly((v) => !v)}

@@ -5,15 +5,13 @@ import Link from "next/link";
 import type { AlertsResponse, ThresholdsResponse } from "@/lib/types";
 import { API_BASE, fetchAlerts, fetchThresholds, saveThreshold } from "@/lib/api";
 import { RiskBadge } from "@/components/ScoreCard";
+import { ASSET_SYMBOLS } from "@/lib/seo";
 
 const POLL_SECONDS = 60;
 const MAX_RETRIES = 8;
 const RETRY_DELAY_MS = 10000;
 
-const ALL_SYMBOLS = [
-  "NVDAx", "TSLAx", "AAPLx", "MSFTx", "GOOGLx", "AMZNx", "METAx",
-  "SPYx", "QQQx", "AMDx", "INTCx", "NFLXx", "BAx", "JPMx", "XOMx",
-];
+const ALL_SYMBOLS = ASSET_SYMBOLS;
 
 function formatAge(now: number, ts: number): string {
   const s = Math.max(0, Math.round(now - ts));
