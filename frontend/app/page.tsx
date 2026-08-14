@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "XIRA: One Verifiable Risk Number for Every xStock",
   description:
     "AI-powered risk intelligence for tokenized equities on X Layer. Real-time scores, factor breakdowns, and on-chain attestations that agents and protocols can actually use.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 const PIPELINE = [
@@ -196,6 +199,50 @@ function ComparisonCard({
 export default function LandingPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "WebSite",
+                name: "XIRA",
+                url: "https://www.xira.surf",
+                description:
+                  "One verifiable 0-100 risk number for every tokenized equity (xStock) on X Layer, signed on-chain.",
+                inLanguage: "en",
+                publisher: {
+                  "@type": "Organization",
+                  name: "XIRA",
+                  url: "https://www.xira.surf",
+                  sameAs: ["https://github.com/Kohap/xira"],
+                },
+              },
+              {
+                "@type": "SoftwareApplication",
+                name: "XIRA",
+                applicationCategory: "SecurityApplication",
+                operatingSystem: "Any",
+                url: "https://www.xira.surf",
+                description:
+                  "XIRA scores 50 tracked xStocks with a transparent five-factor model (momentum, volatility, sentiment, volume anomaly, liquidity) and attests each meaningful change as an on-chain transaction on X Layer Mainnet.",
+                offers: {
+                  "@type": "Offer",
+                  price: "0",
+                  priceCurrency: "USD",
+                },
+                provider: {
+                  "@type": "Organization",
+                  name: "XIRA",
+                  url: "https://www.xira.surf",
+                  sameAs: ["https://github.com/Kohap/xira"],
+                },
+              },
+            ],
+          }),
+        }}
+      />
       <LiveTicker />
 
       <section className="relative">

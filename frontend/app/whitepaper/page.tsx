@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Whitepaper: XIRA",
   description:
     "XIRA: five-factor risk scoring for tokenized equities, attested on X Layer. Model definition, formulas, and validation of the logic as implemented.",
+  alternates: {
+    canonical: "/whitepaper",
+  },
 };
 
 const FACTORS = [
@@ -149,6 +152,34 @@ const ROADMAP = [
 export default function WhitepaperPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ScholarlyArticle",
+            name: "XIRA Whitepaper: One Verifiable Risk Number for Every xStock",
+            url: "https://www.xira.surf/whitepaper",
+            description:
+              "XIRA: five-factor risk scoring for tokenized equities, attested on X Layer. Model definition, formulas, and validation of the logic as implemented.",
+            author: {
+              "@type": "Organization",
+              name: "XIRA",
+              url: "https://www.xira.surf",
+            },
+            about: {
+              "@type": "SoftwareApplication",
+              name: "XIRA",
+              applicationCategory: "SecurityApplication",
+            },
+            isPartOf: {
+              "@type": "WebSite",
+              name: "XIRA",
+              url: "https://www.xira.surf",
+            },
+          }),
+        }}
+      />
       <header>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-balance">
           XIRA Whitepaper

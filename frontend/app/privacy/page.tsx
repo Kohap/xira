@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy: XIRA",
   description: "How XIRA handles (and doesn't handle) your data.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 const LAST_UPDATED = "August 2026";

@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Terms of Use: XIRA",
   description: "Terms governing the use of the XIRA risk analytics service.",
+  alternates: {
+    canonical: "/terms",
+  },
 };
 
 const LAST_UPDATED = "August 2026";
