@@ -87,12 +87,26 @@ curl -X POST \
 | `XIRA_DEVIATION_THRESHOLD` | `3` by default |
 | `XIRA_REQUIRE_API_KEY` | `false` unless integrator keys are required |
 
-## Mainnet trust note
+## Mainnet governance state (2026-08-14)
 
-The current contract owner and updater are the same EOA. For stronger
-production posture, transfer `owner()` to a Safe/multisig and leave the hot key
-as an authorized updater only. That preserves automation while removing
-single-key admin control.
+A Safe migration attempt ended with `xira.owner()` pinned to the canonical
+Safe singleton instance `0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552` (a
+mis-parsed proxy address during `transferOwnership`). That instance is
+already initialized (threshold 1, unknown first owner) and Safe's `GS200`
+guard blocks re-`setup()`, so **contract governance is now frozen**: no one
+can transfer ownership, pause, unregister assets, or change authorized
+updaters.
+
+Publishing is unaffected — the hot key `0x0CE306…D3c0` was authorized as
+updater before the transfer and can never be revoked. A correctly configured
+2-of-2 Safe proxy exists at `0x689f6c845598891207bd3e2274110101d6abacdd`
+(signers `0xE86E…2bfB`, `0xE54E…1920`) but holds no role. `XIRA_EXPECTED_OWNER`
+on Railway matches the singleton so the startup gate passes.
+
+If governance is ever needed again (new updater, pause, etc.): deploy a new
+XIRA contract (`contracts/script/DeployV2.s.sol`, owner = a fresh Safe) and
+repoint `XIRA_CONTRACT_ADDRESS` + `XIRA_EXPECTED_OWNER`. Old attestation
+records remain readable and immutable.
 
 ## Production review smoke checks
 
