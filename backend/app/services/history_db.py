@@ -77,6 +77,15 @@ class HistoryDB:
                 CREATE INDEX IF NOT EXISTS idx_publish_attempts
                 ON publish_attempts(symbol, evidence_hash, status)
             """)
+            # Single-instance scheduler guard: replicas sharing the volume
+            # contend here so only one of them publishes on-chain.
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS scheduler_lock (
+                    id INTEGER PRIMARY KEY CHECK (id = 1),
+                    owner TEXT NOT NULL,
+                    heartbeat_at INTEGER NOT NULL
+                )
+            """)
         logger.info(f"History DB initialized at {self.db_path}")
 
     @contextmanager
@@ -95,12 +104,27 @@ class HistoryDB:
     def store_score(self, symbol: str, attestation: dict, published: bool = False) -> bool:
         try:
             with self._connect() as conn:
+                # ON CONFLICT keeps the row but never demotes published=1
+                # (a same-second rescore write must not clobber the record
+                # of an on-chain attestation).
                 conn.execute("""
-                    INSERT OR REPLACE INTO scores 
-                    (symbol, timestamp, risk_score, risk_level, confidence, 
+                    INSERT INTO scores
+                    (symbol, timestamp, risk_score, risk_level, confidence,
                      anomaly, anomaly_reason, explanation, evidence_hash,
                      model_version, data_source, factors_json, published)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(symbol, timestamp) DO UPDATE SET
+                        risk_score = excluded.risk_score,
+                        risk_level = excluded.risk_level,
+                        confidence = excluded.confidence,
+                        anomaly = excluded.anomaly,
+                        anomaly_reason = excluded.anomaly_reason,
+                        explanation = excluded.explanation,
+                        evidence_hash = excluded.evidence_hash,
+                        model_version = excluded.model_version,
+                        data_source = excluded.data_source,
+                        factors_json = excluded.factors_json,
+                        published = max(scores.published, excluded.published)
                 """, (
                     symbol,
                     attestation.get("timestamp", int(time.time())),
@@ -185,14 +209,15 @@ class HistoryDB:
         try:
             with self._connect() as conn:
                 cursor = conn.execute("""
-                    SELECT timestamp, risk_score, risk_level, confidence, 
-                           anomaly, anomaly_reason, explanation, factors_json
+                    SELECT timestamp, risk_score, risk_level, confidence,
+                           anomaly, anomaly_reason, explanation, factors_json,
+                           evidence_hash, model_version, data_source, published
                     FROM scores
                     WHERE symbol = ?
                     ORDER BY timestamp DESC
                     LIMIT ?
                 """, (symbol, limit))
-                
+
                 results = []
                 for row in cursor.fetchall():
                     results.append({
@@ -204,6 +229,10 @@ class HistoryDB:
                         "anomaly_reason": row[5],
                         "explanation": row[6],
                         "factors": json.loads(row[7]) if row[7] else [],
+                        "evidence_hash": row[8] or "",
+                        "model_version": row[9] or "",
+                        "data_source": row[10] or "",
+                        "published": bool(row[11]),
                     })
                 return results
         except Exception as e:
@@ -243,38 +272,6 @@ class HistoryDB:
         except Exception as e:
             logger.error(f"Failed to get latest score for {symbol}: {e}")
             return None
-
-    def get_all_latest(self) -> List[dict]:
-        try:
-            with self._connect() as conn:
-                cursor = conn.execute("""
-                    SELECT s1.*
-                    FROM scores s1
-                    INNER JOIN (
-                        SELECT symbol, MAX(timestamp) as max_ts
-                        FROM scores
-                        GROUP BY symbol
-                    ) s2 ON s1.symbol = s2.symbol AND s1.timestamp = s2.max_ts
-                    ORDER BY s1.symbol
-                """)
-                
-                results = []
-                for row in cursor.fetchall():
-                    results.append({
-                        "symbol": row[1],
-                        "timestamp": row[2],
-                        "risk_score": row[3],
-                        "risk_level": row[4],
-                        "confidence": row[5],
-                        "anomaly": bool(row[6]),
-                        "anomaly_reason": row[7],
-                        "explanation": row[8],
-                        "factors": json.loads(row[11]) if row[11] else [],
-                    })
-                return results
-        except Exception as e:
-            logger.error(f"Failed to get all latest scores: {e}")
-            return []
 
     def get_stats(self) -> dict:
         try:
@@ -359,14 +356,17 @@ class HistoryDB:
     ) -> dict:
         """Record an intent to publish; the ledger is the idempotency key.
 
-        Returns the current ledger row. Behavior:
+        Returns the current ledger row with an extra "created" key: True
+        only when THIS call inserted a fresh row. Behavior:
           - identical (symbol, evidence_hash, model_version) with status
-            pending|confirmed  -> returned as-is (no duplicate broadcast)
-          - identical row that failed -> re-armed to pending (retry)
+            pending|confirmed  -> returned as-is, created=False (callers
+            must NOT broadcast again)
+          - identical row that failed -> re-armed to pending (retry),
+            created=False but status 'pending' with no tx_hash: retryable
           - pending older than PENDING_TTL_S -> re-armed to pending (the
             orphaned tx either confirmed on-chain (hash check will catch it)
             or died, so re-publishing is safe)
-          - otherwise a fresh pending row is inserted
+          - otherwise a fresh pending row is inserted, created=True
         """
         now = int(time.time())
         try:
@@ -389,27 +389,35 @@ class HistoryDB:
                         """,
                         (row_id,),
                     ).fetchone()
-                    return self._attempt_dict(row) if row else None
+                    if not row:
+                        return None
+                    d = self._attempt_dict(row)
+                    d["created"] = False
+                    return d
 
                 for row in rows:
-                    row_id, status, created = row
+                    row_id, status, created_at = row
                     if status in ("pending", "confirmed"):
                         if status == "confirmed":
                             return _existing(row_id) or {}
-                        age = now - created
+                        age = now - created_at
                         if age < self.PENDING_TTL_S:
                             return _existing(row_id) or {}
                         conn.execute(
                             "UPDATE publish_attempts SET status='pending', updated_at=? WHERE id=?",
                             (now, row_id),
                         )
-                        return _existing(row_id) or {}
+                        attempt = _existing(row_id) or {}
+                        attempt["rearmed"] = True
+                        return attempt
                     if status == "failed":
                         conn.execute(
                             "UPDATE publish_attempts SET status='pending', updated_at=? WHERE id=?",
                             (now, row_id),
                         )
-                        return _existing(row_id) or {}
+                        attempt = _existing(row_id) or {}
+                        attempt["rearmed"] = True
+                        return attempt
                     # status == 'replaced': fall through and insert anew.
                 cur = conn.execute(
                     """
@@ -420,7 +428,9 @@ class HistoryDB:
                     """,
                     (symbol, score, confidence, evidence_hash, model_version, now, now),
                 )
-                return _existing(cur.lastrowid) or {}
+                attempt = _existing(cur.lastrowid) or {}
+                attempt["created"] = True
+                return attempt
         except Exception as e:
             logger.error(f"Failed to record publish attempt for {symbol}: {e}")
             return {}
@@ -507,6 +517,54 @@ class HistoryDB:
         except Exception as e:
             logger.error(f"Failed to count pending publishes: {e}")
             return 0
+
+    # ------------------------------------------------------------------
+    # Scheduler leader lock (single-publisher guarantee across replicas)
+    # ------------------------------------------------------------------
+
+    def try_acquire_leader(self, owner: str, stale_after_s: float) -> bool:
+        """Acquire or renew the scheduler leadership lease.
+
+        Returns True when `owner` holds the lock afterwards. A lock whose
+        heartbeat is older than stale_after_s is presumed dead and may be
+        taken over. On any DB error we fail OPEN (return True) so a lock
+        table problem never halts publishing on a healthy single instance.
+        """
+        now = int(time.time())
+        try:
+            with self._connect() as conn:
+                row = conn.execute(
+                    "SELECT owner, heartbeat_at FROM scheduler_lock WHERE id = 1"
+                ).fetchone()
+                if row is None:
+                    conn.execute(
+                        "INSERT INTO scheduler_lock (id, owner, heartbeat_at) VALUES (1, ?, ?)",
+                        (owner, now),
+                    )
+                    return True
+                held_by, heartbeat_at = row[0], row[1]
+                if held_by == owner or (now - heartbeat_at) > stale_after_s:
+                    conn.execute(
+                        "UPDATE scheduler_lock SET owner = ?, heartbeat_at = ? WHERE id = 1",
+                        (owner, now),
+                    )
+                    return True
+                return False
+        except Exception as e:
+            logger.error(f"Leader lock check failed ({e}); proceeding as leader.")
+            return True
+
+    def release_leader(self, owner: str) -> None:
+        """Drop the lease on clean shutdown so a replica replacement can
+        take over immediately instead of waiting out the stale window."""
+        try:
+            with self._connect() as conn:
+                conn.execute(
+                    "DELETE FROM scheduler_lock WHERE id = 1 AND owner = ?",
+                    (owner,),
+                )
+        except Exception as e:
+            logger.error(f"Leader lock release failed: {e}")
 
 
 # Singleton instance

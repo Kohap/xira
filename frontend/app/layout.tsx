@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Header } from "@/components/Header";
 import { BuiltOnXLayerBadge } from "@/components/BuiltOnXLayerBadge";
 import { CONTRACT_URL } from "@/lib/chain";
@@ -111,12 +112,12 @@ export default function RootLayout({
                   <ul className="space-y-2.5">
                     {col.links.map((link) => (
                       <li key={link.label}>
-                        <a
+                        <Link
                           href={link.href}
                           className="text-sm text-neutral-400 hover:text-white transition-colors py-1"
                         >
                           {link.label}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -173,19 +174,19 @@ export default function RootLayout({
                   View Contract
                 </a>
                 <span className="text-neutral-700" aria-hidden="true">·</span>
-                <a
+                <Link
                   href="/dashboard"
                   className="text-neutral-400 hover:text-white transition-colors py-1"
                 >
                   Live Dashboard
-                </a>
+                </Link>
                 <span className="text-neutral-700" aria-hidden="true">·</span>
-                <a
+                <Link
                   href="/brand"
                   className="text-neutral-400 hover:text-white transition-colors py-1"
                 >
                   Brand kit
-                </a>
+                </Link>
                 <span className="text-neutral-700" aria-hidden="true">·</span>
                 <span className="text-neutral-500">
                   Live on X Layer Mainnet

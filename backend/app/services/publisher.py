@@ -13,6 +13,11 @@ MAX_NONCE_RETRIES = int(os.getenv("XIRA_MAX_NONCE_RETRIES", "3"))
 MIN_SIGNER_BALANCE_OKB = float(os.getenv("XIRA_MIN_SIGNER_BALANCE_OKB", "0.05"))
 BALANCE_CACHE_TTL_S = 60.0
 BATCH_CHUNK = max(1, int(os.getenv("XIRA_BATCH_CHUNK", "12")))
+# Never pay more than this per gas unit, even if the RPC quotes a spike.
+MAX_GAS_PRICE_GWEI = float(os.getenv("XIRA_MAX_GAS_PRICE_GWEI", "200"))
+# Upper bound for the batch gas fallback guess; an uncapped 300k*chunk can
+# exceed the block gas limit and revert guaranteed.
+BATCH_GAS_FALLBACK_CAP = 3_000_000
 
 
 def _get_abi() -> list:
@@ -83,6 +88,13 @@ def _get_abi() -> list:
             "type": "function",
         },
         {
+            "inputs": [],
+            "name": "minAttestationInterval",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function",
+        },
+        {
             "inputs": [{"internalType": "address", "name": "asset", "type": "address"}],
             "name": "getHistory",
             "outputs": [
@@ -125,14 +137,19 @@ class OnchainPublisher:
         self.w3: Optional[Web3] = None
         self.contract = None
         self.account = None
-        self.enabled = bool(
+        self.has_contract = bool(
             self.contract_address
             and self.contract_address != "0x0000000000000000000000000000000000000000"
-            and self.private_key
         )
+        # enabled = able to PUBLISH (contract + signer key + reachable RPC).
+        # Read paths (read_latest/read_history) also work in read-only mode
+        # with a contract address but no key.
+        self.enabled = bool(self.has_contract and self.private_key)
         self.chain_id: Optional[int] = None
+        self.min_interval_s: int = 0
         self.min_signer_balance_wei = Web3.to_wei(MIN_SIGNER_BALANCE_OKB, "ether")
         self._balance_cache: Optional[tuple[float, int]] = None
+        self._gas_price_warned = False
         self.last_tx_error: Optional[str] = None
         self.last_tx_by_token: dict[str, dict] = {}
         self.publishes: int = 0
@@ -143,8 +160,8 @@ class OnchainPublisher:
         self._init_web3()
 
     def _init_web3(self):
-        if not self.enabled:
-            logger.info("OnchainPublisher: off-chain mode (no contract or key configured).")
+        if not self.has_contract:
+            logger.info("OnchainPublisher: off-chain mode (no contract configured).")
             return
 
         urls = [self.rpc_url]
@@ -169,20 +186,31 @@ class OnchainPublisher:
 
         try:
             self.chain_id = self.w3.eth.chain_id
-            self.account = self.w3.eth.account.from_key(self.private_key)
+            if self.private_key:
+                self.account = self.w3.eth.account.from_key(self.private_key)
             checksum = self.w3.to_checksum_address(self.contract_address)
 
             self.contract = self.w3.eth.contract(address=checksum, abi=_get_abi())
 
+            try:
+                self.min_interval_s = int(
+                    self.contract.functions.minAttestationInterval().call()
+                )
+            except Exception:
+                self.min_interval_s = 0
+
+            mode = "publish" if self.account else "read-only (no PRIVATE_KEY configured)"
+            account_label = f"{self.account.address[:10]}..." if self.account else "none"
             logger.info(
-                f"OnchainPublisher connected | Chain: {self.chain_id} ({self.chain_label}) "
+                f"OnchainPublisher connected [{mode}] | Chain: {self.chain_id} ({self.chain_label}) "
                 f"| RPC: {self.rpc_url} "
-                f"| Account: {self.account.address[:10]}... "
+                f"| Account: {account_label} "
                 f"| Contract: {self.contract_address[:10]}..."
             )
         except Exception as e:
             logger.warning(f"OnchainPublisher init failed: {e}. Running off-chain.")
             self.enabled = False
+            self.contract = None
 
     def signer_balance_wei(self) -> Optional[int]:
         """Signer native-token balance (wei), cached for BALANCE_CACHE_TTL_S."""
@@ -202,6 +230,35 @@ class OnchainPublisher:
     def signer_balance_okb(self) -> Optional[float]:
         bal = self.signer_balance_wei()
         return None if bal is None else float(bal) / 1e18
+
+    def _gas_price(self) -> int:
+        """RPC gas price capped at MAX_GAS_PRICE_GWEI so a misbehaving node
+        cannot make the oracle overpay by orders of magnitude."""
+        price = self.w3.eth.gas_price
+        cap = Web3.to_wei(MAX_GAS_PRICE_GWEI, "gwei")
+        if price > cap:
+            if not self._gas_price_warned:
+                logger.warning(
+                    f"RPC gas price {price} wei exceeds cap {cap} wei "
+                    f"({MAX_GAS_PRICE_GWEI} gwei); using the cap."
+                )
+                self._gas_price_warned = True
+            return cap
+        return price
+
+    def in_cooldown(self, token_address: str) -> bool:
+        """True when the contract's per-asset minAttestationInterval has not
+        elapsed since our last published tx for this asset. Publishing now
+        would revert and (inside a batch) take the whole chunk down."""
+        if self.min_interval_s <= 0:
+            return False
+        last = self.last_tx_by_token.get(token_address)
+        if not last:
+            return False
+        ts = last.get("timestamp")
+        if not ts:
+            return False
+        return time.time() - ts < self.min_interval_s
 
     def _estimate_gas(
         self,
@@ -240,6 +297,18 @@ class OnchainPublisher:
             summary["failed"] = len(entries)
             return summary
 
+        # Skip assets still inside the contract's per-asset write cooldown:
+        # they would revert the entire batch chunk.
+        cooling = [e for e in entries if self.in_cooldown(e["token_address"])]
+        if cooling:
+            for e in cooling:
+                logger.info(
+                    f"Publisher: skipping {e.get('symbol', e['token_address'])} "
+                    f"(inside {self.min_interval_s}s attestation cooldown)."
+                )
+                summary["failed"] += 1
+            entries = [e for e in entries if not self.in_cooldown(e["token_address"])]
+
         def _succeed(e, txinfo: dict | None = None):
             summary["published"] += 1
             summary["succeeded"].add(e["token_address"])
@@ -270,7 +339,7 @@ class OnchainPublisher:
                         "from": self.account.address,
                         "nonce": self.w3.eth.get_transaction_count(self.account.address),
                         "gas": self._estimate_batch_gas(inputs),
-                        "gasPrice": self.w3.eth.gas_price,
+                        "gasPrice": self._gas_price(),
                         "chainId": self.chain_id,
                     })
                     signed = self.account.sign_transaction(tx)
@@ -285,6 +354,7 @@ class OnchainPublisher:
                         "block": receipt.get("blockNumber", 0),
                         "entries": len(chunk),
                         "gas_used": receipt.get("gasUsed", 0),
+                        "timestamp": int(time.time()),
                     }
                     for e in chunk:
                         _succeed(e, txinfo)
@@ -329,7 +399,12 @@ class OnchainPublisher:
                 {"from": self.account.address}
             )
         except Exception:
-            return 300000 * max(1, len(inputs))
+            guess = min(300000 * max(1, len(inputs)), BATCH_GAS_FALLBACK_CAP)
+            logger.warning(
+                f"Batch gas estimate failed; falling back to {guess} gas "
+                f"for {len(inputs)} entries."
+            )
+            return guess
 
     def update_attestation(
         self,
@@ -364,7 +439,7 @@ class OnchainPublisher:
                     "from": self.account.address,
                     "nonce": self.w3.eth.get_transaction_count(self.account.address),
                     "gas": self._estimate_gas(token_address, score, confidence, evidence_bytes, model_version, anomaly, anomaly_reason),
-                    "gasPrice": self.w3.eth.gas_price,
+                    "gasPrice": self._gas_price(),
                     "chainId": self.chain_id,
                 })
 

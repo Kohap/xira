@@ -15,82 +15,82 @@ const FACTORS = [
     name: "momentum",
     label: "Momentum",
     weight: 0.25,
-    formula: "50 + (MA5 / MA10 − 1) × 400 + (P52 − 50) × 0.2",
-    note: "Clamped to 0–100. MA5/MA10 from daily closes; P52 = percentile of price within the 52-week high/low range.",
+    formula: "50 − (MA5 / MA10 − 1) × 400 − (P52 − 50) × 0.2",
+    note: "Clamped to 0–100. MA5/MA10 from daily closes; P52 = percentile of price within 52w high/low range. Downside momentum and near-52w lows elevate risk.",
   },
   {
     name: "volatility",
     label: "Volatility",
     weight: 0.20,
-    formula: "σ_annual = σ_daily × √252 → banded score",
-    note: "Annualized volatility of daily returns, banded: <15%→20, <30%→40, <50%→65, <80%→85, else →95.",
+    formula: "σ_annual = σ_daily × √252 → banded risk score",
+    note: "Annualized volatility of daily returns: <15%→20, <30%→40, <50%→65, <80%→85, else →95.",
   },
   {
     name: "sentiment",
     label: "Sentiment",
     weight: 0.20,
-    formula: "50 + s × 100, s ∈ [−1, 1]",
-    note: "s = (positive − negative) / total keyword matches across recent headlines when available; otherwise derived from 5-day price momentum as a price proxy.",
+    formula: "50 − s × 100, s ∈ [−1, 1]",
+    note: "Negative headlines elevate sentiment risk, while positive prevailing signals reduce risk. Derived from news keywords or price momentum proxy.",
   },
   {
     name: "volume_anomaly",
     label: "Volume Anomaly",
     weight: 0.20,
-    formula: "r = volume / avg_volume_20d → banded score",
-    note: "r > 3.0 → 50 + (r − 1) × 20 (cap 100); r > 2.0 → 50 + (r − 1) × 18; r > 1.3 → 50 + (r − 1) × 10; r < 0.3 → 50 − (1 − r) × 40; r < 0.6 → 50 − (1 − r) × 25; otherwise 50.",
+    formula: "r = volume / avg_volume_20d → banded risk score",
+    note: "Spikes (r > 3.0 → 50+(r-1)*20, r > 2.0 → 65, r > 1.3 → 40) signal event risk; thin volume (r < 0.3 → 75, r < 0.6 → 55) signals liquidity risk. Normal volume scores 25.",
   },
   {
     name: "liquidity_proxy",
     label: "Liquidity Proxy",
     weight: 0.15,
-    formula: "turnover = volume × price → banded score",
-    note: "Turnover bands: <$100M→20, <$500M→40, <$2B→60, <$10B→80, else→95. Market cap < $2B adds +10 (cap 100).",
+    formula: "turnover = volume × price → banded risk score",
+    note: "Turnover bands: <$100M→80, <$500M→60, <$2B→40, <$10B→25, deep→10. Small market cap (<$2B) adds +10 risk.",
   },
 ];
 
 const PIPELINE = [
   {
     step: "Collect",
-    detail: "Price, volume, 52-week range, and 20-day average volume per underlying ticker (Finnhub when live mode is enabled; a deterministic simulator otherwise). Headlines scored by positive/negative keyword counts; price momentum serves as a fallback sentiment proxy.",
+    detail: "Price, volume, 52-week range, and 20-day average volume per underlying ticker (Yahoo quotes & OHLCV + Finnhub news rotation when live mode is enabled; a deterministic bucket-seeded simulator otherwise).",
   },
   {
     step: "Score",
-    detail: "Each of the five factors is computed from the collected data and normalized to a 0–100 risk score. The composite is the weighted sum of factor scores using the fixed weights below.",
+    detail: "Each of the five factors is computed in the risk frame (0 = minimal risk, 100 = severe) and combined using fixed weights into a composite 0–100 risk score.",
   },
   {
     step: "Attest",
-    detail: "The result is hashed into an evidence fingerprint (SHA-256 over the canonical JSON payload) and, when a funded oracle key is configured, submitted to the XIRA contract on X Layer via updateAttestation. One transaction is used per attestation.",
+    detail: "The result is hashed into an evidence fingerprint (SHA-256 over canonical JSON) and submitted to the XIRA contract on X Layer via batchUpdateAttestations or updateAttestation.",
   },
   {
     step: "Verify",
-    detail: "Anyone can read the on-chain score with getScore or getScoreBatch, or the full attestation with getLatestAttestation, and replay the evidence hash from the API payload against the stored one.",
+    detail: "Anyone can read the on-chain score with getScore or getLatestAttestation, and replay the evidence hash from the API payload against the stored record.",
   },
 ];
 
 const VALIDATION = [
   {
     check: "Weights are a partition of 1.0",
-    detail: "0.25 + 0.20 + 0.20 + 0.20 + 0.15 = 1.00, so the composite is guaranteed to stay within the [0, 100] range of the factor scores. No normalization drift is possible.",
+    detail: "0.25 + 0.20 + 0.20 + 0.20 + 0.15 = 1.00, so the composite is guaranteed to stay within the [0, 100] range of the factor scores.",
     verdict: "pass",
   },
   {
     check: "Composite bounded and level bands exhaustive",
-    detail: "risk = round(Σ weightᵢ × scoreᵢ) with every factor score clamped to 0–100, so risk ∈ [0, 100]. Bands cover the full range with no gaps: ≤20 LOW, ≤40 MODERATE, ≤60 ELEVATED, ≤80 HIGH, >80 CRITICAL.",
+    detail: "risk = round(Σ weightᵢ × scoreᵢ) with every factor score clamped to 0–100. Bands cover the full range: ≤20 LOW, ≤40 MODERATE, ≤60 ELEVATED, ≤80 HIGH, >80 CRITICAL.",
     verdict: "pass",
   },
   {
     check: "Confidence is computable after the fact",
-    detail: "confidence = clamp(30, 100, 40 + healthy × 10 + (80 − risk) × 0.15) with healthy = number of factors ≥ 50. In practice the clamp's lower bound never binds: the minimum reached is 37 at risk = 100, so confidence ∈ [37, 100]. It is a deterministic function of the attestation alone.",
+    detail: "confidence = clamp(30, 100, 40 + settled × 10 + (80 − risk) × 0.15) with settled = number of factors ≤ 50.",
     verdict: "pass",
   },
   {
-    check: "Anomaly rule matches severity semantics",
-    detail: "anomaly = (≥1 factor ≤ 15) OR (≥2 factors ≤ 25). Factor scores are risk scores (low = dangerous), so the rule fires exactly when the model is most uncertain or the asset is genuinely stressed. The reason string names the offending factors.",
+    check: "Anomaly rule catches elevated risk blowouts",
+    detail: "anomaly = (≥1 factor ≥ 85) OR (≥2 factors ≥ 75). Identifies volatility blowouts, volume spikes, and liquidity crunches consistently.",
     verdict: "pass",
   },
   {
     check: "Evidence hash is replayable",
-    detail: "hash = SHA-256(JSON.sort_keys({symbol, score, confidence, factors[name,label,score,weight,description], data_source})). Anyone with an API response can recompute the hash and compare it to the bytes32 stored on-chain.",
+    detail: "hash = SHA-256(JSON.sort_keys({symbol, score, confidence, factors, data_source})). Anyone with an API response can recompute the hash and compare it on-chain.",
     verdict: "pass",
   },
   {
@@ -202,11 +202,11 @@ export default function WhitepaperPage() {
           </div>
           <div>
             <dt className="inline text-neutral-500">assets tracked&nbsp;</dt>
-            <dd className="inline font-mono">15</dd>
+            <dd className="inline font-mono">50</dd>
           </div>
           <div>
             <dt className="inline text-neutral-500">data&nbsp;</dt>
-            <dd className="inline">Finnhub / simulated</dd>
+            <dd className="inline">Yahoo quotes + Finnhub news / simulated</dd>
           </div>
         </dl>
       </header>
@@ -558,7 +558,7 @@ export default function WhitepaperPage() {
           XIRA provides informational risk analytics on X Layer. Scores
           are model outputs, not investment advice, not a recommendation to buy
           or sell, and not a guarantee of future performance. Tracking is
-          limited to the 15 configured assets. Nothing in this document is an
+          configured across 50 tokenized equity assets. Nothing in this document is an
           offer of securities. See the Terms of Use for full terms.
         </p>
       </section>

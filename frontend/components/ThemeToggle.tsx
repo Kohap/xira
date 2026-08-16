@@ -6,6 +6,8 @@ type Theme = "dark" | "light";
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";
+  const docTheme = document.documentElement.dataset.theme;
+  if (docTheme === "light" || docTheme === "dark") return docTheme;
   const stored = window.localStorage.getItem("xira-theme");
   if (stored === "light" || stored === "dark") return stored;
   return window.matchMedia?.("(prefers-color-scheme: light)").matches
@@ -53,16 +55,14 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => setTheme(getInitialTheme()));
-    return () => cancelAnimationFrame(id);
+    const initial = getInitialTheme();
+    setTheme(initial);
+    document.documentElement.dataset.theme = initial;
   }, []);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
 
   const apply = (next: Theme) => {
     setTheme(next);
+    document.documentElement.dataset.theme = next;
     try {
       window.localStorage.setItem("xira-theme", next);
     } catch {

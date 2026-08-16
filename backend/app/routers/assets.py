@@ -22,8 +22,6 @@ from app.models import (
 
 router = APIRouter(prefix="/api/assets", tags=["assets"])
 
-HISTORY_STORE: dict[str, list[dict]] = {}
-
 # Shared latest board, refreshed by /api/assets/all and read by /stats & /alerts
 _board_cache: dict = {"computed_at": 0, "board": None}
 BOARD_TTL_S = 900
@@ -37,22 +35,14 @@ def _admin_authorized(request: Request) -> bool:
 def _store_asset_history(symbol: str, result: AttestationResponse):
     """Persist a freshly computed score. WRITE PATH: only callable from
     admin-authorized flows (rescore) — public GETs must never persist."""
-    # Store in memory (for quick access)
-    if symbol not in HISTORY_STORE:
-        HISTORY_STORE[symbol] = []
     entry = result.model_dump()
     entry["timestamp"] = int(time.time())
     result.timestamp = entry["timestamp"]
-    HISTORY_STORE[symbol].append(entry)
-    if len(HISTORY_STORE[symbol]) > 50:
-        HISTORY_STORE[symbol] = HISTORY_STORE[symbol][-50:]
-
-    # Also persist to SQLite database
     history_db.store_score(symbol, entry)
 
 
 def _analyze_all() -> AllAssetsResponse:
-    model_version = os.getenv("MODEL_VERSION", "v1.0.0")
+    model_version = os.getenv("MODEL_VERSION", "v1.1.0")
     assets = get_tracked_assets()
     tickers = [a["underlying"] for a in assets]
 
@@ -200,7 +190,7 @@ def market_stats(request: Request):
 async def health_check(request: Request):
     enforce_rate_limit(request, "assets_health", limit=120)
     contract_addr = os.getenv("XIRA_CONTRACT_ADDRESS", "0x0000000000000000000000000000000000000000")
-    live = os.getenv("USE_LIVE_DATA", "true").lower() == "true"
+    live = os.getenv("USE_LIVE_DATA", "false").lower() == "true"
     signer = publisher.account.address if publisher.enabled and publisher.account else None
 
     diag = scheduler_diag()
@@ -229,7 +219,7 @@ async def health_check(request: Request):
 
     return HealthResponse(
         status="ok",
-        version=os.getenv("MODEL_VERSION", "v1.0.0"),
+        version=os.getenv("MODEL_VERSION", "v1.1.0"),
         chain=publisher.chain_label,
         contract=contract_addr,
         tracked_assets=len(get_tracked_assets()),
@@ -379,7 +369,7 @@ def rescore_asset(symbol: str, request: Request):
         else sentiment if isinstance(sentiment, (int, float)) else 0.0
     )
 
-    model_version = os.getenv("MODEL_VERSION", "v1.0.0")
+    model_version = os.getenv("MODEL_VERSION", "v1.1.0")
     result = ai_engine.analyze(
         symbol=match["symbol"],
         price_data=price_data,
@@ -395,6 +385,11 @@ def rescore_asset(symbol: str, request: Request):
         reason = "On-chain publishing is not configured for this deployment."
     elif result.data_source == "mock":
         reason = "Scored on simulated data – not published to chain."
+    elif publisher.in_cooldown(match["token_address"]):
+        reason = (
+            f"Inside the contract's per-asset write cooldown "
+            f"({publisher.min_interval_s}s) – retry shortly."
+        )
     else:
         chain_latest = publisher.read_latest(match["token_address"])
         chain_score = chain_latest["score"] if chain_latest else None
@@ -417,7 +412,8 @@ def rescore_asset(symbol: str, request: Request):
                 )
             else:
                 # Idempotency: never re-broadcast an identical attestation
-                # that is already pending or confirmed in the ledger.
+                # that is already pending or confirmed in the ledger. A
+                # fresh (created) or re-armed row means we may broadcast.
                 attempt = history_db.record_publish_attempt(
                     match["symbol"],
                     result.risk_score,
@@ -425,14 +421,15 @@ def rescore_asset(symbol: str, request: Request):
                     result.evidence_hash,
                     result.model_version,
                 )
-                if attempt.get("status") in ("pending", "confirmed") and attempt.get("tx_hash"):
+                if attempt and not attempt.get("created") and not attempt.get("rearmed"):
                     reason = (
-                        "Attestation already published "
-                        f"(ledger status={attempt['status']})."
+                        "Attestation already published or in flight "
+                        f"(ledger status={attempt.get('status')})."
                     )
-                    result.chain_tx = attempt["tx_hash"]
-                    result.chain_explorer = f"{publisher.explorer_base}/tx/{attempt['tx_hash']}"
-                    published = True
+                    if attempt.get("tx_hash"):
+                        result.chain_tx = attempt["tx_hash"]
+                        result.chain_explorer = f"{publisher.explorer_base}/tx/{attempt['tx_hash']}"
+                        published = True
                 else:
                     tx = publisher.update_attestation(
                         token_address=match["token_address"],
@@ -485,10 +482,12 @@ def get_asset_detail(symbol: str, request: Request):
     match = _find_asset(symbol)
     board = _get_board()
 
+    # One price fetch for both the (rare) off-board analysis and change_24h.
+    prices, _ = data_fetcher.fetch_all_prices([match["underlying"]])
+    price_data = prices.get(match["underlying"])
+
     current = next((a for a in board.assets if a.symbol == match["symbol"]), None)
     if current is None:
-        prices, _ = data_fetcher.fetch_all_prices([match["underlying"]])
-        price_data = prices.get(match["underlying"])
         sentiments, _ = data_fetcher.fetch_all_sentiments([match["underlying"]], prices)
         sentiment = sentiments.get(match["underlying"])
         s_val = (
@@ -500,19 +499,17 @@ def get_asset_detail(symbol: str, request: Request):
             symbol=match["symbol"],
             price_data=price_data,
             sentiment=s_val,
-            model_version=os.getenv("MODEL_VERSION", "v1.0.0"),
+            model_version=os.getenv("MODEL_VERSION", "v1.1.0"),
         )
         current.timestamp = int(time.time())
 
     history = history_db.get_history(match["symbol"], limit=2)
     delta = None
     if len(history) >= 2 and history[0]["risk_score"] != history[1]["risk_score"]:
-        delta = history[1]["risk_score"] - history[0]["risk_score"]
+        # history is newest-first: change = newest - previous.
+        delta = history[0]["risk_score"] - history[1]["risk_score"]
     elif len(history) == 1 and history[0]["risk_score"] != current.risk_score:
         delta = current.risk_score - history[0]["risk_score"]
-
-    prices, _ = data_fetcher.fetch_all_prices([match["underlying"]])
-    price_data = prices.get(match["underlying"])
 
     return AssetDetailResponse(
         symbol=current.symbol,

@@ -50,7 +50,7 @@ contract DeployV2 is Script {
 
         if (desiredOwner != address(0) && desiredOwner != deployer) {
             console.log("");
-            console.log("--- Transferring ownership to", desiredOwner, "---");
+            console.log("--- Starting two-step ownership transfer to", desiredOwner, "---");
             xira.transferOwnership(desiredOwner);
         }
 
@@ -60,7 +60,12 @@ contract DeployV2 is Script {
         console.log("========================================");
         console.log("XIRA V2 Contract:", address(xira));
         console.log("Catalog-driven registration + pause + write cooldown live.");
-        console.log("Owner:", xira.owner());
+        console.log("Owner (until accepted):", xira.owner());
+        if (desiredOwner != address(0) && desiredOwner != deployer) {
+            console.log("Pending owner:", desiredOwner);
+            console.log("ACTION REQUIRED: the new owner (e.g. the Safe) must call");
+            console.log("  acceptOwnership() before the deployer loses owner rights.");
+        }
         console.log("Authorized updater:", deployer);
         console.log("Explorer: https://www.okx.com/web3/explorer/xlayer/address/");
         console.log(address(xira));

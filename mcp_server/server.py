@@ -7,7 +7,7 @@ Thin stdio wrapper over the shared protocol core
 to AI agents via MCP (JSON-RPC over stdio). Zero external dependencies.
 
 Tools exposed:
-  - xira_get_all_assets      → Risk scores for all 15 xStocks
+  - xira_get_all_assets      → Risk scores for all tracked xStocks (50 enabled tokenized equities)
   - xira_get_asset_risk      → Detailed attestation for one asset
   - xira_get_asset_history   → Historical scores for one asset
   - xira_get_health          → Backend health + config
@@ -101,7 +101,7 @@ def main():
             write_msg({
                 "jsonrpc": "2.0",
                 "id": msg_id,
-                "error": {"code": -32603, "message": str(e)},
+                "error": {"code": -32603, "message": "Internal error"},
             })
 
     log_error("XIRA MCP Server shutting down")

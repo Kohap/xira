@@ -53,25 +53,43 @@ class ApiKeys:
         logger.info(f"API key issued: prefix={prefix}")
         return {"key": plaintext, "prefix": prefix, "name": name.strip() or "unnamed"}
 
+    # How often a validated key's last_used_at may be written. Keeps the
+    # hot auth path read-only instead of serializing a SQLite write on
+    # every authenticated request.
+    LAST_USED_REFRESH_S = 300
+
     def validate(self, key: str) -> bool:
-        """Return True when the key exists, is enabled, and matches. Updates
-        last_used_at on success."""
+        """Return True when the key exists, is enabled, and matches.
+        Refreshes last_used_at at most once per LAST_USED_REFRESH_S."""
         if not key:
             return False
         digest = self._hash(key)
+        now = int(time.time())
         with self._connect() as conn:
             row = conn.execute(
-                "SELECT id, enabled FROM api_keys WHERE key_hash = ?", (digest,)
+                "SELECT id, enabled, last_used_at FROM api_keys WHERE key_hash = ?",
+                (digest,),
             ).fetchone()
             if not row:
                 return False
             if not row[1]:
                 return False
-            conn.execute(
-                "UPDATE api_keys SET last_used_at = ? WHERE id = ?",
-                (int(time.time()), row[0]),
-            )
+            last_used = row[2] or 0
+            if now - last_used >= self.LAST_USED_REFRESH_S:
+                conn.execute(
+                    "UPDATE api_keys SET last_used_at = ? WHERE id = ?",
+                    (now, row[0]),
+                )
         return True
+
+    def set_enabled(self, prefix: str, enabled: bool) -> bool:
+        """Disable (or re-enable) a key without deleting it."""
+        with self._connect() as conn:
+            cur = conn.execute(
+                "UPDATE api_keys SET enabled = ? WHERE prefix = ?",
+                (1 if enabled else 0, prefix),
+            )
+        return cur.rowcount > 0
 
     def revoke(self, prefix: str) -> bool:
         with self._connect() as conn:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-import asyncio, logging, os, time
+import asyncio, logging, os, socket, time
 
 from app.services.data_fetcher import data_fetcher, get_tracked_assets
 from app.services.ai_engine import ai_engine, risk_level_from_score
@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 HEARTBEAT_MINUTES = float(os.getenv("XIRA_HEARTBEAT_MINUTES", "30"))
 DEVIATION_THRESHOLD = int(os.getenv("XIRA_DEVIATION_THRESHOLD", "3"))
 FIRST_PASS_DELAY_S = float(os.getenv("XIRA_FIRST_PASS_DELAY_S", "60"))
+
+# Identity for the scheduler leader lock (see history_db.try_acquire_leader).
+_LEADER_ID = f"{socket.gethostname()}:{os.getpid()}"
 
 _last_published: dict[str, int] = {}
 
@@ -112,8 +115,13 @@ def _deviation_ok(prev: int | None, new_score: int) -> bool:
 
 
 def _run_pass() -> None:
-    if not publisher.enabled:
-        logger.info("Scheduler: publisher disabled (no contract/key). Skipping publish pass.")
+    # Leader election: when several replicas share the DB volume exactly one
+    # of them runs passes (publishing AND alerting); the rest stand by and
+    # take over automatically once the lease goes stale.
+    if not history_db.try_acquire_leader(
+        _LEADER_ID, stale_after_s=2 * HEARTBEAT_MINUTES * 60
+    ):
+        logger.info("Scheduler: another instance holds the leader lock; standing by.")
         return
 
     _diag["last_pass_at"] = int(time.time())
@@ -122,16 +130,21 @@ def _run_pass() -> None:
     thresholds = history_db.get_thresholds()
     pending: list[dict] = []
 
-    for asset in get_tracked_assets():
+    assets = get_tracked_assets()
+    underlyings = [a["underlying"] for a in assets]
+    prices, _ = data_fetcher.fetch_all_prices(underlyings)
+    # One batched sentiment call per pass (not one per asset) so the
+    # news_per_pass rotation covers the whole universe as designed.
+    sentiments, _ = data_fetcher.fetch_all_sentiments(underlyings, prices)
+
+    for asset in assets:
         symbol = asset["symbol"]
         try:
-            prices, _ = data_fetcher.fetch_all_prices([asset["underlying"]])
             price_data = prices.get(asset["underlying"])
             if price_data is None:
                 _diag["missing_prices"] += 1
                 continue
 
-            sentiments, _ = data_fetcher.fetch_all_sentiments([asset["underlying"]], prices)
             sentiment = sentiments.get(asset["underlying"])
             s_val = (
                 sentiment.score
@@ -139,7 +152,7 @@ def _run_pass() -> None:
                 else sentiment if isinstance(sentiment, (int, float)) else 0.0
             )
 
-            model_version = os.getenv("MODEL_VERSION", "v1.0.0")
+            model_version = os.getenv("MODEL_VERSION", "v1.1.0")
             result = ai_engine.analyze(
                 symbol=symbol,
                 price_data=price_data,
@@ -153,8 +166,13 @@ def _run_pass() -> None:
                 continue
 
             # Risk alerting is independent of publishing: an asset can trip a
-            # threshold without its score deviating enough to warrant a tx.
+            # threshold without its score deviating enough to warrant a tx,
+            # and alerts must still fire in off-chain deployments.
             _check_risk_alert(symbol, result, thresholds)
+
+            if not publisher.enabled:
+                # Off-chain mode: scoring + alerting done, nothing to publish.
+                continue
 
             # Use the on-chain value as the source of truth so two instances
             # evaluate the same state and don't both publish the same score.
@@ -184,6 +202,8 @@ def _run_pass() -> None:
             # Idempotency ledger: skip when this exact attestation is
             # already pending/confirmed (crashed between broadcast and
             # receipt) or was published moments ago by another path.
+            # A fresh row (created) or a re-armed stale/failed row
+            # (rearmed) means we are clear to broadcast.
             attempt = history_db.record_publish_attempt(
                 symbol,
                 result.risk_score,
@@ -191,11 +211,11 @@ def _run_pass() -> None:
                 result.evidence_hash,
                 result.model_version,
             )
-            if attempt and attempt.get("status") in ("pending", "confirmed") and attempt.get("tx_hash"):
+            if attempt and not attempt.get("created") and not attempt.get("rearmed"):
                 _diag["skipped_threshold"] += 1
                 logger.info(
                     f"Scheduler: {symbol} attestation already in ledger "
-                    f"({attempt['status']}) — no duplicate broadcast."
+                    f"({attempt.get('status')}) — no duplicate broadcast."
                 )
                 continue
 
@@ -290,16 +310,21 @@ async def backfill_published_from_chain() -> None:
 async def scheduler_loop() -> None:
     logger.info(
         f"Scheduler started | heartbeat {HEARTBEAT_MINUTES:.0f} min "
-        f"| deviation threshold ±{DEVIATION_THRESHOLD} pts"
+        f"| deviation threshold ±{DEVIATION_THRESHOLD} pts | leader id {_LEADER_ID}"
     )
     await backfill_published_from_chain()
     await asyncio.sleep(FIRST_PASS_DELAY_S)
-    while True:
-        started = time.time()
-        try:
-            await asyncio.to_thread(_run_pass)
-        except Exception as e:
-            logger.error(f"Scheduler: pass error: {e}")
-        await asyncio.to_thread(_check_alert_flags)
-        elapsed = time.time() - started
-        await asyncio.sleep(max(1.0, HEARTBEAT_MINUTES * 60 - elapsed))
+    try:
+        while True:
+            started = time.time()
+            try:
+                await asyncio.to_thread(_run_pass)
+            except Exception as e:
+                logger.error(f"Scheduler: pass error: {e}")
+            await asyncio.to_thread(_check_alert_flags)
+            elapsed = time.time() - started
+            await asyncio.sleep(max(1.0, HEARTBEAT_MINUTES * 60 - elapsed))
+    finally:
+        # Drop the lease so a replacement instance can take over at once
+        # instead of waiting out the stale window.
+        history_db.release_leader(_LEADER_ID)

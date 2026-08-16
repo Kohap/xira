@@ -29,15 +29,15 @@ this site.
 - **Frontend** — Next.js, deployed on Vercel. Landing page,
   live risk board, per-asset factor breakdowns, anomaly alerts, a published
   vs on-chain verify tool, and docs.
-- **Backend** — FastAPI on Railway. Pulls live quotes from Finnhub (with a
-  deterministic simulator as fallback), scores 50 tracked markets with a
-  transparent five-factor model, and serves the board over JSON.
+- **Backend** — FastAPI on Railway. Pulls live quotes from Yahoo Finance and news from Finnhub (with a
+  deterministic bucket-seeded simulator as fallback), scores 50 tracked markets with a
+  transparent five-factor model (v1.1.0), and serves the board over JSON.
 - **On-chain** — Solidity attestation contract on X Layer Mainnet (Chain ID
   196). A heartbeat scheduler signs every meaningful score change
   (deviation threshold) as a transaction; `GET` endpoints are read-only and
   never spend gas.
 - **Agents** — the same data is exposed as MCP tools
-  (`xira_get_asset_risk`, `xira_get_all_assets`, `xira_get_attestation_history`),
+  (`xira_get_asset_risk`, `xira_get_all_assets`, `xira_get_asset_history`),
   served both locally (`python mcp_server/server.py`) and as a hosted
   endpoint at `https://xira-api-production.up.railway.app/mcp` — point any
   MCP client straight at the URL, no local server needed.
@@ -52,7 +52,7 @@ itself — no dashboard trust required.
 ## Architecture
 
 ```
-Finnhub quotes + fallback simulator
+Yahoo quotes + Finnhub news + fallback simulator
         │
         ▼
 AI engine ── five factors, weighted ──► 0–100 score + explanation
@@ -73,7 +73,7 @@ REST API (FastAPI)  ·  Next.js dashboard  ·  MCP tools for agents
 xira/
 ├── contracts/              # Solidity attestation contract (Foundry)
 │   ├── src/XIRA.sol
-│   ├── script/DeployAll.s.sol
+│   ├── script/DeployV2.s.sol
 │   └── test/
 ├── backend/                # FastAPI backend
 │   ├── app/
@@ -103,7 +103,7 @@ cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env          # add RPC URL, contract address, key
-uvicorn app.main:app --reload # http://localhost:8000 · /docs
+uvicorn app.main:app          # http://localhost:8000 · /docs
 ```
 
 The backend runs without a wallet in off-chain mode — scores and history
@@ -123,7 +123,7 @@ npm run dev                   # http://localhost:3000
 cd contracts
 git submodule update --init --recursive
 export PRIVATE_KEY=your_key
-forge script script/DeployAll.s.sol --rpc-url https://rpc.xlayer.tech --broadcast --legacy
+forge script script/DeployV2.s.sol --rpc-url https://rpc.xlayer.tech --broadcast --legacy
 ```
 
 Oracle wallet: `0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0`

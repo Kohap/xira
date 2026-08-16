@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { RiskLevel } from "@/lib/types";
 import { riskLevelColor, riskLevelTextColor, riskLevelLabel } from "@/lib/types";
 
@@ -190,13 +191,13 @@ export function ScoreCard({
               </button>
             )}
           </div>
-          <a
+          <Link
             href={`/asset/${symbol}`}
             className="inline-flex items-center gap-1 px-2 py-1.5 -mr-1.5 -my-1.5 rounded-lg text-[var(--accent-glow)] hover:underline hover:bg-[var(--card-border)]/50 transition-colors"
             aria-label={`Open ${symbol} details`}
           >
             details →
-          </a>
+          </Link>
         </div>
       </div>
     </div>

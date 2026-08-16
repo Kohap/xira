@@ -32,10 +32,10 @@ MCP_TOOLS = [
     {
         "name": "xira_get_all_assets",
         "description": (
-            "Get risk scores and attestations for all 15 tracked xStocks (NVDAx, TSLAx, "
-            "AAPLx, MSFTx, GOOGLx, AMZNx, METAx, SPYx, QQQx, AMDx, INTCx, NFLXx, BAx, "
-            "JPMx, XOMx). Returns risk scores, confidence levels, factor breakdowns, "
-            "anomaly flags, and a market summary."
+            "Get risk scores and attestations for all tracked xStocks (50 enabled "
+            "tokenized equities, e.g. NVDAx, TSLAx, AAPLx, MSFTx, SPYx, QQQx). "
+            "Returns risk scores, confidence levels, factor breakdowns, anomaly "
+            "flags, and a market summary."
         ),
         "inputSchema": {
             "type": "object",
@@ -63,6 +63,7 @@ MCP_TOOLS = [
         },
     },
     {
+        # NOTE: keep the public name stable — README/docs reference it.
         "name": "xira_get_asset_history",
         "description": (
             "Get the last N risk scores for a single xStock. Useful for spotting "

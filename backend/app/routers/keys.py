@@ -13,6 +13,10 @@ class KeyIssue(BaseModel):
     name: str
 
 
+class KeyEnabled(BaseModel):
+    enabled: bool
+
+
 @router.post("")
 async def issue_key(body: KeyIssue, request: Request):
     """Issue a new API key. Returns the plaintext once. Admin only."""
@@ -31,6 +35,17 @@ async def list_keys(request: Request):
     if not admin_authorized(request):
         raise HTTPException(status_code=401, detail="Admin token required.")
     return {"ok": True, "keys": api_keys.list_keys()}
+
+
+@router.put("/{prefix}/enabled")
+async def set_key_enabled(prefix: str, body: KeyEnabled, request: Request):
+    """Disable or re-enable a key without deleting it. Admin only."""
+    enforce_rate_limit(request, "admin_keys_enable", limit=20)
+    if not admin_authorized(request):
+        raise HTTPException(status_code=401, detail="Admin token required.")
+    if not api_keys.set_enabled(prefix, body.enabled):
+        raise HTTPException(status_code=404, detail="Key not found.")
+    return {"ok": True, "prefix": prefix, "enabled": body.enabled}
 
 
 @router.delete("/{prefix}")

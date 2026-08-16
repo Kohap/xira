@@ -389,21 +389,38 @@ def fetch_news_sentiment(ticker: str) -> SentimentData:
 
 
 def generate_mock_price_data(ticker: str) -> PriceData:
-    base = random.gauss(150.0, 40.0)
+    # Deterministic simulator: seeded by (ticker, 30-minute bucket) so the
+    # same inputs in the same bucket always produce the same score and the
+    # on-chain evidence hash stays reproducible (mirrors the Finnhub
+    # provider's bucket-seeded volume in _deterministic_gauss).
+    bucket = int(time.time() // 1800)
+    rng = random.Random(f"{ticker}:{bucket}")
+    base = rng.gauss(150.0, 40.0)
     volatility = 0.025
     data = PriceData()
-    data.daily_prices = [base * (1 + random.gauss(0, volatility)) for _ in range(21)]
+    data.daily_prices = [base * (1 + rng.gauss(0, volatility)) for _ in range(21)]
     data.price = round(data.daily_prices[-1], 2)
-    data.change_24h = round(random.gauss(0, 2.0), 2)
-    data.change_7d = round(random.gauss(0, 4.0), 2)
-    data.volume = int(random.gauss(50_000_000, 15_000_000))
-    data.avg_volume_20d = int(data.volume * random.gauss(1.0, 0.15))
-    data.high_52w = round(data.price * random.gauss(1.25, 0.10), 2)
-    data.low_52w = round(data.price * random.gauss(0.75, 0.10), 2)
-    data.market_cap = data.price * random.gauss(500_000_000, 200_000_000)
+    data.change_24h = round(rng.gauss(0, 2.0), 2)
+    data.change_7d = round(rng.gauss(0, 4.0), 2)
+    data.volume = max(1, int(rng.gauss(50_000_000, 15_000_000)))
+    data.avg_volume_20d = max(1, int(data.volume * rng.gauss(1.0, 0.15)))
+    data.high_52w = round(data.price * rng.gauss(1.25, 0.10), 2)
+    data.low_52w = round(data.price * rng.gauss(0.75, 0.10), 2)
+    data.market_cap = max(0.0, data.price * rng.gauss(500_000_000, 200_000_000))
     data.source = "mock"
     data.fetched_at = time.time()
     return data
+
+
+def generate_mock_sentiment(ticker: str) -> SentimentData:
+    """Deterministic mock sentiment, bucket-seeded like the mock prices."""
+    s = SentimentData()
+    bucket = int(time.time() // 1800)
+    rng = random.Random(f"{ticker}:{bucket}:sentiment")
+    s.score = round(max(-1.0, min(1.0, rng.gauss(0, 0.4))), 4)
+    s.source = "mock"
+    s.summary = "Mock sentiment signal."
+    return s
 
 
 class DataFetcher:
@@ -423,7 +440,10 @@ class DataFetcher:
                 results[t] = generate_mock_price_data(t)
             return results, time.time()
 
-        with ThreadPoolExecutor(max_workers=1) as executor:
+        # Finnhub's free tier is 60 req/min and needs ~3 calls per ticker,
+        # so it stays serial; the keyless Yahoo chart API tolerates a pool.
+        workers = 1 if QUOTE_PROVIDER == "finnhub" else 8
+        with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {executor.submit(fetch_price_data, t, force): t for t in tickers}
             for future in as_completed(futures):
                 ticker = futures[future]
@@ -437,8 +457,8 @@ class DataFetcher:
                     logger.error(f"Timeout/error for {ticker}, using mock")
                     results[ticker] = generate_mock_price_data(ticker)
 
-        live_count = sum(1 for d in results.values() if d and d.source == "finnhub")
-        logger.info(f"Price data: {live_count}/{len(tickers)} from Finnhub")
+        live_count = sum(1 for d in results.values() if d and d.source in ("finnhub", "yahoo"))
+        logger.info(f"Price data: {live_count}/{len(tickers)} live ({QUOTE_PROVIDER} provider)")
 
         return results, time.time()
 
@@ -449,11 +469,7 @@ class DataFetcher:
 
         if not self.use_live:
             for t in tickers:
-                s = SentimentData()
-                s.score = round(random.gauss(0, 0.4), 4)
-                s.source = "mock"
-                s.summary = "Mock sentiment signal."
-                results[t] = s
+                results[t] = generate_mock_sentiment(t)
             return results, time.time()
 
         n = len(tickers)
@@ -487,5 +503,7 @@ class DataFetcher:
 
 
 data_fetcher = DataFetcher(
-    use_live=os.getenv("USE_LIVE_DATA", "true").lower() == "true",
+    # Default off (mock) to match main.py: a missing env var must never
+    # silently start burning upstream API quota.
+    use_live=os.getenv("USE_LIVE_DATA", "false").lower() == "true",
 )

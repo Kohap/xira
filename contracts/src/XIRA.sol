@@ -25,6 +25,10 @@ contract XIRA {
     uint256 private constant MAX_HISTORY = 20;
 
     address public owner;
+    /// Two-step ownership transfer: set by transferOwnership, cleared by
+    /// acceptOwnership. Prevents permanently locking the contract with a
+    /// mistyped address (the failure mode that froze the legacy contract).
+    address public pendingOwner;
     bool public paused;
     /// Minimum seconds between attestations per asset (0 = disabled).
     uint256 public minAttestationInterval;
@@ -46,7 +50,9 @@ contract XIRA {
         string modelVersion
     );
     event UpdaterAuthorized(address indexed updater, bool authorized);
+    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event MinAttestationIntervalChanged(uint256 intervalSeconds);
     event AssetRegistered(address indexed tokenAddr, string symbol);
     event AssetUnregistered(address indexed tokenAddr, string symbol);
     event Paused(address indexed account, bool state);
@@ -73,10 +79,26 @@ contract XIRA {
         owner = msg.sender;
     }
 
+    /// Step 1 of a two-step handoff: proposes the new owner. Ownership only
+    /// moves once the proposed address calls acceptOwnership, so a mistyped
+    /// address can be corrected instead of freezing the contract.
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "XIRA: zero address");
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+        pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner, newOwner);
+    }
+
+    /// Step 2: the proposed owner accepts and takes over.
+    function acceptOwnership() external {
+        require(msg.sender == pendingOwner, "XIRA: caller is not pending owner");
+        emit OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = address(0);
+    }
+
+    /// Owner-only: withdraw a pending handoff that has not been accepted.
+    function cancelOwnershipTransfer() external onlyOwner {
+        pendingOwner = address(0);
     }
 
     function setAuthorizedUpdater(address updater, bool authorized) external onlyOwner {
@@ -94,6 +116,7 @@ contract XIRA {
     /// cannot spam writes or burn the oracle's gas budget.
     function setMinAttestationInterval(uint256 intervalSeconds) external onlyOwner {
         minAttestationInterval = intervalSeconds;
+        emit MinAttestationIntervalChanged(intervalSeconds);
     }
 
     function registerAsset(address tokenAddr, string calldata symbol) external onlyOwner {

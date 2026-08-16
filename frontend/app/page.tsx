@@ -108,7 +108,7 @@ const CAPABILITIES = [
 const MCP_TOOLS = [
   "xira_get_asset_risk",
   "xira_get_all_assets",
-  "xira_get_attestation_history",
+  "xira_get_asset_history",
 ];
 
 const VERIFY_STEPS = [
@@ -149,7 +149,7 @@ const FAQ = [
   },
   {
     q: "Can agents use this data?",
-    a: "Yes. XIRA exposes MCP tools (xira_get_asset_risk, xira_get_all_assets, xira_get_attestation_history) so agents can query risk data directly.",
+    a: "Yes. XIRA exposes MCP tools (xira_get_asset_risk, xira_get_all_assets, xira_get_asset_history) so agents can query risk data directly.",
   },
   {
     q: "Is this live on mainnet?",
