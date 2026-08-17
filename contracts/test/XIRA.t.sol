@@ -33,16 +33,58 @@ contract XIRATest is Test {
         assertEq(xira.owner(), owner);
     }
 
-    function test_TransferOwnership() public {
+    function test_TransferOwnershipTwoStep() public {
         vm.prank(owner);
         xira.transferOwnership(address(4));
+        assertEq(xira.owner(), owner, "owner unchanged until accepted");
+        assertEq(xira.pendingOwner(), address(4));
+
+        vm.prank(address(4));
+        xira.acceptOwnership();
         assertEq(xira.owner(), address(4));
+        assertEq(xira.pendingOwner(), address(0), "pending cleared after accept");
+    }
+
+    function test_CancelOwnershipTransfer() public {
+        vm.startPrank(owner);
+        xira.transferOwnership(address(4));
+        xira.cancelOwnershipTransfer();
+        vm.stopPrank();
+        assertEq(xira.pendingOwner(), address(0));
+        vm.prank(address(4));
+        vm.expectRevert("XIRA: caller is not pending owner");
+        xira.acceptOwnership();
+    }
+
+    function test_RevertWhen_TransferOwnershipToZeroAddress() public {
+        vm.prank(owner);
+        vm.expectRevert("XIRA: zero address");
+        xira.transferOwnership(address(0));
+    }
+
+    function test_RevertWhen_NonPendingOwnerAccepts() public {
+        vm.prank(owner);
+        xira.transferOwnership(address(4));
+        vm.prank(stranger);
+        vm.expectRevert("XIRA: caller is not pending owner");
+        xira.acceptOwnership();
     }
 
     function test_RevertWhen_StrangerTransfersOwnership() public {
         vm.prank(stranger);
         vm.expectRevert("XIRA: caller is not owner");
         xira.transferOwnership(address(4));
+    }
+
+    function test_RevokedUpdaterCannotWrite() public {
+        vm.startPrank(owner);
+        xira.setAuthorizedUpdater(updater, true);
+        xira.setAuthorizedUpdater(updater, false);
+        vm.stopPrank();
+        assertFalse(xira.authorizedUpdaters(updater));
+        vm.prank(updater);
+        vm.expectRevert("XIRA: caller is not authorized");
+        xira.updateAttestation(mockToken, 50, 80, bytes32(0), "v1.0.0", false, "");
     }
 
     function test_AuthorizeUpdater() public {
@@ -387,6 +429,33 @@ contract XIRATest is Test {
         vm.prank(stranger);
         vm.expectRevert("XIRA: caller is not owner");
         xira.setMinAttestationInterval(60);
+    }
+
+    event MinAttestationIntervalChanged(uint256 intervalSeconds);
+
+    function test_SetIntervalEmitsEvent() public {
+        vm.expectEmit(false, false, false, true, address(xira));
+        emit MinAttestationIntervalChanged(60);
+        vm.prank(owner);
+        xira.setMinAttestationInterval(60);
+    }
+
+    function test_RevertWhen_RegisterZeroAddress() public {
+        vm.prank(owner);
+        vm.expectRevert("XIRA: zero address");
+        xira.registerAsset(address(0), "ZEROx");
+    }
+
+    function test_EmptyBatchIsNoOp() public {
+        XIRA.AttestationInput[] memory inputs = new XIRA.AttestationInput[](0);
+        vm.prank(owner);
+        xira.batchUpdateAttestations(inputs);
+        assertEq(xira.historyCount(mockToken), 0);
+    }
+
+    function test_GetHistoryEmptyForNeverAttested() public view {
+        XIRA.Attestation[] memory hist = xira.getHistory(address(0xBEEF));
+        assertEq(hist.length, 0);
     }
 
     function test_UnregisterAsset() public {

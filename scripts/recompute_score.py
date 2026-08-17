@@ -42,18 +42,19 @@ def main() -> int:
     from app.services.ai_engine import ai_engine
     from app.services.publisher import publisher
 
-    if not publisher.enabled:
-        print("FAIL: publisher not enabled (XIRA_CONTRACT_ADDRESS / PRIVATE_KEY missing).")
+    if not publisher.has_contract:
+        print("FAIL: publisher not enabled (XIRA_CONTRACT_ADDRESS missing or zero address).")
         return 1
 
-    model_version = os.getenv("MODEL_VERSION", "v1.0.0")
+    model_version = os.getenv("MODEL_VERSION", "v1.1.0")
     asset_map = {a["symbol"]: a for a in get_tracked_assets()}
     tickers = [a["underlying"] for a in get_tracked_assets()]
     by_ticker = {a["underlying"]: a for a in get_tracked_assets()}
 
+    signer_addr = publisher.account.address if publisher.account else "none (read-only verification)"
     print(f"Chain       : {publisher.chain_label} (id {publisher.chain_id})")
     print(f"Contract    : {publisher.contract_address}")
-    print(f"Signer      : {publisher.account.address}")
+    print(f"Signer      : {signer_addr}")
     print(f"Model ver   : {model_version}")
 
     prices, _ = data_fetcher.fetch_all_prices(tickers, force=True)

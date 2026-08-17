@@ -2,28 +2,33 @@ services:
   - type: web
     name: xira-api
     env: python
-    plan: free
+    plan: starter
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    disk:
+      name: xira-data
+      mountPath: /data
+      sizeGB: 1
     envVars:
       - key: MODEL_VERSION
-        value: v1.0.0
+        value: v1.1.0
       - key: XLAYER_RPC_URL
         value: https://rpc.xlayer.tech
       - key: XIRA_CONTRACT_ADDRESS
         value: "0xDe28a2EEc95E3E9Dae6311966Ce2d8B45Db3d41E"
       - key: XIRA_EXPECTED_CHAIN_ID
         value: "196"
+      - key: XIRA_EXPECTED_SIGNER
+        value: "0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0"
+      - key: XIRA_EXPECTED_OWNER
+        value: "0x0CE306F2863a98e847F454dF74E93Ff1461ED3c0"
       - key: XIRA_CHAIN_LABEL
         value: xlayer-mainnet
       - key: XIRA_EXPLORER_BASE
         value: https://www.okx.com/web3/explorer/xlayer
-      # PRIVATE_KEY must NOT be committed. Set it as a hosting secret
-      # (Redacted). If missing, the backend runs in off-chain mode: scores are
-      # served but no on-chain attestation transactions are published.
+      - key: XIRA_DB_PATH
+        value: /data/xira_history.db
       - key: USE_LIVE_DATA
-        value: "true"
-      - key: AI_MODE
-        value: heuristic
+        value: "false"
     autoDeploy: true

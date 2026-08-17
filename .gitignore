@@ -4,8 +4,8 @@ __pycache__/
 *.egg-info/
 dist/
 backend/venv/
-backend/.venv/
 .venv/
+.venv*/
 .pytest_cache/
 backend/.pytest_cache/
 
@@ -14,11 +14,15 @@ node_modules/
 .next/
 out/
 
-# Environment
+# Environment — never commit any .env variant (the tracked template is
+# explicitly allowed back in)
 .env
-.env.local
-.env.*.local
-.env.deploy
+.env*
+!.env.example
+
+# Key material
+*.pem
+*.key
 
 # OS
 .DS_Store
@@ -27,8 +31,9 @@ Thumbs.db
 # Foundry
 contracts/out/
 contracts/cache/
-contracts/lib/
 contracts/broadcast/
+# NOTE: contracts/lib/forge-std is a committed submodule gitlink; do not
+# ignore contracts/lib/ or fresh clones cannot resolve the dependency.
 
 # IDE
 .idea/

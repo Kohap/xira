@@ -6,14 +6,35 @@ link and verifies the attestation read-back.
 Usage:
   python scripts/publish-smoke-test.py <symbol> <token_address> <private_key> <contract_address>
 """
+import getpass
 import json
+import os
 import sys
 import time
 import urllib.request
 
-API_URL = "https://xira-api-production.up.railway.app"
+API_URL = os.environ.get("XIRA_API_URL", "https://xira-api-production.up.railway.app")
 
-symbol, token_address, private_key, contract_address = sys.argv[1:5]
+if len(sys.argv) < 3:
+    print("Usage: python scripts/publish-smoke-test.py <symbol> <token_address> [contract_address]")
+    print("Note: Set PRIVATE_KEY in environment or enter when prompted.")
+    sys.exit(1)
+
+symbol = sys.argv[1]
+token_address = sys.argv[2]
+contract_address = sys.argv[3] if len(sys.argv) > 3 else os.environ.get("XIRA_CONTRACT_ADDRESS", "")
+
+if not contract_address:
+    print("ERROR: provide contract_address as argument or set XIRA_CONTRACT_ADDRESS.")
+    sys.exit(1)
+
+private_key = os.environ.get("PRIVATE_KEY")
+if not private_key:
+    private_key = getpass.getpass("Enter updater PRIVATE_KEY: ").strip()
+
+if not private_key:
+    print("ERROR: PRIVATE_KEY is required to sign transactions.")
+    sys.exit(1)
 
 with urllib.request.urlopen(f"{API_URL}/api/attestations/{symbol}", timeout=20) as resp:
     att = json.load(resp)

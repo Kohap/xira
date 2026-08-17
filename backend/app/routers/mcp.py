@@ -37,6 +37,9 @@ from app.services.rate_limit import enforce_rate_limit
 router = APIRouter(prefix="/mcp", tags=["mcp"])
 
 HTTPX_TIMEOUT = 30
+# Each message in a batch triggers an internal self-HTTP call; cap batch
+# size so one request cannot fan out into unbounded internal traffic.
+MAX_BATCH_MESSAGES = 20
 
 
 def _error_response(msg_id: Any, code: int, message: str) -> dict:
@@ -60,8 +63,12 @@ def _process_message(msg: Any, fetcher) -> dict | None:
         result = handle_message(method, params, fetcher)
     except MCPError as e:
         return _error_response(msg_id, e.code, e.message)
-    except Exception as e:  # noqa: BLE001 - surface unexpected failures to the client
-        return _error_response(msg_id, -32603, str(e))
+    except Exception as e:  # noqa: BLE001 - log details, return a generic error
+        # Never echo internal exception text (paths, URLs, stack details)
+        # to remote MCP clients; the server log keeps the full story.
+        import logging as _logging
+        _logging.getLogger(__name__).exception(f"MCP handler error: {e}")
+        return _error_response(msg_id, -32603, "Internal error")
 
     if msg_id is None:
         return None
@@ -101,6 +108,14 @@ async def mcp_post(request: Request):
 
     is_batch = isinstance(payload, list)
     messages = payload if is_batch else [payload]
+
+    if len(messages) > MAX_BATCH_MESSAGES:
+        return JSONResponse(
+            _error_response(
+                None, -32600, f"Batch too large (max {MAX_BATCH_MESSAGES} messages)."
+            ),
+            status_code=400,
+        )
 
     base = os.getenv("XIRA_API_URL") or str(request.base_url).rstrip("/")
     fetcher = _make_httpx_fetcher(base)

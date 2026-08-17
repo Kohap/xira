@@ -3,7 +3,7 @@
     "XIRA": {
       "command": "python3",
       "args": [
-        "/Users/mac/Documents/Default Project/xira/mcp_server/server.py"
+        "mcp_server/server.py"
       ],
       "env": {
         "XIRA_API_URL": "https://xira-api-production.up.railway.app"

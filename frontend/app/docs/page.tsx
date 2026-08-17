@@ -19,7 +19,7 @@ const ENDPOINTS = [
     desc: "The main board. Returns a risk score for every tracked market plus a one-line market summary.",
     query: "?fresh=true forces a recalculation (requires the XIRA_ADMIN_TOKEN header)",
     returns: "AllAssetsResponse",
-    note: "data_source is 'live', 'partial', or 'mock' depending on how many assets resolved from Finnhub.",
+    note: "data_source is 'live', 'partial', or 'mock' depending on data feed resolution.",
   },
   {
     method: "GET",
@@ -35,7 +35,7 @@ const ENDPOINTS = [
     desc: "A trail of past scores for one asset, newest first. Useful for spotting trends.",
     query: "?limit=N, 1–50, default 10",
     returns: "AttestationHistory",
-    note: "Historical entries may omit evidence_hash and chain fields (they are retro-fit from the score log).",
+    note: "Historical entries include stored evidence_hash, model_version, data_source, and published status for full on-chain verifiability.",
   },
   {
     method: "GET",
@@ -59,7 +59,7 @@ const ENDPOINTS = [
     desc: "Every market currently flagged as an anomaly, sorted from highest to lowest risk, with the reason for each flag.",
     query: "",
     returns: "AlertsResponse",
-    note: "Anomalies are factors scoring at critically low levels.",
+    note: "Anomalies are factors scoring at elevated risk levels (e.g. volatility spikes, liquidity crunches).",
   },
   {
     method: "GET",
@@ -181,7 +181,7 @@ const MCP_TOOLS = [
     returns: "All tracked assets with scores, factors, and market summary.",
   },
   {
-    name: "xira_get_attestation_history",
+    name: "xira_get_asset_history",
     maps: "GET /api/attestations/{symbol}/history",
     returns: "Recent score trail for one symbol.",
   },

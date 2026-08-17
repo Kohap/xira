@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import type { AllAssetsResponse, MarketHistoryResponse } from "@/lib/types";
-import { API_BASE, fetchMarketHistory } from "@/lib/api";
+import { API_BASE, fetchAllAssets, fetchMarketHistory } from "@/lib/api";
 import { sectorFor } from "@/lib/markets";
 import { ScoreCard, RiskBadge } from "@/components/ScoreCard";
 import { RiskHeatmap } from "@/components/RiskHeatmap";
@@ -305,8 +305,7 @@ export default function DashboardClient() {
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retriesRef = useRef(0);
   const dataRef = useRef<AllAssetsResponse | null>(null);
-
-  const apiBase = API_BASE;
+  const isFetchingRef = useRef(false);
 
   const scheduleRetry = useCallback((fn: () => void) => {
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
@@ -317,14 +316,12 @@ export default function DashboardClient() {
 
   const fetchData = useCallback(
     async (showLoading = true) => {
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
       if (showLoading) setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${apiBase}/api/assets/all`);
-        if (!res.ok) {
-          throw new Error(`API error: ${res.status} ${res.statusText}`);
-        }
-        const json: AllAssetsResponse = await res.json();
+        const json = await fetchAllAssets();
         const board: AllAssetsResponse = {
           ...json,
           assets: json.assets,
@@ -354,10 +351,11 @@ export default function DashboardClient() {
           setError(msg);
         }
       } finally {
+        isFetchingRef.current = false;
         setLoading(false);
       }
     },
-    [apiBase, scheduleRetry]
+    [scheduleRetry]
   );
 
   useEffect(() => {
@@ -372,18 +370,21 @@ export default function DashboardClient() {
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       setNow(Math.floor(Date.now() / 1000));
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          fetchData(false);
-          return POLL_SECONDS;
-        }
-        return prev - 1;
-      });
+      setCountdown((prev) => (prev <= 1 ? POLL_SECONDS : prev - 1));
     }, 1000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [fetchData]);
+  }, []);
+
+  useEffect(() => {
+    const pollId = setInterval(() => {
+      if (fetchDataRef.current) {
+        void fetchDataRef.current(false);
+      }
+    }, POLL_SECONDS * 1000);
+    return () => clearInterval(pollId);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -477,7 +478,7 @@ export default function DashboardClient() {
             </Link>
           </div>
           <p className="mt-6 text-xs text-neutral-600">
-            Upstream API: <code className="font-mono text-neutral-400">{apiBase}</code>
+            Upstream API: <code className="font-mono text-neutral-400">{API_BASE}</code>
           </p>
         </div>
       </div>

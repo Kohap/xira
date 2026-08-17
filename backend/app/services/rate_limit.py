@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 
 _WINDOW_S = 60.0
 _MAX_KEYS = 10_000
+# When the key table fills up, evict the quietest entries down to this
+# fraction instead of clearing everything (a full clear hands every client
+# a fresh budget at once).
+_EVICT_TO_FRACTION = 0.8
 
 
 class InMemoryBackend:
@@ -28,11 +32,18 @@ class InMemoryBackend:
         self._hits: dict[str, list[float]] = {}
         self._lock = threading.Lock()
 
+    def _evict(self) -> None:
+        """Drop the least-recently-active keys until under the cap."""
+        target = int(_MAX_KEYS * _EVICT_TO_FRACTION)
+        oldest_first = sorted(self._hits.items(), key=lambda kv: kv[1][-1] if kv[1] else 0.0)
+        for key, _ in oldest_first[: max(0, len(self._hits) - target)]:
+            self._hits.pop(key, None)
+
     def allow(self, key: str, limit: int, window_s: float = _WINDOW_S) -> bool:
         now = time.monotonic()
         with self._lock:
             if len(self._hits) >= _MAX_KEYS:
-                self._hits.clear()
+                self._evict()
             queue = self._hits.setdefault(key, [])
             cutoff = now - window_s
             while queue and queue[0] < cutoff:

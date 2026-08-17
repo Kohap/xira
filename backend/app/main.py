@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio, os, logging
+from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -48,17 +49,50 @@ def _build_endpoints() -> dict:
     }
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    live = os.getenv("USE_LIVE_DATA", "false").lower() == "true"
+    mode = "LIVE (Yahoo quotes + Finnhub news)" if live else "MOCK (simulated data)"
+    logger.info(f"XIRA backend starting | Mode: {mode}")
+    logger.info(f"Model: {os.getenv('MODEL_VERSION', 'v1.1.0')}")
+
+    # Mainnet gates: wrong chain, phantom contract, mismatched signer or
+    # owner are fatal. Balance warnings are surfaced but not fatal.
+    from app.services.publisher import publisher as pub
+    from app.services.startup_checks import StartupCheckError
+
+    try:
+        run_startup_checks(pub)
+    except StartupCheckError as e:
+        logger.critical(f"Startup gate failed: {e}")
+        raise RuntimeError(str(e)) from e
+
+    from app.services.data_fetcher import get_tracked_assets
+    assets = get_tracked_assets()
+    logger.info(f"Tracking {len(assets)} assets: {[a['symbol'] for a in assets]}")
+
+    global _scheduler_task
+    _scheduler_task = asyncio.create_task(scheduler_service.scheduler_loop())
+
+    yield
+
+    if _scheduler_task:
+        _scheduler_task.cancel()
+    logger.info("XIRA backend shutting down.")
+
+
 app = FastAPI(
     title="XIRA: X-Layer Intelligence & Risk Analytics",
     description="AI-powered risk intelligence and signals for tokenized equities on X Layer.",
-    version="1.0.0",
+    version="1.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "PUT", "POST"],
+    allow_methods=["GET", "PUT", "POST", "DELETE"],
     allow_headers=["Content-Type", "x-api-key", "x-admin-token", "authorization"],
 )
 
@@ -143,46 +177,12 @@ async def api_key_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-@app.on_event("startup")
-async def startup():
-    live = os.getenv("USE_LIVE_DATA", "false").lower() == "true"
-    mode = "LIVE (Finnhub + news)" if live else "MOCK (simulated data)"
-    logger.info(f"XIRA backend starting | Mode: {mode}")
-    logger.info(f"Model: {os.getenv('MODEL_VERSION', 'v1.0.0')}")
-
-    # Mainnet gates: wrong chain, phantom contract, mismatched signer or
-    # owner are fatal. Balance warnings are surfaced but not fatal.
-    from app.services.publisher import publisher as pub
-    from app.services.startup_checks import StartupCheckError
-
-    try:
-        run_startup_checks(pub)
-    except StartupCheckError as e:
-        logger.critical(f"Startup gate failed: {e}")
-        raise RuntimeError(str(e)) from e
-
-    from app.services.data_fetcher import get_tracked_assets
-    assets = get_tracked_assets()
-    logger.info(f"Tracking {len(assets)} assets: {[a['symbol'] for a in assets]}")
-
-    global _scheduler_task
-    _scheduler_task = asyncio.create_task(scheduler_service.scheduler_loop())
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    global _scheduler_task
-    if _scheduler_task:
-        _scheduler_task.cancel()
-    logger.info("XIRA backend shutting down.")
-
-
 @app.get("/")
 async def root():
     return {
         "name": "XIRA",
         "full_name": "X-Layer Intelligence & Risk Analytics",
-        "version": os.getenv("MODEL_VERSION", "v1.0.0"),
+        "version": os.getenv("MODEL_VERSION", "v1.1.0"),
         "endpoints": _build_endpoints(),
     }
 
@@ -227,4 +227,6 @@ if __name__ == "__main__":
     import uvicorn
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))
-    uvicorn.run("app.main:app", host=host, port=port, reload=True)
+    # reload stays off: a reload-on-file-change server restarts the
+    # scheduler task and can re-broadcast in-flight attestations.
+    uvicorn.run("app.main:app", host=host, port=port)

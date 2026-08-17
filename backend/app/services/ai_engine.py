@@ -26,27 +26,28 @@ FACTOR_WEIGHTS = {
     "liquidity_proxy": 0.15,
 }
 
+# Every factor is scored in RISK direction: 0 = minimal risk, 100 = severe.
+# Anomaly detection therefore fires on HIGH factor scores (model v1.1.0;
+# v1.0.0 mixed factor directions and flagged low-risk configurations).
+ANOMALY_HIGH = 75
+ANOMALY_CRITICAL = 85
+
 
 def _clamp(v: float, lo: float = 0, hi: float = 100) -> float:
     return max(lo, min(hi, v))
 
 
 def score_momentum(price_data) -> tuple[int, str]:
+    """Momentum risk: bearish momentum and proximity to the 52w low raise
+    risk; strong, sustained uptrends lower it."""
     if price_data is None or len(price_data.daily_prices) < 5:
         return 50, "Insufficient price data for momentum calculation."
 
     closes = price_data.daily_prices
     price = closes[-1]
 
-    if len(closes) >= 5:
-        ma5 = sum(closes[-5:]) / 5
-    else:
-        ma5 = price
-
-    if len(closes) >= 10:
-        ma10 = sum(closes[-10:]) / 10
-    else:
-        ma10 = sum(closes) / len(closes)
+    ma5 = sum(closes[-5:]) / 5
+    ma10 = sum(closes[-10:]) / 10 if len(closes) >= 10 else sum(closes) / len(closes)
 
     if ma10 <= 0:
         return 50, "Invalid price data."
@@ -54,23 +55,25 @@ def score_momentum(price_data) -> tuple[int, str]:
     momentum_ratio = (ma5 / ma10) - 1.0
     pct_52 = ((price - price_data.low_52w) / (price_data.high_52w - price_data.low_52w)) * 100 if price_data.high_52w > price_data.low_52w else 50
 
-    raw = 50 + (momentum_ratio * 400) + (pct_52 - 50) * 0.2
+    # Risk direction: falling momentum and near-52w-low prices raise risk.
+    raw = 50 - (momentum_ratio * 400) - (pct_52 - 50) * 0.2
     score = int(round(_clamp(raw)))
 
     chg = price_data.change_24h
     chg7 = getattr(price_data, "change_7d", 0.0)
 
-    if score <= 30:
-        desc = f"Bearish: {chg:+.2f}% (24h), {chg7:+.2f}% (7d). Price near 52w low."
-    elif score >= 70:
-        desc = f"Bullish: {chg:+.2f}% (24h), {chg7:+.2f}% (7d). Price near 52w high."
+    if score >= 70:
+        desc = f"Bearish momentum: {chg:+.2f}% (24h), {chg7:+.2f}% (7d). Price near 52w low — downside risk elevated."
+    elif score <= 30:
+        desc = f"Bullish momentum: {chg:+.2f}% (24h), {chg7:+.2f}% (7d). Price near 52w high — momentum risk subdued."
     else:
-        desc = f"Neutral: {chg:+.2f}% (24h), {chg7:+.2f}% (7d)."
+        desc = f"Neutral momentum: {chg:+.2f}% (24h), {chg7:+.2f}% (7d)."
 
     return score, desc
 
 
 def score_volatility(price_data) -> tuple[int, str]:
+    """Volatility risk: already risk-directional (higher = more erratic)."""
     if price_data is None or len(price_data.daily_prices) < 5:
         return 50, "Insufficient data for volatility assessment."
 
@@ -104,19 +107,20 @@ def score_volatility(price_data) -> tuple[int, str]:
 
 
 def score_sentiment(price_data, sentiment) -> tuple[int, str]:
+    """Sentiment risk: negative signals raise risk, positive lower it."""
     s_val = sentiment.score if hasattr(sentiment, "score") else sentiment if isinstance(sentiment, (int, float)) else 0.0
     combined = s_val * 100
-    score = int(round(_clamp(50 + combined)))
+    score = int(round(_clamp(50 - combined)))
 
     src = getattr(sentiment, "source", "proxy") if hasattr(sentiment, "source") else "proxy"
     summary = getattr(sentiment, "summary", "") if hasattr(sentiment, "summary") else ""
 
     if summary:
         desc = f"[{src}] {summary}"
-    elif score <= 30:
-        desc = f"[{src}] Negative signals detected."
     elif score >= 70:
-        desc = f"[{src}] Positive signals prevailing."
+        desc = f"[{src}] Negative signals detected — sentiment risk elevated."
+    elif score <= 30:
+        desc = f"[{src}] Positive signals prevailing — sentiment risk subdued."
     else:
         desc = f"[{src}] Mixed or neutral signals."
 
@@ -124,6 +128,8 @@ def score_sentiment(price_data, sentiment) -> tuple[int, str]:
 
 
 def score_volume_anomaly(price_data) -> tuple[int, str]:
+    """Volume risk: both tails are risky — spikes signal possible events,
+    very thin volume signals liquidity risk. Normal volume is low risk."""
     if price_data is None or price_data.avg_volume_20d <= 0:
         return 50, "Insufficient volume data."
     if price_data.volume <= 0:
@@ -135,27 +141,28 @@ def score_volume_anomaly(price_data) -> tuple[int, str]:
 
     if ratio > 3.0:
         score = int(min(100, 50 + (ratio - 1.0) * 20))
-        desc = f"Volume spike {ratio:.1f}x avg ({vol_str} vs {avg_str}). Possible event."
+        desc = f"Volume spike {ratio:.1f}x avg ({vol_str} vs {avg_str}). Possible event — event risk elevated."
     elif ratio > 2.0:
-        score = int(50 + (ratio - 1.0) * 18)
-        desc = f"Volume elevated {ratio:.1f}x avg ({vol_str} vs {avg_str})."
+        score = 65
+        desc = f"Volume elevated {ratio:.1f}x avg ({vol_str} vs {avg_str}). Possible developing event."
     elif ratio > 1.3:
-        score = int(50 + (ratio - 1.0) * 10)
-        desc = f"Volume slightly above avg ({vol_str} vs {avg_str})."
+        score = 40
+        desc = f"Volume above average ({vol_str} vs {avg_str}). Watch for news."
     elif ratio < 0.3:
-        score = int(max(0, 50 - (1.0 - ratio) * 40))
-        desc = f"Very thin volume {ratio:.2f}x avg. Liquidity concern."
+        score = 75
+        desc = f"Very thin volume {ratio:.2f}x avg ({vol_str} vs {avg_str}). Liquidity risk."
     elif ratio < 0.6:
-        score = int(50 - (1.0 - ratio) * 25)
-        desc = f"Below-average volume {ratio:.2f}x avg."
+        score = 55
+        desc = f"Below-average volume {ratio:.2f}x avg ({vol_str} vs {avg_str}). Thin-market risk."
     else:
-        score = 50
+        score = 25
         desc = "Volume within normal range."
 
     return score, desc
 
 
 def score_liquidity_proxy(price_data) -> tuple[int, str]:
+    """Liquidity risk: thin turnover and small market cap raise risk."""
     if price_data is None or price_data.price <= 0 or price_data.volume <= 0:
         return 50, "Insufficient data for liquidity estimation."
 
@@ -164,23 +171,24 @@ def score_liquidity_proxy(price_data) -> tuple[int, str]:
     turnover_str = f"${turnover:,.0f}"
 
     if turnover < 100_000_000:
-        score = 20
+        score = 80
         desc = f"Low turnover ({turnover_str}). High slippage risk."
     elif turnover < 500_000_000:
-        score = 40
+        score = 60
         desc = f"Moderate turnover ({turnover_str}). Some slippage risk."
     elif turnover < 2_000_000_000:
-        score = 60
+        score = 40
         desc = f"Adequate turnover ({turnover_str}). Acceptable liquidity."
     elif turnover < 10_000_000_000:
-        score = 80
+        score = 25
         desc = f"High turnover ({turnover_str}). Strong liquidity."
     else:
-        score = 95
+        score = 10
         desc = f"Deep liquidity ({turnover_str}). Minimal slippage."
 
     if mcap > 0 and mcap < 2_000_000_000:
         score = min(score + 10, 100)
+        desc += " Small market cap adds risk."
 
     return score, desc
 
@@ -203,15 +211,16 @@ def generate_explanation(
     if pct > 0.01:
         base += f" Underlying {direction} {pct:.1f}% in 24h."
 
-    worst = min(factors, key=lambda f: f.score)
-    best = max(factors, key=lambda f: f.score)
+    # All factors are risk-directional: highest = key risk, lowest = most stable.
+    worst = max(factors, key=lambda f: f.score)
+    best = min(factors, key=lambda f: f.score)
     base += f" Key risk: {worst.label.lower()} ({worst.score}/100)."
-    base += f" Strength: {best.label.lower()} ({best.score}/100)."
+    base += f" Most stable: {best.label.lower()} ({best.score}/100)."
 
     if anomaly and anomaly_reason:
         base += f" ALERT: {anomaly_reason}"
 
-    src_label = "real-time" if data_source == "finnhub" else "simulated"
+    src_label = "real-time" if data_source in ("finnhub", "yahoo") else "simulated"
     base += f" Data: {src_label}."
 
     return base
@@ -223,17 +232,12 @@ def compute_evidence_hash(data: dict) -> str:
 
 
 class AIEngine:
-    def __init__(self, mode: str = "heuristic", openai_api_key: str = "", openai_model: str = "gpt-4o-mini"):
-        self.mode = mode
-        self.openai_api_key = openai_api_key
-        self.openai_model = openai_model
-
     def analyze(
         self,
         symbol: str,
         price_data,
         sentiment,
-        model_version: str,
+        model_version: str = "v1.1.0",
     ) -> AttestationResponse:
         m_score, m_desc = score_momentum(price_data)
         v_score, v_desc = score_volatility(price_data)
@@ -253,21 +257,25 @@ class AIEngine:
         risk_score = int(round(weighted))
         risk_level = risk_level_from_score(risk_score)
 
-        low_scoring = [f for f in factors if f.score <= 25]
-        critical_scoring = [f for f in factors if f.score <= 15]
-        anomaly = len(critical_scoring) >= 1 or len(low_scoring) >= 2
+        # Anomaly = one or more factors at critical risk, or two or more
+        # factors at high risk. All factors are risk-directional, so this
+        # catches volatility blowouts, volume spikes and liquidity crunches
+        # alike (v1.0.0 only fired on low scores and missed all of these).
+        high_risk = [f for f in factors if f.score >= ANOMALY_HIGH]
+        critical_risk = [f for f in factors if f.score >= ANOMALY_CRITICAL]
+        anomaly = len(critical_risk) >= 1 or len(high_risk) >= 2
 
-        if anomaly and critical_scoring:
-            anomaly_reason = f"Critical alert: {', '.join(f.name for f in critical_scoring)} at critically low levels."
-        elif anomaly and low_scoring:
-            anomaly_reason = f"Alert on {', '.join(f.name for f in low_scoring)}: scores concerning."
+        if anomaly and critical_risk:
+            anomaly_reason = f"Critical alert: {', '.join(f.name for f in critical_risk)} at critically high risk levels."
+        elif anomaly and high_risk:
+            anomaly_reason = f"Alert on {', '.join(f.name for f in high_risk)}: risk factors elevated."
         elif anomaly:
             anomaly_reason = "Multiple risk factors indicate elevated uncertainty."
         else:
             anomaly_reason = ""
 
-        healthy = len([f for f in factors if f.score >= 50])
-        confidence = int(round(40 + healthy * 10 + (80 - risk_score) * 0.15))
+        settled = len([f for f in factors if f.score <= 50])
+        confidence = int(round(40 + settled * 10 + (80 - risk_score) * 0.15))
         confidence = int(_clamp(confidence, 30, 100))
 
         data_source = getattr(price_data, "source", "mock") if price_data else "mock"
@@ -310,4 +318,4 @@ class AIEngine:
         )
 
 
-ai_engine = AIEngine(mode="heuristic")
+ai_engine = AIEngine()

@@ -4,5 +4,5 @@ out = "out"
 libs = ["lib"]
 solc = "0.8.20"
 evm_version = "paris"
-remappings = ["forge-std/=lib/forge-std/src/", "@openzeppelin/=lib/openzeppelin-contracts/"]
+remappings = ["forge-std/=lib/forge-std/src/"]
 fs_permissions = [{ access = "read", path = "../catalogs" }]

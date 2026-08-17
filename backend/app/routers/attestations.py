@@ -10,19 +10,13 @@ from app.models import AttestationResponse, AttestationHistory
 
 router = APIRouter(prefix="/api/attestations", tags=["attestations"])
 
-HISTORY_STORE: dict[str, list[dict]] = {}
-
 
 def _store_history(symbol: str, result: AttestationResponse, published: bool = False):
-    if symbol not in HISTORY_STORE:
-        HISTORY_STORE[symbol] = []
+    """Persist an attestation to the SQLite history. WRITE PATH: only the
+    scheduler and admin rescore call this; public GETs never persist."""
     entry = result.model_dump()
     entry["timestamp"] = int(time.time())
     result.timestamp = entry["timestamp"]
-    HISTORY_STORE[symbol].append(entry)
-    if len(HISTORY_STORE[symbol]) > 50:
-        HISTORY_STORE[symbol] = HISTORY_STORE[symbol][-50:]
-
     history_db.store_score(symbol, entry, published=published)
 
 
@@ -35,7 +29,7 @@ def get_attestation(symbol: str, request: Request):
     if not match:
         raise HTTPException(status_code=404, detail=f"Asset '{symbol}' not tracked.")
 
-    model_version = os.getenv("MODEL_VERSION", "v1.0.0")
+    model_version = os.getenv("MODEL_VERSION", "v1.1.0")
 
     prices, _ = data_fetcher.fetch_all_prices([match["underlying"]])
     price_data = prices.get(match["underlying"])
@@ -90,7 +84,7 @@ def get_attestation(symbol: str, request: Request):
 
 
 @router.get("/{symbol}/history", response_model=AttestationHistory)
-async def get_attestation_history(symbol: str, request: Request, limit: int = Query(default=10, le=50)):
+async def get_attestation_history(symbol: str, request: Request, limit: int = Query(default=10, ge=1, le=50)):
     enforce_rate_limit(request, "attestation_history", limit=60)
     symbol_upper = symbol.upper()
     assets = get_tracked_assets()
@@ -98,36 +92,28 @@ async def get_attestation_history(symbol: str, request: Request, limit: int = Qu
     if not match:
         raise HTTPException(status_code=404, detail=f"Asset '{symbol}' not tracked.")
 
-    # Try to get from database first (persistent history)
     db_history = history_db.get_history(match["symbol"], limit=limit)
-    
-    if db_history:
-        # Convert database records to AttestationResponse format
-        history_responses = []
-        for record in db_history:
-            history_responses.append(AttestationResponse(
-                symbol=match["symbol"],
-                risk_score=record["risk_score"],
-                risk_level=record["risk_level"],
-                confidence=record["confidence"],
-                factors=record["factors"],
-                explanation=record["explanation"],
-                anomaly=record["anomaly"],
-                anomaly_reason=record["anomaly_reason"],
-                evidence_hash="",
-                timestamp=record["timestamp"],
-                model_version="",
-                data_source="",
-                data_freshness_ms=0,
-            ))
-        return AttestationHistory(
+    history_responses = [
+        AttestationResponse(
             symbol=match["symbol"],
-            history=history_responses,
+            risk_score=record["risk_score"],
+            risk_level=record["risk_level"],
+            confidence=record["confidence"],
+            factors=record["factors"],
+            explanation=record["explanation"],
+            anomaly=record["anomaly"],
+            anomaly_reason=record["anomaly_reason"],
+            # Stored verification fields: lets the trail be checked against
+            # the on-chain record entry by entry.
+            evidence_hash=record.get("evidence_hash", ""),
+            timestamp=record["timestamp"],
+            model_version=record.get("model_version", ""),
+            data_source=record.get("data_source", ""),
+            data_freshness_ms=0,
         )
-    
-    # Fallback to in-memory store if database is empty
-    history = HISTORY_STORE.get(match["symbol"], [])
+        for record in db_history
+    ]
     return AttestationHistory(
         symbol=match["symbol"],
-        history=[AttestationResponse(**h) for h in history[-limit:]],
+        history=history_responses,
     )

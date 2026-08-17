@@ -11,9 +11,6 @@ export const SECTOR_MAP: Record<string, string> = {
   AMDx: "Technology",
   INTCx: "Technology",
   NFLXx: "Communication",
-  BAx: "Industrials",
-  JPMx: "Financial",
-  XOMx: "Energy",
 };
 
 const UNDERLYING_SECTOR: Record<string, string> = {

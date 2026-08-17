@@ -215,3 +215,44 @@ export function riskLevelTextColor(level: RiskLevel): string {
 export function riskLevelLabel(level: RiskLevel): string {
   return level.charAt(0) + level.slice(1).toLowerCase();
 }
+
+export function scoreRiskLevel(score: number): RiskLevel {
+  if (score <= 20) return "LOW";
+  if (score <= 40) return "MODERATE";
+  if (score <= 60) return "ELEVATED";
+  if (score <= 80) return "HIGH";
+  return "CRITICAL";
+}
+
+export function scoreColor(score: number): string {
+  return riskLevelColor(scoreRiskLevel(score));
+}
+
+export function scoreTextColor(score: number): string {
+  return riskLevelTextColor(scoreRiskLevel(score));
+}
+
+export function formatAge(timestampSeconds: number, nowSeconds?: number): string {
+  const now = nowSeconds ?? Math.floor(Date.now() / 1000);
+  const diff = Math.max(0, now - timestampSeconds);
+  if (diff < 60) return `${diff}s ago`;
+  const mins = Math.floor(diff / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+export function severityOf(score: number, anomaly: boolean): { label: string; badgeClass: string } {
+  if (score >= 80 || (anomaly && score >= 60)) {
+    return { label: "Critical", badgeClass: "bg-red-500/15 text-red-400 border-red-500/30" };
+  }
+  if (score >= 60 || anomaly) {
+    return { label: "Elevated", badgeClass: "bg-orange-500/15 text-orange-400 border-orange-500/30" };
+  }
+  if (score >= 40) {
+    return { label: "Moderate", badgeClass: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" };
+  }
+  return { label: "Low", badgeClass: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" };
+}

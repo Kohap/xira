@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { fetchBoard } from "@/lib/board-cache";
-import { riskLevelColor } from "@/lib/types";
+import { riskLevelColor, formatAge } from "@/lib/types";
 import type { AllAssetsResponse } from "@/lib/types";
 import type React from "react";
 
@@ -15,12 +15,6 @@ function scoreStroke(score: number): string {
   if (score <= 60) return "#f97316";
   if (score <= 80) return "#ef4444";
   return "#dc2626";
-}
-
-function formatAge(now: number, generatedAt: number): string {
-  const s = Math.max(0, Math.round((now - generatedAt) / 1000));
-  if (s < 90) return `${s}s ago`;
-  return `${Math.round(s / 60)}m ago`;
 }
 
 export function LiveBars() {
@@ -92,7 +86,7 @@ export function LiveBars() {
           {offline
             ? `reconnecting (retry ${tries})`
             : data
-            ? `${data.assets.length} markets · updated ${formatAge(now, data.generated_at * 1000)}`
+            ? `${data.assets.length} markets · updated ${formatAge(data.generated_at, Math.floor(now / 1000))}`
             : "syncing…"}
         </span>
       </div>

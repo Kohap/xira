@@ -132,6 +132,15 @@ export default function AlertsClient() {
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    const pollId = setInterval(() => {
+      if (fetchDataRef.current) {
+        void fetchDataRef.current(false);
+      }
+    }, 60000);
+    return () => clearInterval(pollId);
+  }, []);
+
   const refetch = async () => {
     await fetchData(true);
   };
