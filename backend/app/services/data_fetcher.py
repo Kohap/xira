@@ -21,19 +21,32 @@ YAHOO_DAYS = 370
 _price_cache: dict[str, tuple[PriceData, float]] = {}
 CACHE_TTL = 300  # 5 minutes
 
-CATALOG_PATH = os.getenv(
-    "XIRA_CATALOG_PATH",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "catalogs", "asset_catalog.json"),
-)
+# Tracked assets come from the versioned catalog. The env var may carry a
+# legacy CWD-relative path that dies under Docker (WORKDIR /app), so we
+# probe a candidate list in order and use the first file that loads.
+CATALOG_CANDIDATES = [
+    os.getenv("XIRA_CATALOG_PATH", "").strip(),
+    "/app/catalogs/asset_catalog.json",  # Docker image layout (backend/Dockerfile)
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..", "..", "..", "catalogs", "asset_catalog.json",
+    ),  # repo layout (backend/app/services -> repo root)
+    os.path.join(os.getcwd(), "catalogs", "asset_catalog.json"),  # cwd layout
+]
 
 
 def _load_catalog() -> list[dict]:
     """Tracked assets come from the versioned catalog (built by
     scripts/build_catalog.py from OKX + Backed + on-chain verification).
     Only `enabled` entries are active; the `listed` tail stays available."""
-    try:
-        with open(CATALOG_PATH) as f:
-            catalog = json.load(f)
+    for path in CATALOG_CANDIDATES:
+        if not path:
+            continue
+        try:
+            with open(path) as f:
+                catalog = json.load(f)
+        except OSError:
+            continue
         assets = []
         for a in catalog.get("assets", []):
             if not a.get("enabled", False):
@@ -50,11 +63,14 @@ def _load_catalog() -> list[dict]:
                 }
             )
         if not assets:
-            raise ValueError("catalog has no enabled assets")
+            logger.warning(
+                f"Catalog at {path} has no enabled assets; trying next candidate."
+            )
+            continue
+        logger.info(f"Loaded asset catalog from {path} ({len(assets)} enabled).")
         return assets
-    except Exception as e:
-        logger.warning(f"Catalog load failed ({e}); empty asset universe.")
-        return []
+    logger.warning("Catalog load failed on all candidates; empty asset universe.")
+    return []
 
 
 TRACKED_ASSETS: list[dict] = _load_catalog()
