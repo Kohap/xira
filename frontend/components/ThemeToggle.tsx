@@ -1,19 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Theme = "dark" | "light";
-
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
-  const docTheme = document.documentElement.dataset.theme;
-  if (docTheme === "light" || docTheme === "dark") return docTheme;
-  const stored = window.localStorage.getItem("xira-theme");
-  if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia?.("(prefers-color-scheme: light)").matches
-    ? "light"
-    : "dark";
-}
 
 function SunIcon() {
   return (
@@ -53,21 +42,35 @@ function MoonIcon() {
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("dark");
+  const mounted = useRef(false);
 
   useEffect(() => {
-    const initial = getInitialTheme();
-    setTheme(initial);
-    document.documentElement.dataset.theme = initial;
+    const update = () =>
+      setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark");
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    return () => observer.disconnect();
   }, []);
 
-  const apply = (next: Theme) => {
-    setTheme(next);
-    document.documentElement.dataset.theme = next;
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    document.documentElement.dataset.theme = theme;
     try {
-      window.localStorage.setItem("xira-theme", next);
+      window.localStorage.setItem("xira-theme", theme);
     } catch {
       // storage may be unavailable (private mode); theme still applies
     }
+  }, [theme]);
+
+  const apply = (next: Theme) => {
+    setTheme(next);
   };
 
   return (

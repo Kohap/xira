@@ -86,7 +86,7 @@ export function LiveBars() {
           {offline
             ? `reconnecting (retry ${tries})`
             : data
-            ? `${data.assets.length} markets · updated ${formatAge(data.generated_at)}`
+            ? `${data.assets.length} markets · updated ${formatAge(data.generated_at, Math.floor(now / 1000))}`
             : "syncing…"}
         </span>
       </div>
